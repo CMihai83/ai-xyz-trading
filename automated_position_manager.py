@@ -117,8 +117,16 @@ class AutomatedPositionManager:
                 
                 # Update or create positions from exchange
                 for pos in exchange_positions:
+                    # CRITICAL FIX: Only process positions with actual contracts
+                    # Skip positions with 0 contracts (closed positions that still appear in API)
+                    contracts = pos.get('contracts', 0)
+                    contract_size = pos.get('contractSize', 0)
+
+                    if contracts <= 0 and contract_size <= 0:
+                        continue  # Skip closed position slots
+
                     symbol = pos['symbol']
-                    
+
                     # Check if position exists in registry
                     if symbol in registry_positions:
                         # Update existing position

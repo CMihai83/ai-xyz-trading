@@ -195,7 +195,12 @@ class AIXYZContinuousProfit:
             
             # Load position multipliers or initialize
             self.position_multipliers = reconciled.get('position_multipliers', {})
-            
+
+            # COOLDOWN MECHANISM: Track recently closed symbols to prevent immediate reopening
+            self.recently_closed_symbols = {}  # symbol -> timestamp
+            self.position_cooldown_seconds = 300  # 5 minute cooldown after closing
+            print("⏱️  Position Cooldown System enabled - 5 minute cooldown after close")
+
             # For any position without original size tracked, set it
             for symbol, pos in self.active_positions.items():
                 if symbol not in self.original_sizes:
@@ -1196,7 +1201,20 @@ class AIXYZContinuousProfit:
             symbol = opportunity['symbol']
             direction = opportunity['direction']
             confidence = opportunity.get('confidence', opportunity.get('4h_strength', opportunity['score']))
-            
+
+            # COOLDOWN FIX: Check if symbol is in cooldown period
+            import time
+            if symbol in self.recently_closed_symbols:
+                elapsed = time.time() - self.recently_closed_symbols[symbol]
+                if elapsed < self.position_cooldown_seconds:
+                    remaining = self.position_cooldown_seconds - elapsed
+                    print(f"  ⏱️  Skipping {symbol}: in cooldown ({remaining:.0f}s remaining)")
+                    return False
+                else:
+                    # Cooldown expired, remove from tracking
+                    del self.recently_closed_symbols[symbol]
+                    print(f"  ✅ Cooldown expired for {symbol}")
+
             # Skip if already have position in this symbol
             if symbol in self.active_positions:
                 return False
@@ -3044,8 +3062,28 @@ class AIXYZContinuousProfit:
         
         return False
     
+    def verify_position_closed(self, symbol: str) -> bool:
+        """Verify position is actually closed on exchange before cleanup"""
+        try:
+            positions = self.exchange.fetch_positions([symbol])
+            for pos in positions:
+                if pos['symbol'] == symbol:
+                    contracts = pos.get('contracts', 0)
+                    contract_size = pos.get('contractSize', 0)
+                    if contracts > 0 or contract_size > 0:
+                        return False  # Position still exists
+            return True  # Position confirmed closed
+        except Exception as e:
+            print(f"  ⚠️  Error verifying position closure for {symbol}: {e}")
+            return False  # Assume not closed on error
+
     def cleanup_position_tracking(self, symbol: str):
         """Clean up all tracking data for a closed position"""
+        # VERIFICATION FIX: Verify position is actually closed before cleanup
+        if not self.verify_position_closed(symbol):
+            print(f"  ⚠️  Position {symbol} not confirmed closed on exchange - skipping cleanup")
+            return
+
         # Calculate final PnL for adaptive Fibonacci learning (if position exists)
         final_pnl = 0.0
         if symbol in self.active_positions:
@@ -3079,6 +3117,11 @@ class AIXYZContinuousProfit:
         self.surplus_dump_stage.pop(symbol, None)
         self.original_sizes.pop(symbol, None)
         print(f"  🧹 Cleaned tracking data for closed position {symbol}")
+
+        # COOLDOWN FIX: Add symbol to cooldown tracking to prevent immediate reopening
+        import time
+        self.recently_closed_symbols[symbol] = time.time()
+        print(f"  ⏱️  Added {symbol} to cooldown for {self.position_cooldown_seconds}s")
     
     def cleanup_stale_positions(self):
         """Remove stale positions from all tracking dictionaries"""
