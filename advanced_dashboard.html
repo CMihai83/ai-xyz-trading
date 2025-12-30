@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Trading System - Advanced Dashboard</title>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #0a0e27;
+            color: #fff;
+            overflow-x: hidden;
+        }
+        
+        .dashboard {
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            min-height: 100vh;
+        }
+        
+        .sidebar {
+            background: #1a1f3a;
+            padding: 20px;
+            border-right: 1px solid #2d3561;
+        }
+        
+        .logo {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-bottom: 30px;
+            color: #00d4ff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .nav-item {
+            padding: 12px 16px;
+            margin: 5px 0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .nav-item:hover {
+            background: #2d3561;
+        }
+        
+        .nav-item.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .main-content {
+            padding: 20px;
+            overflow-y: auto;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #1a1f3a;
+            border-radius: 12px;
+        }
+        
+        .page-title {
+            font-size: 2em;
+            font-weight: 300;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: #1a1f3a;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #2d3561;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+        }
+        
+        .stat-label {
+            color: #8892b0;
+            font-size: 0.9em;
+            margin-bottom: 8px;
+        }
+        
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .stat-change {
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+        
+        .positive {
+            color: #00ff88;
+        }
+        
+        .negative {
+            color: #ff4757;
+        }
+        
+        .chart-container {
+            background: #1a1f3a;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border: 1px solid #2d3561;
+        }
+        
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .positions-table {
+            background: #1a1f3a;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #2d3561;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th {
+            text-align: left;
+            padding: 12px;
+            color: #8892b0;
+            font-weight: 500;
+            border-bottom: 1px solid #2d3561;
+        }
+        
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #2d3561;
+        }
+        
+        tr:hover {
+            background: #2d3561;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            font-size: 0.9em;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, #00d4ff 0%, #00ff88 100%);
+            color: #0a0e27;
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, #ff4757 0%, #ff6348 100%);
+            color: white;
+        }
+        
+        .btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+        }
+        
+        .signal-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            font-weight: 600;
+            margin: 2px;
+        }
+        
+        .signal-buy {
+            background: #00ff88;
+            color: #0a0e27;
+        }
+        
+        .signal-sell {
+            background: #ff4757;
+            color: white;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #00d4ff;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .market-scanner {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .scanner-card {
+            background: #1a1f3a;
+            border: 1px solid #2d3561;
+            border-radius: 12px;
+            padding: 15px;
+            transition: all 0.3s;
+        }
+        
+        .scanner-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 0 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        .symbol-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .symbol-name {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #00d4ff;
+        }
+        
+        .price-info {
+            text-align: right;
+        }
+        
+        .current-price {
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+        
+        .signals-list {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #2d3561;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+        
+        const Dashboard = () => {
+            const [activeTab, setActiveTab] = useState('overview');
+            const [marketData, setMarketData] = useState([]);
+            const [positions, setPositions] = useState([]);
+            const [systemStatus, setSystemStatus] = useState({});
+            const [loading, setLoading] = useState(false);
+            const chartRef = useRef(null);
+            const chartInstance = useRef(null);
+            
+            // Fetch system status
+            const fetchSystemStatus = async () => {
+                const services = [
+                    { name: 'API Gateway', port: 8000 },
+                    { name: 'Market Scanner', port: 8001 },
+                    { name: 'AI Engine', port: 8002 },
+                    { name: 'Position Manager', port: 8003 },
+                    { name: 'Risk Engine', port: 8009 }
+                ];
+                
+                const status = {};
+                for (const service of services) {
+                    try {
+                        const response = await fetch(`http://localhost:${service.port}`, {
+                            method: 'GET',
+                            mode: 'cors'
+                        });
+                        status[service.name] = response.ok;
+                    } catch {
+                        status[service.name] = false;
+                    }
+                }
+                setSystemStatus(status);
+            };
+            
+            // Fetch market scanner data
+            const fetchMarketData = async () => {
+                setLoading(true);
+                try {
+                    const response = await fetch('http://localhost:8001/scan');
+                    if (response.ok) {
+                        const data = await response.json();
+                        setMarketData(data.scan_results || []);
+                    }
+                } catch (error) {
+                    console.error('Error fetching market data:', error);
+                }
+                setLoading(false);
+            };
+            
+            // Fetch positions
+            const fetchPositions = async () => {
+                try {
+                    const response = await fetch('http://localhost:8003/api/v1/positions');
+                    if (response.ok) {
+                        const data = await response.json();
+                        setPositions(data.positions || []);
+                    }
+                } catch (error) {
+                    console.error('Error fetching positions:', error);
+                }
+            };
+            
+            useEffect(() => {
+                fetchSystemStatus();
+                fetchMarketData();
+                fetchPositions();
+                
+                const interval = setInterval(() => {
+                    fetchSystemStatus();
+                    if (activeTab === 'scanner') fetchMarketData();
+                    if (activeTab === 'positions') fetchPositions();
+                }, 10000);
+                
+                return () => clearInterval(interval);
+            }, [activeTab]);
+            
+            // Initialize chart
+            useEffect(() => {
+                if (chartRef.current && !chartInstance.current) {
+                    const ctx = chartRef.current.getContext('2d');
+                    chartInstance.current = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                            datasets: [{
+                                label: 'Portfolio Value',
+                                data: [10000, 10500, 11200, 10800, 12000, 13500],
+                                borderColor: '#667eea',
+                                backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                                tension: 0.4
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    labels: { color: '#8892b0' }
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    ticks: { color: '#8892b0' },
+                                    grid: { color: '#2d3561' }
+                                },
+                                x: {
+                                    ticks: { color: '#8892b0' },
+                                    grid: { color: '#2d3561' }
+                                }
+                            }
+                        }
+                    });
+                }
+            }, [activeTab]);
+            
+            const renderContent = () => {
+                switch (activeTab) {
+                    case 'overview':
+                        return (
+                            <div>
+                                <div className="stats-grid">
+                                    <div className="stat-card">
+                                        <div className="stat-label">Portfolio Value</div>
+                                        <div className="stat-value">$13,500</div>
+                                        <div className="stat-change positive">+35% All Time</div>
+                                    </div>
+                                    <div className="stat-card">
+                                        <div className="stat-label">Today's P&L</div>
+                                        <div className="stat-value">+$450</div>
+                                        <div className="stat-change positive">+3.45%</div>
+                                    </div>
+                                    <div className="stat-card">
+                                        <div className="stat-label">Active Positions</div>
+                                        <div className="stat-value">{positions.length}</div>
+                                        <div className="stat-change">5 markets</div>
+                                    </div>
+                                    <div className="stat-card">
+                                        <div className="stat-label">Win Rate</div>
+                                        <div className="stat-value">68%</div>
+                                        <div className="stat-change positive">+5% this week</div>
+                                    </div>
+                                </div>
+                                
+                                <div className="chart-container">
+                                    <div className="chart-header">
+                                        <h3>Portfolio Performance</h3>
+                                        <select style={{background: '#2d3561', color: '#fff', border: 'none', padding: '5px 10px', borderRadius: '5px'}}>
+                                            <option>1 Day</option>
+                                            <option>1 Week</option>
+                                            <option>1 Month</option>
+                                            <option>1 Year</option>
+                                        </select>
+                                    </div>
+                                    <div style={{height: '300px'}}>
+                                        <canvas ref={chartRef}></canvas>
+                                    </div>
+                                </div>
+                                
+                                <div className="positions-table">
+                                    <h3 style={{marginBottom: '20px'}}>System Status</h3>
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th>Service</th>
+                                                <th>Status</th>
+                                                <th>Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {Object.entries(systemStatus).map(([service, isOnline]) => (
+                                                <tr key={service}>
+                                                    <td>{service}</td>
+                                                    <td>
+                                                        <span className={`signal-badge ${isOnline ? 'signal-buy' : 'signal-sell'}`}>
+                                                            {isOnline ? 'ONLINE' : 'OFFLINE'}
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <button className="btn btn-primary">Restart</button>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        );
+                    
+                    case 'scanner':
+                        return (
+                            <div>
+                                <div className="header" style={{background: 'transparent', padding: 0}}>
+                                    <h2>Market Scanner</h2>
+                                    <button onClick={fetchMarketData} className="btn btn-primary">
+                                        {loading ? <span className="loading"></span> : 'Refresh Scan'}
+                                    </button>
+                                </div>
+                                
+                                <div className="market-scanner">
+                                    {marketData.map((item, index) => (
+                                        <div key={index} className="scanner-card">
+                                            <div className="symbol-header">
+                                                <div className="symbol-name">{item.symbol}</div>
+                                                <div className="price-info">
+                                                    <div className="current-price">${item.price?.toFixed(2)}</div>
+                                                </div>
+                                            </div>
+                                            <div className="signals-list">
+                                                {item.signals?.map((signal, idx) => (
+                                                    <div key={idx} style={{marginBottom: '8px'}}>
+                                                        <span className={`signal-badge signal-${signal.type?.toLowerCase()}`}>
+                                                            {signal.type}
+                                                        </span>
+                                                        <span style={{fontSize: '0.9em', color: '#8892b0', marginLeft: '8px'}}>
+                                                            {signal.reason}
+                                                        </span>
+                                                    </div>
+                                                ))}
+                                                {(!item.signals || item.signals.length === 0) && (
+                                                    <div style={{color: '#8892b0', fontSize: '0.9em'}}>No signals</div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))}
+                                    {marketData.length === 0 && !loading && (
+                                        <div style={{color: '#8892b0', gridColumn: '1 / -1', textAlign: 'center', padding: '40px'}}>
+                                            No market opportunities found. Click refresh to scan again.
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        );
+                    
+                    case 'positions':
+                        return (
+                            <div>
+                                <div className="header" style={{background: 'transparent', padding: 0}}>
+                                    <h2>Position Management</h2>
+                                    <div>
+                                        <button className="btn btn-success" style={{marginRight: '10px'}}>New Position</button>
+                                        <button className="btn btn-danger">Close All</button>
+                                    </div>
+                                </div>
+                                
+                                <div className="positions-table">
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th>Symbol</th>
+                                                <th>Side</th>
+                                                <th>Size</th>
+                                                <th>Entry Price</th>
+                                                <th>Current Price</th>
+                                                <th>P&L</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {positions.length > 0 ? positions.map((pos, index) => (
+                                                <tr key={index}>
+                                                    <td>{pos.symbol}</td>
+                                                    <td>
+                                                        <span className={`signal-badge signal-${pos.side?.toLowerCase()}`}>
+                                                            {pos.side}
+                                                        </span>
+                                                    </td>
+                                                    <td>{pos.size}</td>
+                                                    <td>${pos.entry_price?.toFixed(2)}</td>
+                                                    <td>${pos.current_price?.toFixed(2)}</td>
+                                                    <td className={pos.pnl >= 0 ? 'positive' : 'negative'}>
+                                                        ${pos.pnl?.toFixed(2)}
+                                                    </td>
+                                                    <td>
+                                                        <button className="btn btn-danger">Close</button>
+                                                    </td>
+                                                </tr>
+                                            )) : (
+                                                <tr>
+                                                    <td colSpan="7" style={{textAlign: 'center', color: '#8892b0'}}>
+                                                        No active positions
+                                                    </td>
+                                                </tr>
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        );
+                    
+                    case 'ai':
+                        return (
+                            <div>
+                                <h2>AI Decision Engine</h2>
+                                <div className="stats-grid">
+                                    <div className="stat-card">
+                                        <div className="stat-label">Active Gates</div>
+                                        <div className="stat-value">5/5</div>
+                                        <div className="stat-change positive">All operational</div>
+                                    </div>
+                                    <div className="stat-card">
+                                        <div className="stat-label">Decisions Made</div>
+                                        <div className="stat-value">1,247</div>
+                                        <div className="stat-change">Last 24 hours</div>
+                                    </div>
+                                    <div className="stat-card">
+                                        <div className="stat-label">Success Rate</div>
+                                        <div className="stat-value">78%</div>
+                                        <div className="stat-change positive">Above target</div>
+                                    </div>
+                                    <div className="stat-card">
+                                        <div className="stat-label">Market Regime</div>
+                                        <div className="stat-value">Bullish</div>
+                                        <div className="stat-change">Confidence: 82%</div>
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    
+                    default:
+                        return <div>Select a tab</div>;
+                }
+            };
+            
+            return (
+                <div className="dashboard">
+                    <div className="sidebar">
+                        <div className="logo">
+                            🤖 AI Trading System
+                        </div>
+                        <div 
+                            className={`nav-item ${activeTab === 'overview' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('overview')}
+                        >
+                            📊 Overview
+                        </div>
+                        <div 
+                            className={`nav-item ${activeTab === 'scanner' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('scanner')}
+                        >
+                            🔍 Market Scanner
+                        </div>
+                        <div 
+                            className={`nav-item ${activeTab === 'positions' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('positions')}
+                        >
+                            📈 Positions
+                        </div>
+                        <div 
+                            className={`nav-item ${activeTab === 'ai' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('ai')}
+                        >
+                            🧠 AI Engine
+                        </div>
+                        <div 
+                            className={`nav-item ${activeTab === 'risk' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('risk')}
+                        >
+                            ⚖️ Risk Control
+                        </div>
+                        <div 
+                            className={`nav-item ${activeTab === 'settings' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('settings')}
+                        >
+                            ⚙️ Settings
+                        </div>
+                    </div>
+                    
+                    <div className="main-content">
+                        {renderContent()}
+                    </div>
+                </div>
+            );
+        };
+        
+        ReactDOM.render(<Dashboard />, document.getElementById('root'));
+    </script>
+</body>
+</html>

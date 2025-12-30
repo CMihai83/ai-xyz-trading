@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  ai_xyz_trading:
+    build: .
+    container_name: ai_xyz_system
+    restart: unless-stopped
+    environment:
+      - BITGET_API_KEY=${BITGET_API_KEY}
+      - BITGET_SECRET=${BITGET_SECRET}
+      - BITGET_PASSPHRASE=${BITGET_PASSPHRASE}
+      - REDIS_URL=redis://redis:6379
+      - DATABASE_URL=postgresql://user:password@postgres:5432/ai_xyz
+    volumes:
+      - ./logs:/app/logs
+      - ./data:/app/data
+      - ./position_state.json:/app/position_state.json
+      - ./averaging_state.json:/app/averaging_state.json
+      - ./continuous_trading_state.json:/app/continuous_trading_state.json
+    networks:
+      - ai_xyz_network
+    depends_on:
+      - redis
+      - postgres
+
+  redis:
+    image: redis:7-alpine
+    container_name: ai_xyz_redis
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    networks:
+      - ai_xyz_network
+
+  postgres:
+    image: timescale/timescaledb:latest-pg15
+    container_name: ai_xyz_postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=ai_xyz
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - ai_xyz_network
+
+volumes:
+  redis_data:
+  postgres_data:
+
+networks:
+  ai_xyz_network:
+    driver: bridge

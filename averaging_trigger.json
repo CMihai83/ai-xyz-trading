@@ -1,0 +1,11 @@
+{
+  "timestamp": "2025-09-21T05:22:41.429416",
+  "action": "FORCE_AVERAGING",
+  "symbol": "FORM/USDT:USDT",
+  "reason": "Position in deep drawdown (-133.62%), averaging required",
+  "current_price": 1.4039,
+  "entry_price": 1.6854,
+  "current_upnl_pct": -133.62,
+  "recommended_add_size": 6.5,
+  "fibonacci_averaging": true
+}

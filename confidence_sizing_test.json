@@ -1,0 +1,30 @@
+{
+  "timestamp": "2025-09-07T07:13:32.461574",
+  "positions": [
+    {
+      "symbol": "ADA/USDT:USDT",
+      "side": "buy",
+      "confidence": 0.5,
+      "leverage": 8,
+      "position_value": 6.5,
+      "margin_size": 0.8125,
+      "amount": 7.868296816366058,
+      "order_id": "1348452329657053185"
+    },
+    {
+      "symbol": "ATOM/USDT:USDT",
+      "side": "sell",
+      "confidence": 0.9,
+      "leverage": 10,
+      "position_value": 15.166666666666671,
+      "margin_size": 1.516666666666667,
+      "amount": 3.412073490813649,
+      "order_id": "1348452341929586692"
+    }
+  ],
+  "rules": {
+    "base_size": 6.5,
+    "confidence_threshold": 0.7,
+    "max_multiplier": 3.0
+  }
+}

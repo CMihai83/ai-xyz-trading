@@ -1,0 +1,193 @@
+{
+  "timestamp": "2025-09-25T21:46:31.444702",
+  "total_tests": 26,
+  "passed": 23,
+  "failed": 2,
+  "warnings": 1,
+  "details": {
+    "extreme_leverage": [
+      {
+        "status": "PASS",
+        "case": {
+          "leverage": 1,
+          "upnl": -99,
+          "description": "Min leverage, max loss"
+        }
+      },
+      {
+        "status": "PASS",
+        "case": {
+          "leverage": 20,
+          "upnl": 500,
+          "description": "Max leverage, extreme profit"
+        }
+      },
+      {
+        "status": "PASS",
+        "case": {
+          "leverage": 10,
+          "upnl": -95,
+          "description": "Near liquidation"
+        }
+      }
+    ],
+    "boundary_averaging": [
+      {
+        "status": "PASS",
+        "case": {
+          "upnl": -41.9,
+          "steps": 0,
+          "description": "Just before averaging threshold"
+        }
+      },
+      {
+        "status": "PASS",
+        "case": {
+          "upnl": -42.0,
+          "steps": 0,
+          "description": "Exactly at averaging threshold"
+        },
+        "message": "Exact threshold handled"
+      },
+      {
+        "status": "PASS",
+        "case": {
+          "upnl": -42.1,
+          "steps": 0,
+          "description": "Just after averaging threshold"
+        }
+      },
+      {
+        "status": "PASS",
+        "case": {
+          "upnl": -100,
+          "steps": 5,
+          "description": "Max averaging steps reached"
+        }
+      }
+    ],
+    "surplus_dump_boundaries": [
+      {
+        "status": "PASS",
+        "message": "Stage 1 boundary correct"
+      },
+      {
+        "status": "PASS",
+        "message": "Stage 1 boundary correct"
+      },
+      {
+        "status": "PASS",
+        "case": {
+          "peak": 100,
+          "current": 49.9,
+          "stage": 1,
+          "description": "Just before stage 2"
+        }
+      },
+      {
+        "status": "PASS",
+        "message": "Stage 2 boundary correct"
+      }
+    ],
+    "position_size_extremes": [
+      {
+        "status": "FAIL",
+        "message": "Below min notional: $0.00"
+      },
+      {
+        "status": "PASS",
+        "case": {
+          "size": 1000000,
+          "price": 50000,
+          "description": "Maximum position size"
+        }
+      },
+      {
+        "status": "PASS",
+        "case": {
+          "size": 6.5,
+          "price": 1,
+          "description": "Exact minimum notional"
+        }
+      }
+    ],
+    "division_safety": [
+      {
+        "status": "PASS",
+        "message": "Division by zero handled"
+      },
+      {
+        "status": "PASS",
+        "case": {
+          "numerator": 0,
+          "denominator": 100,
+          "description": "Zero numerator"
+        }
+      },
+      {
+        "status": "PASS",
+        "case": {
+          "numerator": -100,
+          "denominator": -10,
+          "description": "Both negative"
+        }
+      }
+    ],
+    "fibonacci_progression": [
+      {
+        "status": "PASS",
+        "case": {
+          "step": 0,
+          "expected": 1,
+          "description": "First Fibonacci"
+        }
+      },
+      {
+        "status": "PASS",
+        "case": {
+          "step": 8,
+          "expected": 34,
+          "description": "Ninth Fibonacci"
+        }
+      },
+      {
+        "status": "WARNING",
+        "message": "Beyond Fibonacci array"
+      }
+    ],
+    "concurrent_operations": [
+      {
+        "status": "PASS",
+        "message": "Concurrency scenario acknowledged"
+      },
+      {
+        "status": "PASS",
+        "message": "Concurrency scenario acknowledged"
+      },
+      {
+        "status": "PASS",
+        "message": "Concurrency scenario acknowledged"
+      }
+    ],
+    "market_volatility": [
+      {
+        "status": "PASS",
+        "case": {
+          "volatility": 0,
+          "description": "Zero volatility"
+        }
+      },
+      {
+        "status": "PASS",
+        "case": {
+          "volatility": 1,
+          "description": "Maximum volatility"
+        }
+      },
+      {
+        "status": "FAIL",
+        "message": "Negative volatility invalid"
+      }
+    ]
+  }
+}

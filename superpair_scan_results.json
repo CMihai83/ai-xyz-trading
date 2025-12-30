@@ -1,0 +1,164 @@
+{
+  "timestamp": "2025-09-14T12:29:38.683235",
+  "quick_scan_count": 28,
+  "confirmed_count": 24,
+  "top_superpairs": [
+    {
+      "symbol": "ETH/USDT:USDT",
+      "is_superpair": true,
+      "score": 100,
+      "volume_24h": 5565608763.957894,
+      "spread": 2.1481400329993576e-06,
+      "liquidity_depth": 1990981.6020999998,
+      "last_price": 4656.0,
+      "change_24h": -1.335,
+      "timestamp": "2025-09-14T12:29:27.233936"
+    },
+    {
+      "symbol": "BTC/USDT:USDT",
+      "is_superpair": true,
+      "score": 100,
+      "volume_24h": 2648715599.2862253,
+      "spread": 8.627829928718661e-07,
+      "liquidity_depth": 7847621.156679999,
+      "last_price": 115902.1,
+      "change_24h": -0.067,
+      "timestamp": "2025-09-14T12:29:34.519109"
+    },
+    {
+      "symbol": "XRP/USDT:USDT",
+      "is_superpair": true,
+      "score": 90,
+      "volume_24h": 648622831.436895,
+      "spread": 3.246331645233312e-05,
+      "liquidity_depth": 767168.0407,
+      "last_price": 3.0805,
+      "change_24h": -2.872,
+      "timestamp": "2025-09-14T12:29:30.242278"
+    },
+    {
+      "symbol": "ADA/USDT:USDT",
+      "is_superpair": true,
+      "score": 90,
+      "volume_24h": 172329119.9543062,
+      "spread": 0.00010920607185758326,
+      "liquidity_depth": 1149205.8503,
+      "last_price": 0.9156,
+      "change_24h": -3.499,
+      "timestamp": "2025-09-14T12:29:31.696437"
+    },
+    {
+      "symbol": "SOL/USDT:USDT",
+      "is_superpair": true,
+      "score": 80,
+      "volume_24h": 2263880647.5482016,
+      "spread": 4.047829149246597e-06,
+      "liquidity_depth": 329961.0575,
+      "last_price": 247.06,
+      "change_24h": 1.83,
+      "timestamp": "2025-09-14T12:29:28.665599"
+    },
+    {
+      "symbol": "DOGE/USDT:USDT",
+      "is_superpair": true,
+      "score": 80,
+      "volume_24h": 1452115770.8587966,
+      "spread": 3.4510128722623076e-05,
+      "liquidity_depth": 331793.266,
+      "last_price": 0.28978,
+      "change_24h": -1.972,
+      "timestamp": "2025-09-14T12:29:33.036699"
+    },
+    {
+      "symbol": "LINK/USDT:USDT",
+      "is_superpair": true,
+      "score": 80,
+      "volume_24h": 128995971.4330829,
+      "spread": 4.0469445568501395e-05,
+      "liquidity_depth": 179681.94400000002,
+      "last_price": 24.709,
+      "change_24h": -2.621,
+      "timestamp": "2025-09-14T12:29:33.248979"
+    },
+    {
+      "symbol": "DOT/USDT:USDT",
+      "is_superpair": true,
+      "score": 70,
+      "volume_24h": 64228799.8617228,
+      "spread": 0.00022552999548927508,
+      "liquidity_depth": 544456.553,
+      "last_price": 4.439,
+      "change_24h": -2.03,
+      "timestamp": "2025-09-14T12:29:27.471586"
+    },
+    {
+      "symbol": "WLD/USDT:USDT",
+      "is_superpair": true,
+      "score": 70,
+      "volume_24h": 207991046.976394,
+      "spread": 6.046680372474845e-05,
+      "liquidity_depth": 41644.5294,
+      "last_price": 1.6533,
+      "change_24h": 2.081,
+      "timestamp": "2025-09-14T12:29:28.700569"
+    },
+    {
+      "symbol": "ARB/USDT:USDT",
+      "is_superpair": true,
+      "score": 70,
+      "volume_24h": 59442675.911581226,
+      "spread": 0.0001883948756593613,
+      "liquidity_depth": 520380.548755,
+      "last_price": 0.5308,
+      "change_24h": -4.721,
+      "timestamp": "2025-09-14T12:29:31.526612"
+    }
+  ],
+  "opportunities": [
+    {
+      "symbol": "ETH/USDT:USDT",
+      "score": 105,
+      "last_price": 4654.91,
+      "volume_24h": 5569037708.89798,
+      "change_24h": -1.359,
+      "volatility": 0.02722170090014938,
+      "timestamp": "2025-09-14T12:29:35.534002"
+    },
+    {
+      "symbol": "BTC/USDT:USDT",
+      "score": 100,
+      "last_price": 115902.1,
+      "volume_24h": 2648715520.941042,
+      "change_24h": -0.067,
+      "volatility": 0.008924242555890607,
+      "timestamp": "2025-09-14T12:29:35.865718"
+    },
+    {
+      "symbol": "XRP/USDT:USDT",
+      "score": 100,
+      "last_price": 3.0802,
+      "volume_24h": 648723997.900595,
+      "change_24h": -2.882,
+      "volatility": 0.034674560062453175,
+      "timestamp": "2025-09-14T12:29:36.239883"
+    },
+    {
+      "symbol": "ADA/USDT:USDT",
+      "score": 100,
+      "last_price": 0.9157,
+      "volume_24h": 172354640.50834334,
+      "change_24h": -3.489,
+      "volatility": 0.04579901153212528,
+      "timestamp": "2025-09-14T12:29:36.573676"
+    },
+    {
+      "symbol": "LINK/USDT:USDT",
+      "score": 90,
+      "last_price": 24.709,
+      "volume_24h": 128995971.4330829,
+      "change_24h": -2.621,
+      "volatility": 0.040294538760482695,
+      "timestamp": "2025-09-14T12:29:37.585388"
+    }
+  ]
+}

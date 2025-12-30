@@ -1,0 +1,49 @@
+{
+  "services": {
+    "risk-engine": {
+      "port": 8001,
+      "path": "services/risk-engine/src",
+      "file": "main.py"
+    },
+    "position-management": {
+      "port": 8002,
+      "path": "services/position-management/src",
+      "file": "main.py"
+    },
+    "market-scanner": {
+      "port": 8003,
+      "path": "services/market-scanner/src",
+      "file": "main.py"
+    },
+    "data-pipeline": {
+      "port": 8004,
+      "path": "services/data-pipeline/src",
+      "file": "main.py"
+    },
+    "ml-framework": {
+      "port": 8005,
+      "path": "services/ml-framework/src",
+      "file": "main.py"
+    },
+    "monitoring-service": {
+      "port": 8006,
+      "path": "services/monitoring-service/src",
+      "file": "main.py"
+    },
+    "notification-service": {
+      "port": 8007,
+      "path": "services/notification-service/src",
+      "file": "main.py"
+    },
+    "fibonacci-service": {
+      "port": 8008,
+      "path": "services/api-gateway/src",
+      "file": "fibonacci_averaging_service.py"
+    },
+    "balance-manager": {
+      "port": 8009,
+      "path": "services",
+      "file": "balance_manager.py"
+    }
+  }
+}

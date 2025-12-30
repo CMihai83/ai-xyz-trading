@@ -1,0 +1,24 @@
+{
+  "timestamp": "2025-10-25T15:35:36.948317",
+  "services": {
+    "autonomous_sync": {
+      "running": false,
+      "pid": null,
+      "healthy": false,
+      "required": true
+    },
+    "momentum_guardian": {
+      "running": true,
+      "pid": 2672901,
+      "healthy": true,
+      "required": true
+    },
+    "surplus_dump_manager": {
+      "running": false,
+      "pid": null,
+      "healthy": false,
+      "required": false
+    }
+  },
+  "health_score": 67
+}

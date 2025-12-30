@@ -1,0 +1,43 @@
+{
+  "timestamp": "2025-09-26T09:08:40.212335",
+  "overall_health": "DEGRADED",
+  "score": 80,
+  "services": {
+    "autonomous_sync": {
+      "running": true,
+      "pid": 2066301,
+      "cpu_usage": 0.0,
+      "memory_mb": 94.1640625
+    },
+    "momentum_guardian": {
+      "running": true,
+      "pid": 2062292,
+      "cpu_usage": 0.0,
+      "memory_mb": 139.28125
+    },
+    "surplus_dump_manager": {
+      "running": false,
+      "pid": null,
+      "cpu_usage": 0,
+      "memory_mb": 0
+    }
+  },
+  "resources": {
+    "cpu_percent": 6.1,
+    "memory_percent": 38.2,
+    "memory_available_gb": 38.71247863769531,
+    "disk_percent": 60.7,
+    "disk_free_gb": 12.30910873413086
+  },
+  "positions": {
+    "count": 1,
+    "file_size_mb": 0.0010499954223632812
+  },
+  "alerts": [
+    {
+      "severity": "CRITICAL",
+      "service": "surplus_dump_manager",
+      "message": "surplus_dump_manager is not running"
+    }
+  ]
+}

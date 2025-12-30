@@ -1,0 +1,52 @@
+{
+  "timestamp": "2025-09-04T14:34:43.384923",
+  "test_orders": [
+    {
+      "symbol": "BTCUSDT",
+      "side": "buy",
+      "quantity": 5e-06,
+      "price": 50000,
+      "leverage": 27,
+      "orderType": "limit",
+      "timeInForce": "GTC",
+      "margin_required": 0.009259259259259259,
+      "notional_value": 0.25,
+      "stop_loss": 49000.0,
+      "take_profit": 52000.0
+    },
+    {
+      "symbol": "ETHUSDT",
+      "side": "buy",
+      "quantity": 0.0005,
+      "price": 3000,
+      "leverage": 20,
+      "orderType": "limit",
+      "timeInForce": "GTC",
+      "margin_required": 0.075,
+      "notional_value": 1.5,
+      "stop_loss": 2940.0,
+      "take_profit": 3120.0
+    },
+    {
+      "symbol": "BNBUSDT",
+      "side": "buy",
+      "quantity": 0.05,
+      "price": 3000,
+      "leverage": 13,
+      "orderType": "limit",
+      "timeInForce": "GTC",
+      "margin_required": 11.538461538461538,
+      "notional_value": 150.0,
+      "stop_loss": 2940.0,
+      "take_profit": 3120.0
+    }
+  ],
+  "symbols_tested": [
+    "BTCUSDT",
+    "ETHUSDT",
+    "BNBUSDT",
+    "ADAUSDT",
+    "SOLUSDT"
+  ],
+  "account_balance": 1000.0
+}

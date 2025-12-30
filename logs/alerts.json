@@ -1,0 +1,117 @@
+[
+  {
+    "timestamp": "2025-09-16T20:03:28.158567+00:00",
+    "type": "COMPLIANCE_VIOLATION",
+    "message": "Violations: [\n  {\n    \"rule\": 2,\n    \"position\": \"MITO/USDT:USDT\",\n    \"issue\": \"Wrong zone: NEUTRAL should be AVERAGING\",\n    \"fixable\": true\n  }\n]"
+  },
+  {
+    "timestamp": "2025-09-16T21:27:32.405334+00:00",
+    "type": "COMPLIANCE_VIOLATION",
+    "message": "Violations: [\n  {\n    \"rule\": 2,\n    \"position\": \"MITO/USDT:USDT\",\n    \"issue\": \"Wrong zone: NEUTRAL should be AVERAGING\",\n    \"fixable\": true\n  }\n]"
+  },
+  {
+    "timestamp": "2025-09-16T21:36:03.108094+00:00",
+    "type": "COMPLIANCE_VIOLATION",
+    "message": "Violations: [\n  {\n    \"rule\": 2,\n    \"position\": \"MITO/USDT:USDT\",\n    \"issue\": \"Wrong zone: AVERAGING should be NEUTRAL\",\n    \"fixable\": true\n  }\n]"
+  },
+  {
+    "timestamp": "2025-09-16T21:39:03.135853+00:00",
+    "type": "COMPLIANCE_VIOLATION",
+    "message": "Violations: [\n  {\n    \"rule\": 2,\n    \"position\": \"MITO/USDT:USDT\",\n    \"issue\": \"Wrong zone: NEUTRAL should be AVERAGING\",\n    \"fixable\": true\n  }\n]"
+  },
+  {
+    "timestamp": "2025-09-16T21:46:33.200006+00:00",
+    "type": "COMPLIANCE_VIOLATION",
+    "message": "Violations: [\n  {\n    \"rule\": 2,\n    \"position\": \"MITO/USDT:USDT\",\n    \"issue\": \"Wrong zone: AVERAGING should be NEUTRAL\",\n    \"fixable\": true\n  }\n]"
+  },
+  {
+    "timestamp": "2025-09-17T01:55:09.189406+00:00",
+    "type": "COMPLIANCE_VIOLATION",
+    "message": "Violations: [\n  {\n    \"rule\": 2,\n    \"position\": \"HOLO/USDT:USDT\",\n    \"issue\": \"Wrong zone: NEUTRAL should be AVERAGING\",\n    \"fixable\": true\n  }\n]"
+  },
+  {
+    "timestamp": "2025-09-17T02:06:11.171035+00:00",
+    "type": "COMPLIANCE_VIOLATION",
+    "message": "Violations: [\n  {\n    \"rule\": 2,\n    \"position\": \"HOLO/USDT:USDT\",\n    \"issue\": \"Wrong zone: AVERAGING should be NEUTRAL\",\n    \"fixable\": true\n  }\n]"
+  },
+  {
+    "timestamp": "2025-09-17T02:30:11.531125+00:00",
+    "type": "COMPLIANCE_VIOLATION",
+    "message": "Violations: [\n  {\n    \"rule\": 2,\n    \"position\": \"HOLO/USDT:USDT\",\n    \"issue\": \"Wrong zone: NEUTRAL should be PROFIT_TAKING\",\n    \"fixable\": true\n  }\n]"
+  },
+  {
+    "timestamp": "2025-09-17T02:30:41.536353+00:00",
+    "type": "COMPLIANCE_VIOLATION",
+    "message": "Violations: [\n  {\n    \"rule\": 2,\n    \"position\": \"HOLO/USDT:USDT\",\n    \"issue\": \"Wrong zone: PROFIT_TAKING should be NEUTRAL\",\n    \"fixable\": true\n  }\n]"
+  },
+  {
+    "timestamp": "2025-09-17T06:08:23.467399+00:00",
+    "type": "COMPLIANCE_VIOLATION",
+    "message": "Violations: [\n  {\n    \"rule\": 2,\n    \"position\": \"IMX/USDT:USDT\",\n    \"issue\": \"Wrong zone: NEUTRAL should be AVERAGING\",\n    \"fixable\": true\n  }\n]"
+  },
+  {
+    "timestamp": "2025-09-17T06:29:57.370422+00:00",
+    "type": "COMPLIANCE_VIOLATION",
+    "message": "Violations: [\n  {\n    \"rule\": 2,\n    \"position\": \"PORTALS/USDT:USDT\",\n    \"issue\": \"Wrong zone: NEUTRAL should be PROFIT_TAKING\",\n    \"fixable\": true\n  }\n]"
+  },
+  {
+    "timestamp": "2025-09-17T06:35:57.434796+00:00",
+    "type": "COMPLIANCE_VIOLATION",
+    "message": "Violations: [\n  {\n    \"rule\": 2,\n    \"position\": \"IMX/USDT:USDT\",\n    \"issue\": \"Wrong zone: AVERAGING should be NEUTRAL\",\n    \"fixable\": true\n  }\n]"
+  },
+  {
+    "timestamp": "2025-09-17T07:19:27.840176+00:00",
+    "type": "COMPLIANCE_VIOLATION",
+    "message": "Violations: [\n  {\n    \"rule\": 2,\n    \"position\": \"IMX/USDT:USDT\",\n    \"issue\": \"Wrong zone: NEUTRAL should be AVERAGING\",\n    \"fixable\": true\n  }\n]"
+  },
+  {
+    "timestamp": "2025-09-17T07:43:28.060000+00:00",
+    "type": "COMPLIANCE_VIOLATION",
+    "message": "Violations: [\n  {\n    \"rule\": 2,\n    \"position\": \"PORTALS/USDT:USDT\",\n    \"issue\": \"Wrong zone: NEUTRAL should be PROFIT_TAKING\",\n    \"fixable\": true\n  }\n]"
+  },
+  {
+    "timestamp": "2025-09-17T07:52:58.144819+00:00",
+    "type": "COMPLIANCE_VIOLATION",
+    "message": "Violations: [\n  {\n    \"rule\": 2,\n    \"position\": \"PORTALS/USDT:USDT\",\n    \"issue\": \"Wrong zone: PROFIT_TAKING should be NEUTRAL\",\n    \"fixable\": true\n  }\n]"
+  },
+  {
+    "timestamp": "2025-09-17T10:25:04.200583+00:00",
+    "type": "COMPLIANCE_VIOLATION",
+    "message": "Violations: [\n  {\n    \"rule\": 2,\n    \"position\": \"WIF/USDT:USDT\",\n    \"issue\": \"Wrong zone: NEUTRAL should be AVERAGING\",\n    \"fixable\": true\n  }\n]"
+  },
+  {
+    "timestamp": "2025-09-17T10:26:04.214742+00:00",
+    "type": "COMPLIANCE_VIOLATION",
+    "message": "Violations: [\n  {\n    \"rule\": 2,\n    \"position\": \"WIF/USDT:USDT\",\n    \"issue\": \"Wrong zone: AVERAGING should be NEUTRAL\",\n    \"fixable\": true\n  }\n]"
+  },
+  {
+    "timestamp": "2025-09-17T10:42:34.386356+00:00",
+    "type": "COMPLIANCE_VIOLATION",
+    "message": "Violations: [\n  {\n    \"rule\": 2,\n    \"position\": \"WIF/USDT:USDT\",\n    \"issue\": \"Wrong zone: NEUTRAL should be AVERAGING\",\n    \"fixable\": true\n  }\n]"
+  },
+  {
+    "timestamp": "2025-09-17T10:46:37.172396+00:00",
+    "type": "COMPLIANCE_VIOLATION",
+    "message": "Violations: [\n  {\n    \"rule\": 2,\n    \"position\": \"PEPE/USDT:USDT\",\n    \"issue\": \"Wrong zone: NEUTRAL should be AVERAGING\",\n    \"fixable\": true\n  }\n]"
+  },
+  {
+    "timestamp": "2025-09-17T10:47:07.182286+00:00",
+    "type": "COMPLIANCE_VIOLATION",
+    "message": "Violations: [\n  {\n    \"rule\": 2,\n    \"position\": \"PEPE/USDT:USDT\",\n    \"issue\": \"Wrong zone: AVERAGING should be NEUTRAL\",\n    \"fixable\": true\n  }\n]"
+  },
+  {
+    "timestamp": "2025-09-17T10:47:37.190823+00:00",
+    "type": "COMPLIANCE_VIOLATION",
+    "message": "Violations: [\n  {\n    \"rule\": 2,\n    \"position\": \"PEPE/USDT:USDT\",\n    \"issue\": \"Wrong zone: AVERAGING should be NEUTRAL\",\n    \"fixable\": true\n  }\n]"
+  },
+  {
+    "timestamp": "2025-09-17T15:55:42.904432+00:00",
+    "type": "COMPLIANCE_VIOLATION",
+    "message": "Violations: [\n  {\n    \"rule\": 2,\n    \"position\": \"TA/USDT:USDT\",\n    \"issue\": \"Wrong zone: AVERAGING should be NEUTRAL\",\n    \"fixable\": true\n  }\n]"
+  },
+  {
+    "timestamp": "2025-09-17T16:16:43.146325+00:00",
+    "type": "COMPLIANCE_VIOLATION",
+    "message": "Violations: [\n  {\n    \"rule\": 2,\n    \"position\": \"PEPE/USDT:USDT\",\n    \"issue\": \"Wrong zone: NEUTRAL should be AVERAGING\",\n    \"fixable\": true\n  }\n]"
+  }
+]

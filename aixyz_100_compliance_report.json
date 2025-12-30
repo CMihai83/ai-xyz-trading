@@ -1,0 +1,40 @@
+{
+  "timestamp": "2025-09-07T07:26:42.373407",
+  "tests": {
+    "leverage": {
+      "passed": true,
+      "range": "7x-10x",
+      "formula": "min(10, max(7, int(7 + confidence * 3)))"
+    },
+    "position_sizing": {
+      "passed": true,
+      "details": {
+        "base_size": "$6.50",
+        "confidence_threshold": 0.7,
+        "max_multiplier": 3.0
+      }
+    },
+    "averaging_mechanics": {
+      "passed": true,
+      "details": {
+        "exponential_sizing": "verified",
+        "delta_phasing": "correct",
+        "thresholds": "properly_spaced"
+      }
+    },
+    "surplus_dump": {
+      "passed": true,
+      "details": {
+        "hierarchical_dumps": "verified",
+        "threshold_calculations": "correct",
+        "averaging_reset": "implemented"
+      }
+    },
+    "zone_transitions": {
+      "passed": true,
+      "stop_loss_terminal": true
+    }
+  },
+  "compliance_score": 100.0,
+  "issues": []
+}

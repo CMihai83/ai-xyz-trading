@@ -1,0 +1,19 @@
+✅ Alert: The system drawdown exceeds a warning threshold (e.g., -5%).
+
+✅ Alerts are routed to Telegram via a bot.
+
+User Story 6.4: Containerize the Entire Application
+As a developer, I want each service in its own Docker container, so that dependencies are isolated and the system is portable.
+
+✅ A Dockerfile exists for each major service (Scanner, Cortex, API, etc.).
+
+✅ All images are built from minimal base images for security and performance.
+
+User Story 6.5: Orchestrate Deployment with Docker Compose
+As an operator, I want a single docker-compose.yml file to define and run the entire application stack, so that deployment is reduced to one command: docker compose up -d.
+
+✅ The compose file defines networks, volumes, and all service dependencies.
+
+✅ Environment variables are used for all configuration (e.g., API keys, database URLs), passed in via an .env file that is not checked into version control.
+
+These three epics complete the vision. The Cortex provides the wisdom, the Chronosphere provides the certainty, and the Vital Signs provide the resilience. The system is now whole.

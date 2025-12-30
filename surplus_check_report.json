@@ -1,0 +1,79 @@
+{
+  "timestamp": "2025-09-07T07:03:39.434225",
+  "positions_checked": 6,
+  "eligible_for_surplus": 0,
+  "positions": [
+    {
+      "symbol": "BTC/USDT:USDT",
+      "side": "long",
+      "contracts": 0.0004,
+      "entry_price": 110576.6,
+      "current_price": 110594.1,
+      "upnl": 0.007,
+      "percentage": 0.11,
+      "eligible": false,
+      "reason": "UPNL $0.0070 - Need $0.1430 more profit for surplus zone",
+      "dump_actions": []
+    },
+    {
+      "symbol": "ETH/USDT:USDT",
+      "side": "long",
+      "contracts": 0.01,
+      "entry_price": 4299.0,
+      "current_price": 4299.16,
+      "upnl": 0.0016,
+      "percentage": 0.02,
+      "eligible": false,
+      "reason": "UPNL $0.0016 - Need $0.1484 more profit for surplus zone",
+      "dump_actions": []
+    },
+    {
+      "symbol": "SOL/USDT:USDT",
+      "side": "long",
+      "contracts": 0.3,
+      "entry_price": 203.103,
+      "current_price": 203.13,
+      "upnl": 0.0081,
+      "percentage": 0.11,
+      "eligible": false,
+      "reason": "UPNL $0.0081 - Need $0.1419 more profit for surplus zone",
+      "dump_actions": []
+    },
+    {
+      "symbol": "INJ/USDT:USDT",
+      "side": "short",
+      "contracts": 1.5,
+      "entry_price": 12.854,
+      "current_price": 13.098,
+      "upnl": -0.366,
+      "percentage": -3.79,
+      "eligible": false,
+      "reason": "UPNL $-0.3660 - Position is negative, need $0.5160 profit",
+      "dump_actions": []
+    },
+    {
+      "symbol": "WIF/USDT:USDT",
+      "side": "short",
+      "contracts": 8.6,
+      "entry_price": 0.8082,
+      "current_price": 0.8215,
+      "upnl": -0.11438,
+      "percentage": -3.29,
+      "eligible": false,
+      "reason": "UPNL $-0.1144 - Position is negative, need $0.2644 profit",
+      "dump_actions": []
+    },
+    {
+      "symbol": "DOGE/USDT:USDT",
+      "side": "long",
+      "contracts": 28.0,
+      "entry_price": 0.21365,
+      "current_price": 0.2172,
+      "upnl": 0.0994,
+      "percentage": 3.32,
+      "eligible": false,
+      "reason": "UPNL $0.0994 - Need $0.0506 more profit for surplus zone",
+      "dump_actions": []
+    }
+  ]
+}

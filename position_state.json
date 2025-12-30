@@ -1,0 +1,165 @@
+{
+  "timestamp": "2025-12-30T19:11:31.179333",
+  "active_positions": {
+    "ETH/USDT:USDT": {
+      "entry_price": 3018.7182612228316,
+      "amount": 0.01,
+      "side": "buy",
+      "leverage": 10,
+      "confidence": 69.54027718517901,
+      "opened_at": "2025-12-29T07:56:51.449119",
+      "order_id": "1389443271922184193",
+      "initial_margin": 2.4300921492654544,
+      "safety_margin": 7.500000000000001
+    },
+    "DOGE/USDT:USDT": {
+      "entry_price": 0.12717976152508717,
+      "amount": 191.0,
+      "side": "buy",
+      "leverage": 10,
+      "confidence": 68.3427993975337,
+      "opened_at": "2025-12-29T07:58:08.722242",
+      "order_id": "1389443596032831489",
+      "initial_margin": 2.42974206912,
+      "safety_margin": 7.500000000000001
+    },
+    "LSK/USDT:USDT": {
+      "entry_price": 0.2041997180550003,
+      "amount": 118.0,
+      "side": "buy",
+      "leverage": 10,
+      "confidence": 71.58656910660956,
+      "opened_at": "2025-12-30T11:02:55.861259",
+      "order_id": "1389837387206127617",
+      "initial_margin": 2.418868496116364,
+      "safety_margin": 7.500000000000001
+    },
+    "CELO/USDT:USDT": {
+      "entry_price": 0.1269993036863055,
+      "amount": 189.2,
+      "side": "buy",
+      "leverage": 10,
+      "confidence": 75.90583493307196,
+      "opened_at": "2025-12-30T14:35:18.218787",
+      "order_id": "1389890832525062155",
+      "initial_margin": 2.4054704232436364,
+      "safety_margin": 7.500000000000001
+    },
+    "XTZ/USDT:USDT": {
+      "entry_price": 0.5206967971743893,
+      "amount": 46.0,
+      "side": "buy",
+      "leverage": 10,
+      "confidence": 78.38312836776092,
+      "opened_at": "2025-12-30T19:09:57.566911",
+      "order_id": "1389959951916101633",
+      "initial_margin": 2.4111300984436363,
+      "safety_margin": 7.500000000000001
+    }
+  },
+  "position_zones": {
+    "ETH/USDT:USDT": "NEUTRAL",
+    "DOGE/USDT:USDT": "AVERAGING",
+    "LSK/USDT:USDT": "AVERAGING",
+    "CELO/USDT:USDT": "AVERAGING",
+    "XTZ/USDT:USDT": "NEUTRAL"
+  },
+  "averaging_steps": {
+    "ETH/USDT:USDT": 0,
+    "DOGE/USDT:USDT": 0,
+    "LSK/USDT:USDT": 0,
+    "CELO/USDT:USDT": 0,
+    "XTZ/USDT:USDT": 0
+  },
+  "peak_upnl": {
+    "ETH/USDT:USDT": 0.0569,
+    "DOGE/USDT:USDT": 0.00191,
+    "LSK/USDT:USDT": 0.2124,
+    "CELO/USDT:USDT": 0,
+    "XTZ/USDT:USDT": 0.0092
+  },
+  "peak_upnl_timestamps": {
+    "LSK/USDT:USDT": "2025-12-30T11:05:06.990226",
+    "CELO/USDT:USDT": null,
+    "XTZ/USDT:USDT": "2025-12-30T19:10:13.157644"
+  },
+  "surplus_dump_stage": {
+    "ETH/USDT:USDT": 0,
+    "DOGE/USDT:USDT": 0,
+    "LSK/USDT:USDT": 0,
+    "CELO/USDT:USDT": 0,
+    "XTZ/USDT:USDT": 0
+  },
+  "original_sizes": {
+    "ETH/USDT:USDT": 0.01,
+    "DOGE/USDT:USDT": 191.0,
+    "LSK/USDT:USDT": 118.0,
+    "CELO/USDT:USDT": 189.2,
+    "XTZ/USDT:USDT": 46.0
+  },
+  "position_multipliers": {
+    "GMT/USDT:USDT": [
+      1.0,
+      1.0,
+      0.8,
+      0.8,
+      0.8,
+      0.8
+    ],
+    "WOO/USDT:USDT": [
+      1.0,
+      1.0,
+      0.8,
+      0.8,
+      0.8
+    ],
+    "XVG/USDT:USDT": [
+      1.0,
+      1.0,
+      0.8,
+      0.8,
+      0.8,
+      0.8
+    ],
+    "RDNT/USDT:USDT": [
+      1.0,
+      1.0,
+      0.8,
+      0.8,
+      0.8,
+      0.8
+    ],
+    "TRX/USDT:USDT": [
+      1.0,
+      1.0,
+      0.8,
+      0.8,
+      0.8,
+      0.8
+    ],
+    "LSK/USDT:USDT": [
+      1.0,
+      1.0,
+      0.8,
+      0.8,
+      0.8,
+      0.8
+    ],
+    "CELO/USDT:USDT": [
+      1.0,
+      1.0,
+      0.8,
+      0.8,
+      0.8,
+      0.8
+    ],
+    "XTZ/USDT:USDT": [
+      1.0,
+      1.0,
+      0.8,
+      0.8,
+      0.8,
+      0.8
+    ]
+  }
+}

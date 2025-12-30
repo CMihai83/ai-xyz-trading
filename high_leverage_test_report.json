@@ -1,0 +1,39 @@
+{
+  "timestamp": "2025-09-06T20:31:08.961604",
+  "leverage_used": 10,
+  "margin_mode": "ISOLATED",
+  "positions": [
+    {
+      "id": "1348290725393051649",
+      "symbol": "CRV/USDT:USDT",
+      "side": "sell",
+      "entry_price": 0.7615,
+      "amount": 131.3197636244255,
+      "margin_used": 10,
+      "position_value": 100,
+      "leverage": 10,
+      "current_zone": "PROFIT_TAKING",
+      "averaging_steps": 0,
+      "peak_upnl": 0.1179,
+      "opened_at": "2025-09-06T20:31:19.787776",
+      "final_pnl": 0.1441,
+      "closed_at": "2025-09-06T20:34:21.358467"
+    }
+  ],
+  "zones_hit": "{'PROFIT_TAKING', 'NEUTRAL'}",
+  "averaging_executions": [],
+  "surplus_dumps": [],
+  "stop_losses": [],
+  "take_profits": [
+    {
+      "upnl": 0.0524,
+      "percentage": 0.52,
+      "timestamp": "2025-09-06T20:32:31.849407"
+    },
+    {
+      "upnl": 0.0786,
+      "percentage": 0.78,
+      "timestamp": "2025-09-06T20:34:00.148680"
+    }
+  ]
+}

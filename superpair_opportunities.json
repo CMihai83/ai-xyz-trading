@@ -1,0 +1,363 @@
+[
+  {
+    "symbol": "SOL/USDT:USDT",
+    "is_superpair": true,
+    "score": 97,
+    "rsi": 22.38,
+    "volatility": 1.23,
+    "volume_trend": 0.04,
+    "spread": 0.05,
+    "signals": [
+      "Oversold",
+      "Moderate volatility",
+      "Excellent spread",
+      "SUPERPAIR (boosted from 65)"
+    ],
+    "last_price": 215.2,
+    "volume_24h": 3741233891.618469,
+    "change_24h": -7.108,
+    "timestamp": "2025-09-23T07:04:28.995688"
+  },
+  {
+    "symbol": "ETH/USDT:USDT",
+    "is_superpair": true,
+    "score": 75,
+    "rsi": 23.7,
+    "volatility": 0.79,
+    "volume_trend": 0.03,
+    "spread": 0.02,
+    "signals": [
+      "Oversold",
+      "Excellent spread",
+      "SUPERPAIR (boosted from 50)"
+    ],
+    "last_price": 4172.59,
+    "volume_24h": 13855963583.79051,
+    "change_24h": -2.648,
+    "timestamp": "2025-09-23T07:04:28.882374"
+  },
+  {
+    "symbol": "XRP/USDT:USDT",
+    "is_superpair": true,
+    "score": 75,
+    "rsi": 21.12,
+    "volatility": 0.95,
+    "volume_trend": 0.11,
+    "spread": 0.35,
+    "signals": [
+      "Oversold",
+      "Excellent spread",
+      "SUPERPAIR (boosted from 50)"
+    ],
+    "last_price": 2.8571,
+    "volume_24h": 1032243463.2100638,
+    "change_24h": -1.108,
+    "timestamp": "2025-09-23T07:04:29.030151"
+  },
+  {
+    "symbol": "BTC/USDT:USDT",
+    "is_superpair": true,
+    "score": 75,
+    "rsi": 27.08,
+    "volatility": 0.45,
+    "volume_trend": 0.16,
+    "spread": 0.01,
+    "signals": [
+      "Oversold",
+      "Excellent spread",
+      "SUPERPAIR (boosted from 50)"
+    ],
+    "last_price": 112408.5,
+    "volume_24h": 10173082699.426231,
+    "change_24h": -1.677,
+    "timestamp": "2025-09-23T07:04:29.106633"
+  },
+  {
+    "symbol": "LINK/USDT:USDT",
+    "is_superpair": false,
+    "score": 65,
+    "rsi": 26.93,
+    "volatility": 1.02,
+    "volume_trend": 0.04,
+    "spread": 0.47,
+    "signals": [
+      "Oversold",
+      "Moderate volatility",
+      "Excellent spread"
+    ],
+    "last_price": 21.419,
+    "volume_24h": 183085196.2451064,
+    "change_24h": -3.222,
+    "timestamp": "2025-09-23T07:04:30.621524"
+  },
+  {
+    "symbol": "DOT/USDT:USDT",
+    "is_superpair": false,
+    "score": 65,
+    "rsi": 22.3,
+    "volatility": 1.01,
+    "volume_trend": 0.01,
+    "spread": 2.5,
+    "signals": [
+      "Oversold",
+      "Moderate volatility",
+      "Excellent spread"
+    ],
+    "last_price": 3.994,
+    "volume_24h": 94067605.1438357,
+    "change_24h": -3.27,
+    "timestamp": "2025-09-23T07:04:32.134202"
+  },
+  {
+    "symbol": "DOGE/USDT:USDT",
+    "is_superpair": false,
+    "score": 65,
+    "rsi": 20.98,
+    "volatility": 1.22,
+    "volume_trend": 0.13,
+    "spread": 0.42,
+    "signals": [
+      "Oversold",
+      "Moderate volatility",
+      "Excellent spread"
+    ],
+    "last_price": 0.23945,
+    "volume_24h": 892279248.8100541,
+    "change_24h": -3.657,
+    "timestamp": "2025-09-23T07:04:32.195207"
+  },
+  {
+    "symbol": "UNI/USDT:USDT",
+    "is_superpair": false,
+    "score": 65,
+    "rsi": 22.54,
+    "volatility": 1.01,
+    "volume_trend": 0.05,
+    "spread": 1.24,
+    "signals": [
+      "Oversold",
+      "Moderate volatility",
+      "Excellent spread"
+    ],
+    "last_price": 8.087,
+    "volume_24h": 54691402.7808386,
+    "change_24h": -6.638,
+    "timestamp": "2025-09-23T07:04:32.371784"
+  },
+  {
+    "symbol": "SUSHI/USDT:USDT",
+    "is_superpair": false,
+    "score": 65,
+    "rsi": 24.71,
+    "volatility": 1.13,
+    "volume_trend": 0.01,
+    "spread": 1.48,
+    "signals": [
+      "Oversold",
+      "Moderate volatility",
+      "Excellent spread"
+    ],
+    "last_price": 0.6762,
+    "volume_24h": 8921798.47391316,
+    "change_24h": -6.525,
+    "timestamp": "2025-09-23T07:04:35.353536"
+  },
+  {
+    "symbol": "AXS/USDT:USDT",
+    "is_superpair": false,
+    "score": 65,
+    "rsi": 24.29,
+    "volatility": 1.02,
+    "volume_trend": 0.01,
+    "spread": 4.6,
+    "signals": [
+      "Oversold",
+      "Moderate volatility",
+      "Excellent spread"
+    ],
+    "last_price": 2.177,
+    "volume_24h": 9928906.17865974,
+    "change_24h": -5.224,
+    "timestamp": "2025-09-23T07:04:35.414504"
+  },
+  {
+    "symbol": "THETA/USDT:USDT",
+    "is_superpair": false,
+    "score": 65,
+    "rsi": 26.52,
+    "volatility": 1.07,
+    "volume_trend": 0.02,
+    "spread": 1.36,
+    "signals": [
+      "Oversold",
+      "Moderate volatility",
+      "Excellent spread"
+    ],
+    "last_price": 0.7367,
+    "volume_24h": 3272760.83055789,
+    "change_24h": -5.503,
+    "timestamp": "2025-09-23T07:04:35.479583"
+  },
+  {
+    "symbol": "AVAX/USDT:USDT",
+    "is_superpair": false,
+    "score": 65,
+    "rsi": 30.79,
+    "volatility": 2.6,
+    "volume_trend": 0.1,
+    "spread": 0.29,
+    "signals": [
+      "Near oversold",
+      "Good volatility",
+      "Excellent spread"
+    ],
+    "last_price": 34.213,
+    "volume_24h": 498152695.06725615,
+    "change_24h": 8.153,
+    "timestamp": "2025-09-23T07:04:35.573027"
+  },
+  {
+    "symbol": "LRC/USDT:USDT",
+    "is_superpair": false,
+    "score": 65,
+    "rsi": 19.01,
+    "volatility": 1.04,
+    "volume_trend": 0.03,
+    "spread": 2.41,
+    "signals": [
+      "Oversold",
+      "Moderate volatility",
+      "Excellent spread"
+    ],
+    "last_price": 0.08312,
+    "volume_24h": 1936386.728558496,
+    "change_24h": -4.995,
+    "timestamp": "2025-09-23T07:04:40.123666"
+  },
+  {
+    "symbol": "AAVE/USDT:USDT",
+    "is_superpair": false,
+    "score": 55,
+    "rsi": 36.19,
+    "volatility": 1.04,
+    "volume_trend": 0.05,
+    "spread": 0.37,
+    "signals": [
+      "Near oversold",
+      "Moderate volatility",
+      "Excellent spread"
+    ],
+    "last_price": 267.27,
+    "volume_24h": 125418057.176393,
+    "change_24h": -5.758,
+    "timestamp": "2025-09-23T07:04:33.738519"
+  },
+  {
+    "symbol": "XLM/USDT:USDT",
+    "is_superpair": false,
+    "score": 55,
+    "rsi": 32.61,
+    "volatility": 1.05,
+    "volume_trend": 0.03,
+    "spread": 0.27,
+    "signals": [
+      "Near oversold",
+      "Moderate volatility",
+      "Excellent spread"
+    ],
+    "last_price": 0.368,
+    "volume_24h": 49920093.4780597,
+    "change_24h": -0.057,
+    "timestamp": "2025-09-23T07:04:33.891689"
+  },
+  {
+    "symbol": "GALA/USDT:USDT",
+    "is_superpair": false,
+    "score": 55,
+    "rsi": 27.03,
+    "volatility": 1.17,
+    "volume_trend": 0.02,
+    "spread": 6.6,
+    "signals": [
+      "Oversold",
+      "Moderate volatility",
+      "Good spread"
+    ],
+    "last_price": 0.01517,
+    "volume_24h": 39456633.93271997,
+    "change_24h": -7.837,
+    "timestamp": "2025-09-23T07:04:37.022560"
+  },
+  {
+    "symbol": "DYDX/USDT:USDT",
+    "is_superpair": false,
+    "score": 55,
+    "rsi": 31.8,
+    "volatility": 1.44,
+    "volume_trend": 0.04,
+    "spread": 1.68,
+    "signals": [
+      "Near oversold",
+      "Moderate volatility",
+      "Excellent spread"
+    ],
+    "last_price": 0.5952,
+    "volume_24h": 15820470.41046124,
+    "change_24h": -9.544,
+    "timestamp": "2025-09-23T07:04:37.173852"
+  },
+  {
+    "symbol": "CRV/USDT:USDT",
+    "is_superpair": false,
+    "score": 55,
+    "rsi": 36.97,
+    "volatility": 1.2,
+    "volume_trend": 0.03,
+    "spread": 1.48,
+    "signals": [
+      "Near oversold",
+      "Moderate volatility",
+      "Excellent spread"
+    ],
+    "last_price": 0.6771,
+    "volume_24h": 42785347.52592195,
+    "change_24h": -8.5,
+    "timestamp": "2025-09-23T07:04:37.145611"
+  },
+  {
+    "symbol": "NEAR/USDT:USDT",
+    "is_superpair": false,
+    "score": 55,
+    "rsi": 38.39,
+    "volatility": 1.87,
+    "volume_trend": 0.05,
+    "spread": 3.46,
+    "signals": [
+      "Near oversold",
+      "Moderate volatility",
+      "Excellent spread"
+    ],
+    "last_price": 2.891,
+    "volume_24h": 88303799.8747451,
+    "change_24h": -2.43,
+    "timestamp": "2025-09-23T07:04:38.554993"
+  },
+  {
+    "symbol": "KSM/USDT:USDT",
+    "is_superpair": false,
+    "score": 55,
+    "rsi": 21.14,
+    "volatility": 1.01,
+    "volume_trend": 0.09,
+    "spread": 7.05,
+    "signals": [
+      "Oversold",
+      "Moderate volatility",
+      "Good spread"
+    ],
+    "last_price": 14.19,
+    "volume_24h": 2921981.104,
+    "change_24h": -4.956,
+    "timestamp": "2025-09-23T07:04:38.651620"
+  }
+]

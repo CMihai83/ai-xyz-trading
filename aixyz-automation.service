@@ -1,0 +1,27 @@
+[Unit]
+Description=AI-XYZ Automated Position Manager
+After=network.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/root/ai_xyz
+Environment="PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+Environment="PYTHONPATH=/root/ai_xyz"
+ExecStart=/usr/bin/python3 /root/ai_xyz/automated_position_manager.py
+Restart=always
+RestartSec=10
+StandardOutput=append:/var/log/aixyz-automation.log
+StandardError=append:/var/log/aixyz-automation-error.log
+
+# Watchdog
+WatchdogSec=60
+TimeoutStartSec=300
+
+# Resource limits
+LimitNOFILE=65535
+LimitNPROC=4096
+
+[Install]
+WantedBy=multi-user.target

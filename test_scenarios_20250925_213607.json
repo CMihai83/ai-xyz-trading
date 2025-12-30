@@ -1,0 +1,358 @@
+{
+  "market_conditions": [
+    {
+      "name": "EXTREME_VOLATILITY_UP",
+      "description": "Extreme upward price movement",
+      "price_changes": [
+        0.05,
+        0.1,
+        0.15,
+        0.2,
+        0.3
+      ],
+      "volume_multiplier": 5.0,
+      "volatility": 0.95,
+      "expected_action": "TAKE_PROFIT"
+    },
+    {
+      "name": "EXTREME_CRASH",
+      "description": "Market crash scenario",
+      "price_changes": [
+        -0.1,
+        -0.2,
+        -0.35,
+        -0.5,
+        -0.7,
+        -0.85
+      ],
+      "volume_multiplier": 10.0,
+      "volatility": 0.99,
+      "expected_action": "AVERAGING_THEN_STOP_LOSS"
+    },
+    {
+      "name": "MEDIAN_SIDEWAYS",
+      "description": "Normal sideways market",
+      "price_changes": [
+        0.01,
+        -0.01,
+        0.02,
+        -0.015,
+        0.005
+      ],
+      "volume_multiplier": 1.0,
+      "volatility": 0.15,
+      "expected_action": "HOLD"
+    },
+    {
+      "name": "V_SHAPED_RECOVERY",
+      "description": "Sharp drop followed by recovery",
+      "price_changes": [
+        -0.42,
+        -0.68,
+        -0.5,
+        -0.2,
+        0.1,
+        0.3
+      ],
+      "volume_multiplier": 3.0,
+      "volatility": 0.6,
+      "expected_action": "AVERAGING_THEN_SURPLUS_DUMP"
+    },
+    {
+      "name": "FLASH_CRASH",
+      "description": "Instant drop and recovery",
+      "price_changes": [
+        -0.9,
+        0.85
+      ],
+      "volume_multiplier": 20.0,
+      "volatility": 1.0,
+      "expected_action": "STOP_LOSS_OR_RECOVERY"
+    },
+    {
+      "name": "SLOW_BLEED",
+      "description": "Gradual decline over time",
+      "price_changes": [
+        -0.05,
+        -0.05,
+        -0.05,
+        -0.05,
+        -0.05,
+        -0.05,
+        -0.05,
+        -0.05,
+        -0.05,
+        -0.05,
+        -0.05,
+        -0.05,
+        -0.05,
+        -0.05,
+        -0.05,
+        -0.05,
+        -0.05,
+        -0.05,
+        -0.05,
+        -0.05
+      ],
+      "volume_multiplier": 0.5,
+      "volatility": 0.1,
+      "expected_action": "MULTIPLE_AVERAGING"
+    }
+  ],
+  "position_scenarios": [
+    {
+      "name": "FRESH_POSITION",
+      "entry_price": 100.0,
+      "current_price": 100.0,
+      "amount": 10.0,
+      "leverage": 8,
+      "upnl": 0.0,
+      "upnl_pct": 0.0,
+      "zone": "NEUTRAL",
+      "averaging_steps": 0,
+      "description": "New position just opened"
+    },
+    {
+      "name": "FIRST_AVERAGING",
+      "entry_price": 100.0,
+      "current_price": 58.0,
+      "amount": 10.0,
+      "leverage": 8,
+      "upnl": -420.0,
+      "upnl_pct": -42.0,
+      "zone": "AVERAGING",
+      "averaging_steps": 0,
+      "description": "At first averaging threshold"
+    },
+    {
+      "name": "DEEP_AVERAGING",
+      "entry_price": 100.0,
+      "current_price": 16.0,
+      "amount": 60.0,
+      "leverage": 8,
+      "upnl": -2520.0,
+      "upnl_pct": -84.0,
+      "zone": "AVERAGING",
+      "averaging_steps": 3,
+      "description": "Deep in averaging zone"
+    },
+    {
+      "name": "RECOVERY_SURPLUS",
+      "entry_price": 50.0,
+      "current_price": 85.0,
+      "amount": 89.0,
+      "leverage": 8,
+      "upnl": 3115.0,
+      "upnl_pct": 70.0,
+      "zone": "SURPLUS_DUMP",
+      "averaging_steps": 4,
+      "peak_upnl": 3650.0,
+      "description": "Recovered after averaging, ready for surplus dump"
+    },
+    {
+      "name": "NEAR_LIQUIDATION",
+      "entry_price": 100.0,
+      "current_price": 5.0,
+      "amount": 233.0,
+      "leverage": 20,
+      "upnl": -22135.0,
+      "upnl_pct": -95.0,
+      "zone": "STOP_LOSS",
+      "averaging_steps": 5,
+      "description": "Near liquidation, stop loss triggered"
+    },
+    {
+      "name": "PROFITABLE",
+      "entry_price": 100.0,
+      "current_price": 115.0,
+      "amount": 10.0,
+      "leverage": 8,
+      "upnl": 150.0,
+      "upnl_pct": 15.0,
+      "zone": "PROFIT_TAKING",
+      "averaging_steps": 0,
+      "description": "Simple profitable position"
+    }
+  ],
+  "averaging_scenarios": [
+    {
+      "name": "AVERAGING_STEP_1",
+      "step": 1,
+      "threshold": -0.42,
+      "multiplier": 1,
+      "cumulative_multiplier": 1,
+      "description": "Averaging step 1 at -42%",
+      "expected_size_increase": 1,
+      "total_steps_taken": 1
+    },
+    {
+      "name": "AVERAGING_STEP_2",
+      "step": 2,
+      "threshold": -0.68,
+      "multiplier": 1,
+      "cumulative_multiplier": 2,
+      "description": "Averaging step 2 at -68%",
+      "expected_size_increase": 1,
+      "total_steps_taken": 2
+    },
+    {
+      "name": "AVERAGING_STEP_3",
+      "step": 3,
+      "threshold": -0.84,
+      "multiplier": 2,
+      "cumulative_multiplier": 4,
+      "description": "Averaging step 3 at -84%",
+      "expected_size_increase": 2,
+      "total_steps_taken": 3
+    },
+    {
+      "name": "AVERAGING_STEP_4",
+      "step": 4,
+      "threshold": -0.94,
+      "multiplier": 3,
+      "cumulative_multiplier": 7,
+      "description": "Averaging step 4 at -94%",
+      "expected_size_increase": 3,
+      "total_steps_taken": 4
+    },
+    {
+      "name": "AVERAGING_STEP_5",
+      "step": 5,
+      "threshold": -1.0,
+      "multiplier": 5,
+      "cumulative_multiplier": 12,
+      "description": "Averaging step 5 at -100%",
+      "expected_size_increase": 5,
+      "total_steps_taken": 5
+    },
+    {
+      "name": "RAPID_AVERAGING",
+      "description": "All averaging steps in quick succession",
+      "price_sequence": [
+        100,
+        58,
+        32,
+        16,
+        6,
+        0
+      ],
+      "time_between_steps": 60,
+      "expected_behavior": "EXECUTE_ALL_STEPS"
+    },
+    {
+      "name": "AVERAGING_WITH_RECOVERY",
+      "description": "Averaging followed by price recovery",
+      "price_sequence": [
+        100,
+        58,
+        32,
+        45,
+        70,
+        95,
+        110
+      ],
+      "expected_behavior": "AVERAGING_THEN_SURPLUS_DUMP",
+      "expected_profit": true
+    },
+    {
+      "name": "FAILED_AVERAGING",
+      "description": "Averaging that leads to liquidation",
+      "price_sequence": [
+        100,
+        58,
+        32,
+        16,
+        6,
+        1
+      ],
+      "expected_behavior": "STOP_LOSS_TRIGGERED",
+      "expected_loss": -0.95
+    }
+  ],
+  "surplus_scenarios": [
+    {
+      "name": "SURPLUS_STAGE_1",
+      "peak_upnl": 1000.0,
+      "current_upnl": 850.0,
+      "surplus_size": 50.0,
+      "expected_dump": 25.0,
+      "stage": 1,
+      "description": "First stage surplus dump at 85% of peak"
+    },
+    {
+      "name": "SURPLUS_STAGE_2",
+      "peak_upnl": 1000.0,
+      "current_upnl": 500.0,
+      "surplus_size": 25.0,
+      "expected_dump": 25.0,
+      "stage": 2,
+      "description": "Second stage surplus dump at 50% of peak"
+    },
+    {
+      "name": "MULTIPLE_SURPLUS_CYCLES",
+      "description": "Position goes through multiple surplus dump cycles",
+      "price_sequence": [
+        100,
+        58,
+        32,
+        90,
+        75,
+        45,
+        95,
+        80,
+        50
+      ],
+      "expected_dumps": 3,
+      "expected_behavior": "MULTIPLE_PARTIAL_EXITS"
+    },
+    {
+      "name": "NO_SURPLUS",
+      "peak_upnl": 100.0,
+      "current_upnl": 85.0,
+      "surplus_size": 0.0,
+      "expected_dump": 0.0,
+      "stage": 0,
+      "description": "No surplus to dump (position never averaged)"
+    }
+  ],
+  "risk_scenarios": [
+    {
+      "name": "HIGH_LEVERAGE_RISK",
+      "leverage": 20,
+      "volatility": 0.8,
+      "price_change": -0.05,
+      "expected_upnl_pct": -100.0,
+      "description": "High leverage with small move causes liquidation"
+    },
+    {
+      "name": "KELLY_EXTREME",
+      "win_rate": 0.9,
+      "avg_win": 0.1,
+      "avg_loss": 0.01,
+      "expected_kelly": 0.225,
+      "description": "High win rate scenario for Kelly sizing"
+    },
+    {
+      "name": "PORTFOLIO_HEAT",
+      "total_positions": 10,
+      "average_loss": -0.15,
+      "total_exposure": -1.5,
+      "expected_action": "STOP_NEW_POSITIONS",
+      "description": "Portfolio heat limit reached"
+    },
+    {
+      "name": "CORRELATION_CRASH",
+      "positions": [
+        "BTC",
+        "ETH",
+        "SOL",
+        "AVAX"
+      ],
+      "correlation": 0.95,
+      "market_move": -0.3,
+      "expected_loss": -1.2,
+      "description": "Correlated positions amplify losses"
+    }
+  ],
+  "timestamp": "2025-09-25T21:36:07.655548"
+}

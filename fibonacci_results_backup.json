@@ -1,0 +1,90 @@
+{
+  "br_usdt_test_001": {
+    "position_id": "br_usdt_test_001",
+    "symbol": "BR/USDT:USDT",
+    "timestamp": "2025-09-10T20:26:04.166684",
+    "results": {
+      "success": true,
+      "leverage": 7,
+      "initial_position_size": 6.5,
+      "averaging_steps": [
+        {
+          "step_number": 1,
+          "price": 0.0831,
+          "margin_allocation": 3.25,
+          "position_multiplier": 1.0,
+          "fibonacci_weight": 8,
+          "distance_from_entry": 0.0025,
+          "liquidation_safety": true
+        },
+        {
+          "step_number": 2,
+          "price": 0.0805,
+          "margin_allocation": 5.2,
+          "position_multiplier": 1.6,
+          "fibonacci_weight": 5,
+          "distance_from_entry": 0.0051,
+          "liquidation_safety": true
+        },
+        {
+          "step_number": 3,
+          "price": 0.0779,
+          "margin_allocation": 8.45,
+          "position_multiplier": 2.6,
+          "fibonacci_weight": 3,
+          "distance_from_entry": 0.0077,
+          "liquidation_safety": true
+        }
+      ],
+      "total_margin_required": 16.9,
+      "liquidation_price": 0.0704,
+      "confidence_score": 0.65,
+      "entry_price": 0.0856,
+      "direction": "long"
+    }
+  },
+  "bake_usdt_test_001": {
+    "position_id": "bake_usdt_test_001",
+    "symbol": "BAKE/USDT:USDT",
+    "timestamp": "2025-09-10T20:26:04.167592",
+    "results": {
+      "success": true,
+      "leverage": 10,
+      "initial_position_size": 6.5,
+      "averaging_steps": [
+        {
+          "step_number": 1,
+          "price": 0.1119,
+          "margin_allocation": 1.95,
+          "position_multiplier": 0.5,
+          "fibonacci_weight": 33,
+          "distance_from_entry": 0.0062,
+          "liquidation_safety": true
+        },
+        {
+          "step_number": 2,
+          "price": 0.1182,
+          "margin_allocation": 3.9,
+          "position_multiplier": 1.0,
+          "fibonacci_weight": 33,
+          "distance_from_entry": 0.0125,
+          "liquidation_safety": true
+        },
+        {
+          "step_number": 3,
+          "price": 0.1247,
+          "margin_allocation": 7.8,
+          "position_multiplier": 2.0,
+          "fibonacci_weight": 34,
+          "distance_from_entry": 0.019,
+          "liquidation_safety": true
+        }
+      ],
+      "total_margin_required": 13.65,
+      "liquidation_price": 0.1268,
+      "confidence_score": 0.7,
+      "entry_price": 0.10566,
+      "direction": "short"
+    }
+  }
+}

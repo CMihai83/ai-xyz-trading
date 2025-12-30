@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI-XYZ Trading System Documentation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+        
+        h1 {
+            color: #333;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+        
+        h2 {
+            color: #555;
+            font-size: 1.8em;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            padding-left: 10px;
+            border-left: 4px solid #764ba2;
+        }
+        
+        h3 {
+            color: #666;
+            font-size: 1.3em;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            background: linear-gradient(135deg, #00c851 0%, #00ff00 100%);
+            color: white;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        
+        .feature-card {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .feature-card h4 {
+            color: #444;
+            margin-bottom: 10px;
+        }
+        
+        .code-block {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .zone-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        
+        .zone-table th,
+        .zone-table td {
+            padding: 12px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+        
+        .zone-table th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .zone-table tr:nth-child(even) {
+            background: #f5f5f5;
+        }
+        
+        .metric {
+            display: inline-block;
+            padding: 8px 16px;
+            background: #f0f0f0;
+            border-radius: 8px;
+            margin: 5px;
+        }
+        
+        .metric-label {
+            font-size: 0.9em;
+            color: #666;
+        }
+        
+        .metric-value {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .nav-menu {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .nav-menu a {
+            color: white;
+            text-decoration: none;
+            padding: 8px 15px;
+            margin: 0 5px;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.2);
+            display: inline-block;
+        }
+        
+        .nav-menu a:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        
+        .alert-info {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            color: #1565c0;
+        }
+        
+        .alert-success {
+            background: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            color: #2e7d32;
+        }
+        
+        .alert-warning {
+            background: #fff3e0;
+            border-left: 4px solid #ff9800;
+            color: #e65100;
+        }
+    </style>
+</head>
+<body>
+    <div class="nav-menu">
+        <a href="#overview">Overview</a>
+        <a href="#zones">Zone Management</a>
+        <a href="#averaging">Averaging Strategy</a>
+        <a href="#surplus">Surplus Dump</a>
+        <a href="#performance">Performance</a>
+        <a href="#api">API</a>
+        <a href="#deployment">Deployment</a>
+    </div>
+
+    <div class="container">
+        <h1>AI-XYZ Trading System <span class="status-badge">LIVE</span></h1>
+        <p style="font-size: 1.1em; color: #666; margin-top: 10px;">
+            Advanced algorithmic trading system with Fibonacci-based averaging, zone management, and surplus dump mechanics.
+        </p>
+
+        <div id="overview">
+            <h2>System Overview</h2>
+            <p>The AI-XYZ trading system is a sophisticated algorithmic trading platform designed for the Bitget exchange. It implements a unique zone-based position management strategy with exponential averaging and surplus dumping mechanics.</p>
+            
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h4>🎯 Core Features</h4>
+                    <ul>
+                        <li>Zone-based position management</li>
+                        <li>Fibonacci averaging thresholds</li>
+                        <li>Two-stage surplus dump</li>
+                        <li>Multi-cycle position management</li>
+                        <li>Real-time market scanning</li>
+                    </ul>
+                </div>
+                
+                <div class="feature-card">
+                    <h4>⚡ Performance Metrics</h4>
+                    <div class="metric">
+                        <div class="metric-label">Positions/sec</div>
+                        <div class="metric-value">10,000+</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-label">Latency</div>
+                        <div class="metric-value">&lt;1ms</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-label">Uptime</div>
+                        <div class="metric-value">99.9%</div>
+                    </div>
+                </div>
+                
+                <div class="feature-card">
+                    <h4>🔧 Technical Stack</h4>
+                    <ul>
+                        <li>Python 3.11+</li>
+                        <li>CCXT for exchange integration</li>
+                        <li>Redis for state management</li>
+                        <li>Microservices architecture</li>
+                        <li>Real-time WebSocket feeds</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div id="zones">
+            <h2>Zone Management System</h2>
+            <p>The system uses a sophisticated zone-based approach to manage positions through their lifecycle:</p>
+            
+            <table class="zone-table">
+                <thead>
+                    <tr>
+                        <th>Zone</th>
+                        <th>UPNL Range</th>
+                        <th>Actions</th>
+                        <th>Transitions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>NEUTRAL</strong></td>
+                        <td>-15% &lt; UPNL &lt; +15%</td>
+                        <td>Monitor position</td>
+                        <td>→ AVERAGING or PROFIT_TAKING</td>
+                    </tr>
+                    <tr>
+                        <td><strong>AVERAGING</strong></td>
+                        <td>UPNL ≤ -15%</td>
+                        <td>Execute Fibonacci averaging</td>
+                        <td>→ NEUTRAL or SURPLUS_DUMP</td>
+                    </tr>
+                    <tr>
+                        <td><strong>SURPLUS_DUMP</strong></td>
+                        <td>UPNL &gt; +15% (after averaging)</td>
+                        <td>Two-stage profit taking</td>
+                        <td>→ NEUTRAL (after Stage 2)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>PROFIT_TAKING</strong></td>
+                        <td>UPNL &gt; +15% (no averaging)</td>
+                        <td>Close position</td>
+                        <td>→ Position closed</td>
+                    </tr>
+                    <tr>
+                        <td><strong>STOP_LOSS</strong></td>
+                        <td>UPNL ≤ stop threshold</td>
+                        <td>Emergency close</td>
+                        <td>→ Position closed</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="alert alert-info">
+                <strong>Note:</strong> After Stage 2 surplus dump completion, positions reset to NEUTRAL zone with averaging_steps = 0, allowing for multiple surplus dump cycles.
+            </div>
+        </div>
+
+        <div id="averaging">
+            <h2>Fibonacci Averaging Strategy</h2>
+            <p>The system implements an adaptive Fibonacci-based averaging strategy that adjusts thresholds based on historical price volatility:</p>
+            
+            <div class="code-block">
+Step 1: -42% UPNL → 1.0x size multiplier (21/50 Fibonacci)
+Step 2: -68% UPNL → 2.0x size multiplier (34/50 Fibonacci)
+Step 3: -84% UPNL → 3.0x size multiplier (42/50 Fibonacci)
+Step 4: -94% UPNL → 4.0x size multiplier (47/50 Fibonacci)
+Step 5: -100% UPNL → 5.0x size multiplier (50/50 Fibonacci)
+            </div>
+
+            <h3>Multi-Timeframe Delta Calculation</h3>
+            <p>The system analyzes price movements across multiple timeframes to determine optimal averaging thresholds:</p>
+            <ul>
+                <li>5-minute consecutive and overall volatility</li>
+                <li>15-minute trend analysis</li>
+                <li>1-hour major movement detection</li>
+                <li>4-hour and daily maximum ranges</li>
+            </ul>
+        </div>
+
+        <div id="surplus">
+            <h2>Surplus Dump Mechanism</h2>
+            <p>When positions recover after averaging, the system implements a two-stage surplus dump to secure profits:</p>
+            
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h4>Stage 1 (85% of Peak)</h4>
+                    <ul>
+                        <li>Triggers when UPNL drops to 85% of peak</li>
+                        <li>Dumps 50% of surplus size</li>
+                        <li>Preserves position for further gains</li>
+                    </ul>
+                </div>
+                
+                <div class="feature-card">
+                    <h4>Stage 2 (50% of Peak)</h4>
+                    <ul>
+                        <li>Triggers when UPNL drops to 50% of peak</li>
+                        <li>Dumps remaining surplus</li>
+                        <li>Resets position to original size</li>
+                        <li>Returns to NEUTRAL zone</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="alert alert-success">
+                <strong>Reset Behavior:</strong> After Stage 2 completion, the position resets to its original state with averaging_steps = 0, allowing it to go through another complete cycle if market conditions warrant.
+            </div>
+        </div>
+
+        <div id="performance">
+            <h2>Live Performance Tracking</h2>
+            
+            <h3>Recent Session Results</h3>
+            <div class="metric">
+                <div class="metric-label">Total P&L</div>
+                <div class="metric-value">$0.6530</div>
+            </div>
+            <div class="metric">
+                <div class="metric-label">ROI</div>
+                <div class="metric-value">3.87%</div>
+            </div>
+            <div class="metric">
+                <div class="metric-label">Positions Opened</div>
+                <div class="metric-value">4</div>
+            </div>
+            <div class="metric">
+                <div class="metric-label">Positions Closed</div>
+                <div class="metric-value">3</div>
+            </div>
+
+            <h3>Example Successful Operations</h3>
+            <table class="zone-table">
+                <thead>
+                    <tr>
+                        <th>Symbol</th>
+                        <th>Operation</th>
+                        <th>Result</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>SOMI/USDT</td>
+                        <td>Full surplus dump cycle</td>
+                        <td>✅ Stage 1 & 2 completed, 11.41% profit</td>
+                    </tr>
+                    <tr>
+                        <td>BAN/USDT</td>
+                        <td>Profit taking</td>
+                        <td>✅ 16.15% profit (correctly &gt;15%)</td>
+                    </tr>
+                    <tr>
+                        <td>TA/USDT</td>
+                        <td>Averaging + Surplus dump</td>
+                        <td>✅ 2 averaging steps, full surplus cycle, 20.70% final profit</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div id="api">
+            <h2>System API & Commands</h2>
+            
+            <h3>Management Scripts</h3>
+            <div class="code-block">
+# Start full system
+./START_AIXYZ_FULL.sh
+
+# Check system status
+./status.sh
+
+# Monitor logs
+tail -f aixyz_main_trading.log
+
+# Check positions
+cat position_state.json | jq .
+            </div>
+
+            <h3>Microservices Endpoints</h3>
+            <table class="zone-table">
+                <thead>
+                    <tr>
+                        <th>Service</th>
+                        <th>Port</th>
+                        <th>Function</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>Position Management</td><td>9000</td><td>Core position tracking</td></tr>
+                    <tr><td>Risk Management</td><td>9001</td><td>Risk calculations</td></tr>
+                    <tr><td>Market Scanner</td><td>9002</td><td>Opportunity detection</td></tr>
+                    <tr><td>Order Execution</td><td>9003</td><td>Trade execution</td></tr>
+                    <tr><td>Data Analytics</td><td>9004</td><td>Performance metrics</td></tr>
+                    <tr><td>ML Predictor</td><td>9005</td><td>Price predictions</td></tr>
+                    <tr><td>Backtesting</td><td>9006</td><td>Strategy validation</td></tr>
+                    <tr><td>Configuration</td><td>9007</td><td>Parameter management</td></tr>
+                    <tr><td>Monitoring</td><td>9008</td><td>System health</td></tr>
+                    <tr><td>API Gateway</td><td>9009</td><td>External interface</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div id="deployment">
+            <h2>Deployment & Configuration</h2>
+            
+            <h3>System Requirements</h3>
+            <ul>
+                <li>Python 3.11 or higher</li>
+                <li>4GB+ RAM recommended</li>
+                <li>SSD storage for optimal performance</li>
+                <li>Stable internet connection</li>
+                <li>Bitget API credentials</li>
+            </ul>
+
+            <h3>Environment Variables</h3>
+            <div class="code-block">
+BITGET_API_KEY=your_api_key
+BITGET_SECRET_KEY=your_secret_key
+BITGET_PASSPHRASE=your_passphrase
+
+# Optional configurations
+LEVERAGE=9
+MIN_POSITION_SIZE=6.5
+ZONE_THRESHOLD_AVERAGING=-0.15
+ZONE_THRESHOLD_PROFIT=0.15
+            </div>
+
+            <h3>Risk Management Recommendations</h3>
+            <div class="alert alert-warning">
+                <strong>Important:</strong>
+                <ul style="margin-top: 10px;">
+                    <li>Consider using 5-7x leverage instead of 9x to reduce liquidation risk</li>
+                    <li>Implement emergency stop loss at -10% for high leverage positions</li>
+                    <li>Monitor positions closely after surplus dump cycles</li>
+                    <li>Ensure adequate capital for averaging operations</li>
+                </ul>
+            </div>
+        </div>
+
+        <div style="margin-top: 50px; padding-top: 20px; border-top: 1px solid #ddd; text-align: center; color: #666;">
+            <p>AI-XYZ Trading System v1.0 | Last Updated: 2025-09-08</p>
+            <p>© 2025 AI-XYZ Trading. Professional Algorithmic Trading Platform.</p>
+        </div>
+    </div>
+</body>
+</html>

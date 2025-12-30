@@ -1,0 +1,138 @@
+{
+  "timestamp": "2025-09-17T07:21:33.633737",
+  "positions_opened": [
+    {
+      "symbol": "PEPE/USDT:USDT",
+      "side": "buy",
+      "amount": 542211.1370167544,
+      "entry_price": 1.10658e-05,
+      "leverage": 7,
+      "order_id": "1352058102635147268",
+      "opened_at": "2025-09-17T06:01:32.527301"
+    },
+    {
+      "symbol": "WIF/USDT:USDT",
+      "side": "buy",
+      "amount": 6.439841150584952,
+      "entry_price": 0.9317,
+      "leverage": 7,
+      "order_id": "1352065964795080705",
+      "opened_at": "2025-09-17T06:32:46.999631"
+    },
+    {
+      "symbol": "DOGE/USDT:USDT",
+      "side": "buy",
+      "amount": 22.629554197782305,
+      "entry_price": 0.26514,
+      "leverage": 7,
+      "order_id": "1352072419304648705",
+      "opened_at": "2025-09-17T06:58:25.883004"
+    },
+    {
+      "symbol": "CRV/USDT:USDT",
+      "side": "buy",
+      "amount": 8.282716731087797,
+      "entry_price": 0.7244,
+      "leverage": 7,
+      "order_id": "1352073348057772033",
+      "opened_at": "2025-09-17T07:02:07.297713"
+    }
+  ],
+  "active_positions": [
+    {
+      "symbol": "BB/USDT:USDT",
+      "side": "short",
+      "contracts": 58.0,
+      "entry_price": 0.172955757575,
+      "mark_price": 0.16644,
+      "upnl": 0.37791393935,
+      "percentage": 30.13
+    },
+    {
+      "symbol": "FET/USDT:USDT",
+      "side": "short",
+      "contracts": 9.0,
+      "entry_price": 0.6457,
+      "mark_price": 0.6349,
+      "upnl": 0.0972,
+      "percentage": 13.38
+    },
+    {
+      "symbol": "CRV/USDT:USDT",
+      "side": "long",
+      "contracts": 8.0,
+      "entry_price": 0.7246,
+      "mark_price": 0.7252,
+      "upnl": 0.0048,
+      "percentage": 0.57
+    },
+    {
+      "symbol": "APT/USDT:USDT",
+      "side": "short",
+      "contracts": 1.353,
+      "entry_price": 4.4473,
+      "mark_price": 4.4062,
+      "upnl": 0.0556083,
+      "percentage": 6.46
+    },
+    {
+      "symbol": "SUI/USDT:USDT",
+      "side": "short",
+      "contracts": 1.6,
+      "entry_price": 3.6297,
+      "mark_price": 3.5888,
+      "upnl": 0.06544,
+      "percentage": 9.01
+    },
+    {
+      "symbol": "WIF/USDT:USDT",
+      "side": "long",
+      "contracts": 6.4,
+      "entry_price": 0.9319,
+      "mark_price": 0.926,
+      "upnl": -0.03776,
+      "percentage": -4.43
+    },
+    {
+      "symbol": "DOGE/USDT:USDT",
+      "side": "long",
+      "contracts": 22.0,
+      "entry_price": 0.26507,
+      "mark_price": 0.26586,
+      "upnl": 0.01738,
+      "percentage": 2.08
+    },
+    {
+      "symbol": "IMX/USDT:USDT",
+      "side": "short",
+      "contracts": 55.9,
+      "entry_price": 0.719720214668,
+      "mark_price": 0.7342,
+      "upnl": -0.809420000059,
+      "percentage": -16.09
+    },
+    {
+      "symbol": "PEPE/USDT:USDT",
+      "side": "long",
+      "contracts": 542000.0,
+      "entry_price": 1.10652e-05,
+      "mark_price": 1.09161e-05,
+      "upnl": -0.0808122,
+      "percentage": -9.43
+    },
+    {
+      "symbol": "OP/USDT:USDT",
+      "side": "short",
+      "contracts": 7.7,
+      "entry_price": 0.7772,
+      "mark_price": 0.7749,
+      "upnl": 0.01771,
+      "percentage": 2.07
+    }
+  ],
+  "balance": {
+    "total": 27.84306874,
+    "free": 15.31768213,
+    "used": 12.52538661
+  }
+}

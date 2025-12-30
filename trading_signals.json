@@ -1,0 +1,82 @@
+[
+  {
+    "symbol": "FET/USDT:USDT",
+    "action": "SELL",
+    "price": 0.6433,
+    "leverage": 8,
+    "score": 0.6532788523461616,
+    "volatility": 0.8197130865403849,
+    "confidence": 0.2,
+    "timestamp": "2025-09-16T21:44:36.940823",
+    "reasoning": {
+      "vsa_confirmations": 3,
+      "timeframe_alignment": 3,
+      "4h_validation": "CONFIRMED",
+      "multi_criteria_score": 0.6532788523461616
+    }
+  },
+  {
+    "symbol": "SUI/USDT:USDT",
+    "action": "SELL",
+    "price": 3.6193,
+    "leverage": 8,
+    "score": 0.6336313257101808,
+    "volatility": 0.9078314275451851,
+    "confidence": 0.2,
+    "timestamp": "2025-09-16T21:44:37.242781",
+    "reasoning": {
+      "vsa_confirmations": 3,
+      "timeframe_alignment": 3,
+      "4h_validation": "CONFIRMED",
+      "multi_criteria_score": 0.6336313257101808
+    }
+  },
+  {
+    "symbol": "APT/USDT:USDT",
+    "action": "SELL",
+    "price": 4.4341,
+    "leverage": 7,
+    "score": 0.5855908358833951,
+    "volatility": 0.7727089708487673,
+    "confidence": 0.5,
+    "timestamp": "2025-09-16T21:44:37.513872",
+    "reasoning": {
+      "vsa_confirmations": 2,
+      "timeframe_alignment": 3,
+      "4h_validation": "CONFIRMED",
+      "multi_criteria_score": 0.5855908358833951
+    }
+  },
+  {
+    "symbol": "LINK/USDT:USDT",
+    "action": "SELL",
+    "price": 23.488,
+    "leverage": 7,
+    "score": 0.5560887656033286,
+    "volatility": 0.8971914008321776,
+    "confidence": 0.2,
+    "timestamp": "2025-09-16T21:44:37.844713",
+    "reasoning": {
+      "vsa_confirmations": 3,
+      "timeframe_alignment": 2,
+      "4h_validation": "CONFIRMED",
+      "multi_criteria_score": 0.5560887656033286
+    }
+  },
+  {
+    "symbol": "OP/USDT:USDT",
+    "action": "SELL",
+    "price": 0.7749,
+    "leverage": 7,
+    "score": 0.5469623269361945,
+    "volatility": 1.1155817340486331,
+    "confidence": 0.2,
+    "timestamp": "2025-09-16T21:44:38.114252",
+    "reasoning": {
+      "vsa_confirmations": 2,
+      "timeframe_alignment": 3,
+      "4h_validation": "CONFIRMED",
+      "multi_criteria_score": 0.5469623269361945
+    }
+  }
+]

@@ -1,0 +1,321 @@
+version: '3.8'
+
+services:
+  # Core Infrastructure Services
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: trading_system
+      POSTGRES_USER: trading_user
+      POSTGRES_PASSWORD: trading_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./infrastructure/docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U trading_user -d trading_system"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  influxdb:
+    image: influxdb:2.7-alpine
+    environment:
+      DOCKER_INFLUXDB_INIT_MODE: setup
+      DOCKER_INFLUXDB_INIT_USERNAME: admin
+      DOCKER_INFLUXDB_INIT_PASSWORD: adminpassword
+      DOCKER_INFLUXDB_INIT_ORG: trading-org
+      DOCKER_INFLUXDB_INIT_BUCKET: trading-data
+    ports:
+      - "8086:8086"
+    volumes:
+      - influxdb_data:/var/lib/influxdb2
+
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    ports:
+      - "9092:9092"
+    depends_on:
+      - zookeeper
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+
+  # Monitoring Stack
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./configs/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3001:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./configs/monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./configs/monitoring/grafana/datasources:/etc/grafana/provisioning/datasources
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.8.0
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.8.0
+    ports:
+      - "5601:5601"
+    environment:
+      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+    depends_on:
+      - elasticsearch
+
+  # Core Trading Services
+  api-gateway:
+    build:
+      context: ./services/api-gateway
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://trading_user:trading_password@postgres:5432/trading_system
+      - REDIS_URL=redis://redis:6379/0
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+    depends_on:
+      - postgres
+      - redis
+      - kafka
+    volumes:
+      - ./services/api-gateway:/app
+    command: uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
+
+  market-scanner:
+    build:
+      context: ./services/market-scanner
+      dockerfile: Dockerfile
+    environment:
+      - DATABASE_URL=postgresql://trading_user:trading_password@postgres:5432/trading_system
+      - REDIS_URL=redis://redis:6379/1
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - INFLUXDB_URL=http://influxdb:8086
+    depends_on:
+      - postgres
+      - redis
+      - kafka
+      - influxdb
+    volumes:
+      - ./services/market-scanner:/app
+
+  ai-decision-engine:
+    build:
+      context: ./services/ai-decision-engine
+      dockerfile: Dockerfile
+    environment:
+      - DATABASE_URL=postgresql://trading_user:trading_password@postgres:5432/trading_system
+      - REDIS_URL=redis://redis:6379/2
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+    depends_on:
+      - postgres
+      - redis
+      - kafka
+    volumes:
+      - ./services/ai-decision-engine:/app
+
+  position-management:
+    build:
+      context: ./services/position-management
+      dockerfile: Dockerfile
+    environment:
+      - DATABASE_URL=postgresql://trading_user:trading_password@postgres:5432/trading_system
+      - REDIS_URL=redis://redis:6379/3
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+    depends_on:
+      - postgres
+      - redis
+      - kafka
+    volumes:
+      - ./services/position-management:/app
+
+  backtesting-engine:
+    build:
+      context: ./services/backtesting-engine
+      dockerfile: Dockerfile
+    environment:
+      - DATABASE_URL=postgresql://trading_user:trading_password@postgres:5432/trading_system
+      - REDIS_URL=redis://redis:6379/4
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - INFLUXDB_URL=http://influxdb:8086
+    depends_on:
+      - postgres
+      - redis
+      - kafka
+      - influxdb
+    volumes:
+      - ./services/backtesting-engine:/app
+
+  ml-framework:
+    build:
+      context: ./services/ml-framework
+      dockerfile: Dockerfile
+    environment:
+      - DATABASE_URL=postgresql://trading_user:trading_password@postgres:5432/trading_system
+      - REDIS_URL=redis://redis:6379/5
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+    depends_on:
+      - postgres
+      - redis
+      - kafka
+    volumes:
+      - ./services/ml-framework:/app
+      - ml_models:/app/models
+
+  monitoring-service:
+    build:
+      context: ./services/monitoring-service
+      dockerfile: Dockerfile
+    environment:
+      - DATABASE_URL=postgresql://trading_user:trading_password@postgres:5432/trading_system
+      - REDIS_URL=redis://redis:6379/6
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - PROMETHEUS_URL=http://prometheus:9090
+    depends_on:
+      - postgres
+      - redis
+      - kafka
+      - prometheus
+    volumes:
+      - ./services/monitoring-service:/app
+
+  notification-service:
+    build:
+      context: ./services/notification-service
+      dockerfile: Dockerfile
+    environment:
+      - DATABASE_URL=postgresql://trading_user:trading_password@postgres:5432/trading_system
+      - REDIS_URL=redis://redis:6379/7
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+    depends_on:
+      - postgres
+      - redis
+      - kafka
+    volumes:
+      - ./services/notification-service:/app
+
+  data-pipeline:
+    build:
+      context: ./services/data-pipeline
+      dockerfile: Dockerfile
+    environment:
+      - DATABASE_URL=postgresql://trading_user:trading_password@postgres:5432/trading_system
+      - REDIS_URL=redis://redis:6379/8
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - INFLUXDB_URL=http://influxdb:8086
+    depends_on:
+      - postgres
+      - redis
+      - kafka
+      - influxdb
+    volumes:
+      - ./services/data-pipeline:/app
+
+  risk-engine:
+    build:
+      context: ./services/risk-engine
+      dockerfile: Dockerfile
+    environment:
+      - DATABASE_URL=postgresql://trading_user:trading_password@postgres:5432/trading_system
+      - REDIS_URL=redis://redis:6379/9
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+    depends_on:
+      - postgres
+      - redis
+      - kafka
+    volumes:
+      - ./services/risk-engine:/app
+
+  # Background Task Workers
+  celery-worker:
+    build:
+      context: ./services/api-gateway
+      dockerfile: Dockerfile
+    command: celery -A src.celery_app worker --loglevel=info
+    environment:
+      - DATABASE_URL=postgresql://trading_user:trading_password@postgres:5432/trading_system
+      - REDIS_URL=redis://redis:6379/0
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+    depends_on:
+      - postgres
+      - redis
+      - kafka
+    volumes:
+      - ./services/api-gateway:/app
+
+  celery-beat:
+    build:
+      context: ./services/api-gateway
+      dockerfile: Dockerfile
+    command: celery -A src.celery_app beat --loglevel=info
+    environment:
+      - DATABASE_URL=postgresql://trading_user:trading_password@postgres:5432/trading_system
+      - REDIS_URL=redis://redis:6379/0
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+    depends_on:
+      - postgres
+      - redis
+      - kafka
+    volumes:
+      - ./services/api-gateway:/app
+
+volumes:
+  postgres_data:
+  redis_data:
+  influxdb_data:
+  prometheus_data:
+  grafana_data:
+  elasticsearch_data:
+  ml_models:
+
+networks:
+  default:
+    name: trading-system-network
+

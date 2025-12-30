@@ -1,0 +1,158 @@
+version: '3.8'
+
+services:
+  # Database Services
+  postgres:
+    image: postgres:15-alpine
+    container_name: futures-postgres
+    environment:
+      POSTGRES_DB: futures_trading_db
+      POSTGRES_USER: futures_user
+      POSTGRES_PASSWORD: secure_futures_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/futures_init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U futures_user -d futures_trading_db"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  redis:
+    image: redis:7-alpine
+    container_name: futures-redis
+    command: redis-server --appendonly yes --requirepass futures_redis_password
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Futures Trading Services
+  futures-position-manager:
+    build: ./services/futures-position-manager
+    container_name: futures-position-manager
+    ports:
+      - "8003:8000"
+    environment:
+      - BITGET_API_KEY=${BITGET_API_KEY}
+      - BITGET_API_SECRET=${BITGET_API_SECRET}
+      - BITGET_API_PASSPHRASE=${BITGET_API_PASSPHRASE}
+      - REDIS_URL=redis://:futures_redis_password@redis:6379/0
+    depends_on:
+      - redis
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  futures-risk-engine:
+    build: ./services/futures-risk-engine
+    container_name: futures-risk-engine
+    ports:
+      - "8009:8000"
+    environment:
+      - REDIS_URL=redis://:futures_redis_password@redis:6379/1
+    depends_on:
+      - redis
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Copy other services from the original system
+  api-gateway:
+    build: ../ai-trading-system-production/services/api-gateway
+    container_name: futures-api-gateway
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://futures_user:secure_futures_password@postgres:5432/futures_trading_db
+      - REDIS_URL=redis://:futures_redis_password@redis:6379/0
+      - TRADING_MODE=futures
+    depends_on:
+      - postgres
+      - redis
+    restart: unless-stopped
+
+  market-scanner:
+    build: ../ai-trading-system-production/services/market-scanner
+    container_name: futures-market-scanner
+    ports:
+      - "8001:8000"
+    environment:
+      - BITGET_API_KEY=${BITGET_API_KEY}
+      - BITGET_API_SECRET=${BITGET_API_SECRET}
+      - BITGET_API_PASSPHRASE=${BITGET_API_PASSPHRASE}
+      - REDIS_URL=redis://:futures_redis_password@redis:6379/1
+      - TRADING_MODE=futures
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  ai-decision-engine:
+    build: ../ai-trading-system-production/services/ai-decision-engine
+    container_name: futures-ai-engine
+    ports:
+      - "8002:8000"
+    environment:
+      - DATABASE_URL=postgresql://futures_user:secure_futures_password@postgres:5432/futures_trading_db
+      - REDIS_URL=redis://:futures_redis_password@redis:6379/2
+      - TRADING_MODE=futures
+    depends_on:
+      - postgres
+      - redis
+    restart: unless-stopped
+
+  # Monitoring Stack
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: futures-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: futures-grafana
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=futures_admin123
+    volumes:
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  default:
+    name: futures-trading-network

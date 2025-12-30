@@ -1,0 +1,43 @@
+{
+  "mode": "dynamic_only",
+  "description": "Using dynamic pattern-based averaging for adaptive thresholds",
+  "plugins": {
+    "fibonacci": {
+      "enabled": false,
+      "weight": 0.0,
+      "priority": 100,
+      "description": "Fixed thresholds - disabled in favor of dynamic"
+    },
+    "dynamic_pattern": {
+      "enabled": true,
+      "weight": 1.0,
+      "priority": 90,
+      "risk_tolerance": "moderate",
+      "description": "Dynamic pattern-based logic - ACTIVE for adaptive averaging"
+    }
+  },
+  "aggregation": {
+    "method": "weighted_average",
+    "min_combined_confidence": 0.4,
+    "conflict_resolution": "highest_priority",
+    "description": "How to combine signals from multiple plugins (lowered threshold for averaging)"
+  },
+  "testing": {
+    "ab_test_mode": false,
+    "log_all_signals": true,
+    "dry_run": false,
+    "description": "Testing and logging configuration"
+  },
+  "safety": {
+    "max_position_multiplier": 10.0,
+    "circuit_breaker_loss_pct": 2.0,
+    "enable_rollback": true,
+    "description": "Safety limits and circuit breakers"
+  },
+  "integration": {
+    "enabled": false,
+    "hook_location": "autonomous_sync",
+    "override_current_logic": false,
+    "description": "Integration with current AI-XYZ system (DISABLED - orchestrator blocking averaging at correct thresholds)"
+  }
+}

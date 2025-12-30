@@ -1,0 +1,38 @@
+{
+  "timestamp": "2025-09-07T07:17:16.370322",
+  "leverage_compliance": {
+    "zone_state_machine.py": "unknown",
+    "averaging_engine.py": "unknown",
+    "surplus_dump_manager.py": "unknown",
+    "risk_manager.py": "unknown",
+    "live_positions_registry.py": "unknown",
+    "integrated_system_launcher.py": "unknown",
+    "comprehensive_compliance_test.py": "unknown",
+    "high_leverage_test.py": "compliant"
+  },
+  "position_size_compliance": {
+    "zone_state_machine.py": "unknown",
+    "averaging_engine.py": "unknown",
+    "surplus_dump_manager.py": "unknown",
+    "risk_manager.py": "unknown",
+    "live_positions_registry.py": "unknown",
+    "integrated_system_launcher.py": "unknown",
+    "comprehensive_compliance_test.py": "partially-compliant",
+    "high_leverage_test.py": "unknown"
+  },
+  "integration_status": {
+    "config_module": "exists",
+    "live_positions": {
+      "total": 4,
+      "compliant": 2,
+      "non_compliant": 2
+    }
+  },
+  "issues_found": [],
+  "recommendations": [
+    "\u2705 Position sizing config is properly integrated",
+    "Ensure all new positions use confidence-based sizing",
+    "Update test scripts to verify 7x-10x leverage",
+    "Add validation to reject positions with leverage < 7x"
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "timestamp": "2025-09-07T07:19:29.290067",
+  "tests_passed": 3,
+  "tests_failed": 1,
+  "details": [
+    {
+      "test": "Position Sizing Config",
+      "passed": true
+    },
+    {
+      "test": "Leverage Compliance",
+      "passed": true
+    },
+    {
+      "test": "Live Position Compliance",
+      "passed": false,
+      "compliance_rate": 50.0
+    },
+    {
+      "test": "Cardinal Rules",
+      "passed": true
+    }
+  ]
+}

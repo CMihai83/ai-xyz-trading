@@ -1,0 +1,205 @@
+{
+  "last_update": "2025-12-29T06:28:42.821801",
+  "coins": [
+    {
+      "symbol": "ZBT/USDT:USDT",
+      "base": "ZBT",
+      "change_24h": 56.209,
+      "abs_change_24h": 56.209,
+      "volume_24h": 16553843.5378,
+      "volatility_score": 618.299,
+      "price": 0.1673,
+      "timestamp": "2025-12-29T06:28:42.821242"
+    },
+    {
+      "symbol": "TAKE/USDT:USDT",
+      "base": "TAKE",
+      "change_24h": 36.248,
+      "abs_change_24h": 36.248,
+      "volume_24h": 22794468.31995,
+      "volatility_score": 398.72799999999995,
+      "price": 0.44391,
+      "timestamp": "2025-12-29T06:28:42.821149"
+    },
+    {
+      "symbol": "SQD/USDT:USDT",
+      "base": "SQD",
+      "change_24h": 19.476,
+      "abs_change_24h": 19.476,
+      "volume_24h": 26521848.31911,
+      "volatility_score": 214.236,
+      "price": 0.08441,
+      "timestamp": "2025-12-29T06:28:42.821055"
+    },
+    {
+      "symbol": "AT/USDT:USDT",
+      "base": "AT",
+      "change_24h": 17.121,
+      "abs_change_24h": 17.121,
+      "volume_24h": 36147948.1673,
+      "volatility_score": 188.331,
+      "price": 0.1977,
+      "timestamp": "2025-12-29T06:28:42.821264"
+    },
+    {
+      "symbol": "FLOW/USDT:USDT",
+      "base": "FLOW",
+      "change_24h": -16.023,
+      "abs_change_24h": 16.023,
+      "volume_24h": 37524264.86658,
+      "volatility_score": 176.253,
+      "price": 0.1043,
+      "timestamp": "2025-12-29T06:28:42.820311"
+    },
+    {
+      "symbol": "PIPPIN/USDT:USDT",
+      "base": "PIPPIN",
+      "change_24h": -12.936,
+      "abs_change_24h": 12.936,
+      "volume_24h": 18276256.11345,
+      "volatility_score": 142.296,
+      "price": 0.40293,
+      "timestamp": "2025-12-29T06:28:42.820830"
+    },
+    {
+      "symbol": "RIVER/USDT:USDT",
+      "base": "RIVER",
+      "change_24h": 11.178,
+      "abs_change_24h": 11.178,
+      "volume_24h": 9616065.184,
+      "volatility_score": 118.66637662675201,
+      "price": 4.804,
+      "timestamp": "2025-12-29T06:28:42.821246"
+    },
+    {
+      "symbol": "POWER/USDT:USDT",
+      "base": "POWER",
+      "change_24h": -10.17,
+      "abs_change_24h": 10.17,
+      "volume_24h": 10928416.40699,
+      "volatility_score": 111.87,
+      "price": 0.31559,
+      "timestamp": "2025-12-29T06:28:42.821304"
+    },
+    {
+      "symbol": "XPL/USDT:USDT",
+      "base": "XPL",
+      "change_24h": 10.0,
+      "abs_change_24h": 10.0,
+      "volume_24h": 18103014.8453,
+      "volatility_score": 110.0,
+      "price": 0.1639,
+      "timestamp": "2025-12-29T06:28:42.821131"
+    },
+    {
+      "symbol": "HIVE/USDT:USDT",
+      "base": "HIVE",
+      "change_24h": -11.253,
+      "abs_change_24h": 11.253,
+      "volume_24h": 7722955.7845,
+      "volatility_score": 98.1594214429785,
+      "price": 0.097,
+      "timestamp": "2025-12-29T06:28:42.820795"
+    },
+    {
+      "symbol": "STORJ/USDT:USDT",
+      "base": "STORJ",
+      "change_24h": -8.818,
+      "abs_change_24h": 8.818,
+      "volume_24h": 35620249.67378,
+      "volatility_score": 96.99799999999999,
+      "price": 0.1396,
+      "timestamp": "2025-12-29T06:28:42.820300"
+    },
+    {
+      "symbol": "ZKP/USDT:USDT",
+      "base": "ZKP",
+      "change_24h": -8.186,
+      "abs_change_24h": 8.186,
+      "volume_24h": 9789550.21814,
+      "volatility_score": 88.32325808569405,
+      "price": 0.14592,
+      "timestamp": "2025-12-29T06:28:42.821320"
+    },
+    {
+      "symbol": "DOLO/USDT:USDT",
+      "base": "DOLO",
+      "change_24h": 10.953,
+      "abs_change_24h": 10.953,
+      "volume_24h": 6709119.79651,
+      "volatility_score": 84.43798913117402,
+      "price": 0.0467,
+      "timestamp": "2025-12-29T06:28:42.821003"
+    },
+    {
+      "symbol": "ICNT/USDT:USDT",
+      "base": "ICNT",
+      "change_24h": 7.314,
+      "abs_change_24h": 7.314,
+      "volume_24h": 9055798.5521,
+      "volatility_score": 73.54811061005941,
+      "price": 0.4974,
+      "timestamp": "2025-12-29T06:28:42.821069"
+    },
+    {
+      "symbol": "H/USDT:USDT",
+      "base": "H",
+      "change_24h": 6.748,
+      "abs_change_24h": 6.748,
+      "volume_24h": 9129026.24702,
+      "volatility_score": 68.35066911489096,
+      "price": 0.16404,
+      "timestamp": "2025-12-29T06:28:42.821065"
+    },
+    {
+      "symbol": "0G/USDT:USDT",
+      "base": "0G",
+      "change_24h": 8.927,
+      "abs_change_24h": 8.927,
+      "volume_24h": 6516738.724,
+      "volatility_score": 67.10192658914801,
+      "price": 1.0555,
+      "timestamp": "2025-12-29T06:28:42.821188"
+    },
+    {
+      "symbol": "LIT/USDT:USDT",
+      "base": "LIT",
+      "change_24h": 8.901,
+      "abs_change_24h": 8.901,
+      "volume_24h": 6419167.097,
+      "volatility_score": 66.038006330397,
+      "price": 3.548,
+      "timestamp": "2025-12-29T06:28:42.821322"
+    },
+    {
+      "symbol": "1MBABYDOGE/USDT:USDT",
+      "base": "1MBABYDOGE",
+      "change_24h": 6.368,
+      "abs_change_24h": 6.368,
+      "volume_24h": 9337841.214062,
+      "volatility_score": 65.83137285114681,
+      "price": 0.000618,
+      "timestamp": "2025-12-29T06:28:42.820668"
+    },
+    {
+      "symbol": "IR/USDT:USDT",
+      "base": "IR",
+      "change_24h": -15.035,
+      "abs_change_24h": 15.035,
+      "volume_24h": 3101755.20837,
+      "volatility_score": 61.66988955784295,
+      "price": 0.1076,
+      "timestamp": "2025-12-29T06:28:42.821318"
+    },
+    {
+      "symbol": "GMT/USDT:USDT",
+      "base": "GMT",
+      "change_24h": 5.433,
+      "abs_change_24h": 5.433,
+      "volume_24h": 9850829.41613,
+      "volatility_score": 58.95255621783429,
+      "price": 0.0163,
+      "timestamp": "2025-12-29T06:28:42.820262"
+    }
+  ]
+}

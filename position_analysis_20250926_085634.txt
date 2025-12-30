@@ -1,0 +1,7 @@
+AI-XYZ Position Analysis Report
+Generated: 2025-09-26 08:56:34.308284
+
+Closed Positions Found: 714
+Recommendations: 5
+
+Full recommendations saved to file.

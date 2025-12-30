@@ -1,0 +1,77 @@
+# Default values for trading-system
+replicaCount: 1
+
+image:
+  repository: ghcr.io/company/ai-trading-system
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext: {}
+
+securityContext: {}
+
+service:
+  type: ClusterIP
+  port: 80
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: trading-system.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 250m
+    memory: 256Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+# Database configuration
+database:
+  host: postgres
+  port: 5432
+  name: trading_system
+  username: trading_user
+  password: trading_password
+
+# Redis configuration
+redis:
+  host: redis
+  port: 6379
+  database: 0
+
+# Kafka configuration
+kafka:
+  bootstrapServers: kafka:9092
+
+# Environment
+environment: production

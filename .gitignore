@@ -1,0 +1,67 @@
+# Log files
+*.log
+logs/*.log
+logs/**/*.log
+
+# Large data files
+*.csv
+backtest_data.csv
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environment
+venv/
+ENV/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# PID files
+*.pid
+
+# State/backup files
+position_state_backup_*.json
+*_backup_*.json
+backup_*/
+
+# Temporary files
+*.tmp
+*.temp
+
+# Docker volumes
+.docker/

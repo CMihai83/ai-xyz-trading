@@ -1,0 +1,17 @@
+apiVersion: v2
+name: trading-system
+description: AI-Powered Trading System Helm Chart
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+keywords:
+  - trading
+  - ai
+  - microservices
+  - kubernetes
+home: https://github.com/company/ai-trading-system
+sources:
+  - https://github.com/company/ai-trading-system
+maintainers:
+  - name: Trading Team
+    email: trading-team@company.com

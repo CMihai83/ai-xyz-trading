@@ -1,0 +1,13 @@
+{
+  "timestamp": "2025-09-06T20:05:02.124496",
+  "symbol": "SOL/USDT:USDT",
+  "entry_price": 200.005,
+  "exit_price": 200.056,
+  "contracts": 0.1,
+  "final_pnl": 0.0051,
+  "zone_transitions": [],
+  "peak_upnl": 0.0166,
+  "averaging_steps": 0,
+  "monitoring_duration": 120,
+  "compliance_verified": true
+}

@@ -1,0 +1,73 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "trading-system.fullname" . }}-api-gateway
+  labels:
+    {{- include "trading-system.labels" . | nindent 4 }}
+    component: api-gateway
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "trading-system.selectorLabels" . | nindent 6 }}
+      component: api-gateway
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "trading-system.selectorLabels" . | nindent 8 }}
+        component: api-gateway
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "trading-system.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: api-gateway
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}/api-gateway:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8000
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+          env:
+            - name: DATABASE_URL
+              value: "postgresql://{{ .Values.database.username }}:{{ .Values.database.password }}@{{ .Values.database.host }}:{{ .Values.database.port }}/{{ .Values.database.name }}"
+            - name: REDIS_URL
+              value: "redis://{{ .Values.redis.host }}:{{ .Values.redis.port }}/{{ .Values.redis.database }}"
+            - name: KAFKA_BOOTSTRAP_SERVERS
+              value: "{{ .Values.kafka.bootstrapServers }}"
+            - name: ENVIRONMENT
+              value: "{{ .Values.environment }}"
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

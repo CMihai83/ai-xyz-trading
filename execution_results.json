@@ -1,0 +1,45 @@
+{
+  "timestamp": "2025-09-16T21:46:58.450600",
+  "signals_processed": 5,
+  "successful": 4,
+  "failed": 1,
+  "results": [
+    {
+      "success": true,
+      "symbol": "FET/USDT:USDT",
+      "order_id": "1351933623753879553",
+      "amount": 9.326908129954921,
+      "leverage": 8,
+      "action": "sell"
+    },
+    {
+      "success": true,
+      "symbol": "SUI/USDT:USDT",
+      "order_id": "1351933627495198723",
+      "amount": 1.6577791285607715,
+      "leverage": 8,
+      "action": "sell"
+    },
+    {
+      "success": true,
+      "symbol": "APT/USDT:USDT",
+      "order_id": "1351933631379124225",
+      "amount": 1.3531494553573442,
+      "leverage": 7,
+      "action": "sell"
+    },
+    {
+      "success": false,
+      "symbol": "LINK/USDT:USDT",
+      "error": "bitget amount of LINK/USDT:USDT must be greater than minimum amount precision of 1"
+    },
+    {
+      "success": true,
+      "symbol": "OP/USDT:USDT",
+      "order_id": "1351933637829963777",
+      "amount": 7.742934572202865,
+      "leverage": 7,
+      "action": "sell"
+    }
+  ]
+}

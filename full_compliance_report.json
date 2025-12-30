@@ -1,0 +1,78 @@
+{
+  "timestamp": "2025-09-06T20:12:09.648945",
+  "services_started": true,
+  "opportunity_found": true,
+  "ai_decision_made": true,
+  "position_opened": true,
+  "zones_monitored": true,
+  "position_closed": true,
+  "cardinal_rules_verified": [
+    "Rule 9: Services stateless and idempotent",
+    "Rule 13: Gates cannot be bypassed",
+    "Rule 14: Model confidence thresholds",
+    "Rule 1: Exchange reconciliation",
+    "Rule 7: Immutable history"
+  ],
+  "zone_transitions": [],
+  "final_pnl": 0.00196,
+  "opportunity": {
+    "symbol": "DOGE/USDT:USDT",
+    "price": 0.2139,
+    "volume": 151818281.60916117,
+    "rsi": 37.037037037036896,
+    "signal_type": "BUY",
+    "signal_strength": 0.1769547325102912,
+    "timestamp": "2025-09-06T20:12:15.171845"
+  },
+  "decision": {
+    "decision_id": "22cc2a12-3279-40a8-963b-7bec9e8bb36b",
+    "approved": true,
+    "confidence": 0.6442386831275728,
+    "symbol": "DOGE/USDT:USDT",
+    "action": "BUY",
+    "gate_results": {
+      "signal_validation": {
+        "passed": "True",
+        "score": 0.1769547325102912,
+        "reason": "Signal strength 0.18 vs threshold 0.1"
+      },
+      "risk_assessment": {
+        "passed": true,
+        "score": 0.8,
+        "reason": "Position size $0.68 within risk limits"
+      },
+      "portfolio_impact": {
+        "passed": true,
+        "score": 0.9,
+        "reason": "Current positions: 0, limit: 5"
+      },
+      "market_conditions": {
+        "passed": true,
+        "score": 0.7,
+        "reason": "Market conditions acceptable for testing"
+      }
+    },
+    "timestamp": "2025-09-06T20:12:16.612310"
+  },
+  "position": {
+    "position_id": "1348285937154633731",
+    "symbol": "DOGE/USDT:USDT",
+    "side": "buy",
+    "entry_price": 0.2139,
+    "amount": 28.050490883590463,
+    "current_zone": "NEUTRAL",
+    "unrealized_pnl": 0,
+    "averaging_steps": 0,
+    "peak_upnl": 0.00224,
+    "threshold_negative": -0.15,
+    "threshold_positive": 0.15,
+    "stop_loss": -1.0,
+    "created_at": "2025-09-06T20:12:18.169789",
+    "decision_id": "22cc2a12-3279-40a8-963b-7bec9e8bb36b",
+    "closed_at": "2025-09-06T20:13:22.774527",
+    "exit_price": 0.21398,
+    "realized_pnl": 0.00196,
+    "status": "CLOSED"
+  },
+  "compliance_percentage": 100.0
+}
