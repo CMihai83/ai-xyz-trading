@@ -48,6 +48,9 @@ from market_microstructure import FundingRateOptimizer, OrderBookImbalanceDetect
 from partial_close_ladder import PartialCloseLadder, AdaptiveLadder
 from atr_stop_loss import ATRStopLoss, TrailingATRStop
 
+# V1.3.0: Import enhanced live position sync
+from position_sync_integration import patch_trading_system
+
 # Import the adaptive Fibonacci module for dynamic averaging
 import sys
 sys.path.insert(0, '/root/ai_xyz/core')
@@ -281,6 +284,15 @@ class AIXYZContinuousProfit:
             print("      • +30% reduction in whipsaw losses")
 
             print("✅ Market Microstructure Systems initialized\n")
+
+            # V1.3.0: Initialize Enhanced Position Sync
+            print("🚀 Initializing Enhanced Live Position Sync v1.3.0")
+            self.sync_integration = patch_trading_system(self)
+            print("   🔄 Real-time position sync with Redis")
+            print("   📦 Complete lifecycle state persistence")
+            print("   🔐 Atomic state updates across all tracking")
+            print("   🚀 Auto-recovery from disconnections")
+            print("✅ Enhanced Position Sync initialized\n")
 
             # For any position without original size tracked, set it
             for symbol, pos in self.active_positions.items():
@@ -3507,7 +3519,8 @@ class AIXYZContinuousProfit:
     def monitor_positions(self):
         """Monitor and manage all active positions"""
         # Always reconcile with exchange to pick up manual positions
-        self.reconcile_with_exchange()
+        # V1.3.0: Use enhanced sync integration
+        self.sync_integration.reconcile_with_exchange()
         
         # Update Fibonacci configs regularly (every monitor cycle)
         self.update_fibonacci_configs()
