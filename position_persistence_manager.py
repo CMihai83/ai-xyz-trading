@@ -94,7 +94,8 @@ class PositionPersistenceManager:
                         'zone': position_zones.get(symbol, 'NEUTRAL'),
                         'averaging_steps': averaging_steps.get(symbol, 0),
                         'peak_upnl': peak_upnl.get(symbol, 0),
-                        'surplus_stage': surplus_dump_stage.get(symbol, 0)
+                        'surplus_stage': surplus_dump_stage.get(symbol, 0),
+                        'pyramid_count': pos_data.get('pyramid_count', 0)
                     })
                     # Set expiry to 24 hours
                     self.redis_client.expire(key, 86400)
