@@ -345,6 +345,18 @@ class AIXYZContinuousProfit:
                 for symbol, pos in self.active_positions.items():
                     zone = self.position_zones.get(symbol, 'NEUTRAL')
                     steps = self.averaging_steps.get(symbol, 0)
+
+                    # CRITICAL FIX: Detect already-averaged positions on startup
+                    if steps == 0 and symbol in self.original_sizes:
+                        original = self.original_sizes[symbol]
+                        current = pos['amount']
+                        if current > original * 1.5:  # Position has been averaged
+                            ratio = current / original
+                            implied_steps = max(1, int(ratio) - 1)
+                            self.averaging_steps[symbol] = implied_steps
+                            steps = implied_steps
+                            print(f"    🔧 Detected averaging from size: {symbol} → {implied_steps} steps (ratio {ratio:.2f}x)")
+
                     print(f"    {symbol}: {pos['side']} | Zone: {zone} | Avg Steps: {steps}")
         else:
             self.persistence = None
@@ -2563,13 +2575,13 @@ class AIXYZContinuousProfit:
                     # V3: Use adaptive averaging engine for dynamic step planning
                     # Get current position data
                     position_data = {
-                        'entry_price': local_pos.get('entry_price', pos.get('entryPrice', current_price)),
-                        'amount': local_pos.get('amount', 0),
-                        'side': local_pos.get('side', 'long'),
-                        'leverage': local_pos.get('leverage', 8),
+                        'entry_price': position.get('entry_price', position.get('entryPrice', current_price)),
+                        'amount': position.get('amount', 0),
+                        'side': position.get('side', 'long'),
+                        'leverage': position.get('leverage', 8),
                         'pnl': upnl,
                         'current_price': current_price,
-                        'holding_time_hours': self._calculate_holding_time(local_pos.get('opened_at'))
+                        'holding_time_hours': self._calculate_holding_time(position.get('opened_at'))
                     }
 
                     # Calculate adaptive averaging plan
@@ -2809,13 +2821,26 @@ class AIXYZContinuousProfit:
                         'duration': 0  # Would track time in position
                     })
                     self.position_zones[symbol] = 'AVERAGING'
-                    
+
                     # Update total margin used for this position
                     margin_used_key = f"{symbol}_margin_used"
                     if margin_used_key in self.position_margin_used:
                         self.position_margin_used[margin_used_key] += margin_to_add
                         print(f"  💼 Total margin used for {symbol}: ${self.position_margin_used[margin_used_key]:.2f}")
-                    
+
+                    # CRITICAL FIX: Save state immediately after averaging counter increment
+                    if self.persistence:
+                        self.persistence.save_position_state(
+                            self.active_positions,
+                            self.position_zones,
+                            self.averaging_steps,
+                            self.peak_upnl,
+                            self.surplus_dump_stage,
+                            self.original_sizes,
+                            self.position_multipliers
+                        )
+                        print(f"  💾 State saved - averaging_steps[{symbol}] = {self.averaging_steps[symbol]}")
+
                     print(f"  ✅ Averaging executed - Fibonacci step {step + 1}")
                     return True
                     
@@ -2972,10 +2997,39 @@ class AIXYZContinuousProfit:
                     params={'reduceOnly': True, 'marginCoin': 'USDT'}
                 )
 
+                # FIX 3: Verify order was executed successfully
+                if not order:
+                    print(f"  ❌ Stage 1 dump failed - no response from exchange")
+                    return False
+
+                order_status = order.get('status', 'unknown')
+                if order_status not in ['closed', 'filled']:
+                    print(f"  ⚠️ Stage 1 order status: {order_status} - may need manual verification")
+                    # Continue anyway as some exchanges update status asynchronously
+                else:
+                    print(f"  ✅ Stage 1 order filled successfully (ID: {order.get('id', 'unknown')})")
+
                 # Update position and move to stage 1
                 position['amount'] -= dump_amount
+                # FIX 1: Update active_positions dict as well (matches averaging pattern)
+                if symbol in self.active_positions:
+                    self.active_positions[symbol]['amount'] -= dump_amount
+                    print(f"  📊 Updated active_positions: {self.active_positions[symbol]['amount']:.4f}")
                 self.surplus_dump_stage[symbol] = 1
-                
+
+                # FIX 2: Save state immediately (matches averaging pattern)
+                if self.persistence:
+                    self.persistence.save_position_state(
+                        self.active_positions,
+                        self.position_zones,
+                        self.averaging_steps,
+                        self.peak_upnl,
+                        self.surplus_dump_stage,
+                        self.original_sizes,
+                        self.position_multipliers
+                    )
+                    print(f"  💾 State saved - surplus_dump_stage[{symbol}] = 1")
+
                 print(f"  ✅ Stage 1 surplus dump complete")
                 print(f"     New position size: {position['amount']:.4f}")
                 print(f"     Remaining surplus: {position['amount'] - original_size:.4f}")
@@ -3011,16 +3065,45 @@ class AIXYZContinuousProfit:
                     params={'reduceOnly': True, 'marginCoin': 'USDT'}
                 )
 
+                # FIX 3: Verify order was executed successfully
+                if not order:
+                    print(f"  ❌ Stage 2 dump failed - no response from exchange")
+                    return False
+
+                order_status = order.get('status', 'unknown')
+                if order_status not in ['closed', 'filled']:
+                    print(f"  ⚠️ Stage 2 order status: {order_status} - may need manual verification")
+                    # Continue anyway as some exchanges update status asynchronously
+                else:
+                    print(f"  ✅ Stage 2 order filled successfully (ID: {order.get('id', 'unknown')})")
+
                 # Update position back to original size
                 position['amount'] = original_size
-                
+                # FIX 1: Update active_positions dict as well (matches averaging pattern)
+                if symbol in self.active_positions:
+                    self.active_positions[symbol]['amount'] = original_size
+                    print(f"  📊 Updated active_positions: {self.active_positions[symbol]['amount']:.4f}")
+
                 # After full surplus dump, reset all tracking to entry state
                 self.averaging_steps[symbol] = 0  # Reset averaging count
                 self.surplus_dump_stage[symbol] = 0  # Reset dump stage
                 self.peak_upnl[symbol] = 0  # Reset peak tracking
                 self.peak_upnl_timestamps[symbol] = None  # Reset peak timestamp
                 self.position_zones[symbol] = 'NEUTRAL'  # Back to neutral zone
-                
+
+                # FIX 2: Save state immediately (matches averaging pattern)
+                if self.persistence:
+                    self.persistence.save_position_state(
+                        self.active_positions,
+                        self.position_zones,
+                        self.averaging_steps,
+                        self.peak_upnl,
+                        self.surplus_dump_stage,
+                        self.original_sizes,
+                        self.position_multipliers
+                    )
+                    print(f"  💾 State saved - position reset to NEUTRAL")
+
                 # Position remains open at original entry size
                 print(f"  ✅ Stage 2 surplus dump complete - position reset to entry state")
                 print(f"     Position size: {position['amount']:.4f} (back to original)")
@@ -3575,15 +3658,18 @@ class AIXYZContinuousProfit:
                         pct = pos.get('percentage', 0)
                     
                     local_pos = self.active_positions[symbol]
-                    
+
+                    # Get entry price from position data
+                    entry_price = local_pos.get('entry_price', 0) or pos.get('entryPrice', 0)
+
                     # Update speed tracker with current price
                     current_price = pos.get('markPrice', 0)
                     if current_price > 0:
                         self.speed_tracker.update_price(symbol, current_price)
-                        
+
                         # Update adaptive Fibonacci system with current price
                         self.adaptive_fibonacci.update_price(symbol, current_price)
-                    
+
                     # CRITICAL: Always track peak UPNL for all positions
                     # This ensures we capture peaks even if averaging hasn't been detected yet
                     if symbol not in self.peak_upnl:
