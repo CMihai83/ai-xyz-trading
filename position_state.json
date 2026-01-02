@@ -1,144 +1,131 @@
 {
-  "timestamp": "2025-12-30T23:18:53.108400",
+  "timestamp": "2026-01-02T13:31:54.067644",
   "active_positions": {
-    "XTZ/USDT:USDT": {
-      "entry_price": 0.5238992701900713,
-      "amount": 45.0,
+    "USTC/USDT:USDT": {
+      "entry_price": 0.006511944729,
+      "amount": 45950.0,
       "side": "buy",
-      "leverage": 10,
-      "confidence": 121.74095115016311,
-      "opened_at": "2025-12-30T23:01:05.669941",
-      "order_id": "1390018118981152769",
-      "initial_margin": 2.403840735970909,
-      "safety_margin": 7.500000000000001
+      "leverage": 10.0,
+      "opened_at": "2025-12-31T17:24:58.947583+00:00"
     },
-    "XVG/USDT:USDT": {
-      "entry_price": 0.006371995483142442,
-      "amount": 3781.0,
+    "IMX/USDT:USDT": {
+      "entry_price": 0.2514,
+      "amount": 102.8,
       "side": "buy",
-      "leverage": 10,
-      "confidence": 112.8498726745363,
-      "opened_at": "2025-12-30T23:03:06.811472",
-      "order_id": "1390018627053973506",
-      "initial_margin": 2.4034031042618182,
-      "safety_margin": 7.500000000000001
+      "leverage": 10.0,
+      "opened_at": "2026-01-01T23:07:22.710992+00:00"
     },
-    "GLM/USDT:USDT": {
-      "entry_price": 0.218,
-      "amount": 110.0,
+    "ONDO/USDT:USDT": {
+      "entry_price": 0.4026,
+      "amount": 65.9,
       "side": "buy",
-      "leverage": 10,
-      "confidence": 80.63140178092135,
-      "opened_at": "2025-12-30T23:03:48.783763",
-      "order_id": "1390018803130855425",
-      "initial_margin": 2.4037184684509088,
-      "safety_margin": 7.500000000000001
+      "leverage": 10.0,
+      "opened_at": "2026-01-02T10:22:48.674343+00:00"
     },
-    "CAKE/USDT:USDT": {
-      "entry_price": 1.864691753402722,
-      "amount": 12.8,
+    "CELO/USDT:USDT": {
+      "entry_price": 0.1185,
+      "amount": 223.3,
       "side": "buy",
-      "leverage": 10,
-      "confidence": 71.7364902617416,
-      "opened_at": "2025-12-30T23:16:09.802047",
-      "order_id": "1390021911185616956",
-      "initial_margin": 2.401641377541818,
-      "safety_margin": 7.500000000000001
+      "leverage": 10.0,
+      "opened_at": "2026-01-02T10:20:43.468551+00:00"
     },
-    "CHZ/USDT:USDT": {
-      "entry_price": 0.03869,
-      "amount": 620.0,
+    "RDNT/USDT:USDT": {
+      "entry_price": 0.01127,
+      "amount": 2336.0,
       "side": "buy",
-      "leverage": 10,
-      "confidence": 71.88145831362019,
-      "opened_at": "2025-12-30T23:18:52.819624",
-      "order_id": "1390022594873946113",
-      "initial_margin": 2.401388427229091,
-      "safety_margin": 7.500000000000001
+      "leverage": 10.0,
+      "opened_at": "2026-01-02T12:27:22.055730+00:00"
+    },
+    "OP/USDT:USDT": {
+      "entry_price": 0.2977,
+      "amount": 88.9,
+      "side": "buy",
+      "leverage": 10.0,
+      "opened_at": "2026-01-02T10:25:40.355170+00:00"
+    },
+    "PEPE/USDT:USDT": {
+      "entry_price": 5.26697034e-06,
+      "amount": 8874000.0,
+      "side": "buy",
+      "leverage": 10.0,
+      "opened_at": "2026-01-02T10:19:59.933623+00:00"
+    },
+    "ENA/USDT:USDT": {
+      "entry_price": 0.2251,
+      "amount": 117.0,
+      "side": "buy",
+      "leverage": 10.0,
+      "opened_at": "2026-01-02T10:31:21.276648+00:00"
     }
   },
   "position_zones": {
-    "XTZ/USDT:USDT": "NEUTRAL",
-    "XVG/USDT:USDT": "NEUTRAL",
-    "GLM/USDT:USDT": "NEUTRAL",
-    "CAKE/USDT:USDT": "NEUTRAL",
-    "CHZ/USDT:USDT": "NEUTRAL"
+    "USTC/USDT:USDT": "NEUTRAL",
+    "IMX/USDT:USDT": "NEUTRAL",
+    "ONDO/USDT:USDT": "NEUTRAL",
+    "CELO/USDT:USDT": "NEUTRAL",
+    "RDNT/USDT:USDT": "NEUTRAL",
+    "OP/USDT:USDT": "NEUTRAL",
+    "PEPE/USDT:USDT": "NEUTRAL",
+    "ENA/USDT:USDT": "NEUTRAL"
   },
   "averaging_steps": {
-    "XTZ/USDT:USDT": 0,
-    "XVG/USDT:USDT": 0,
-    "GLM/USDT:USDT": 0,
-    "CAKE/USDT:USDT": 0,
-    "CHZ/USDT:USDT": 0
+    "USTC/USDT:USDT": 0,
+    "IMX/USDT:USDT": 0,
+    "ONDO/USDT:USDT": 0,
+    "CELO/USDT:USDT": 0,
+    "RDNT/USDT:USDT": 0,
+    "OP/USDT:USDT": 0,
+    "PEPE/USDT:USDT": 0,
+    "ENA/USDT:USDT": 0
   },
   "peak_upnl": {
-    "XTZ/USDT:USDT": 0,
-    "XVG/USDT:USDT": 0.049153,
-    "GLM/USDT:USDT": 0,
-    "CAKE/USDT:USDT": 0,
-    "CHZ/USDT:USDT": 0
+    "USTC/USDT:USDT": 1.360509737216,
+    "IMX/USDT:USDT": 0.43176,
+    "ONDO/USDT:USDT": 0.15816,
+    "CELO/USDT:USDT": 0.08932,
+    "RDNT/USDT:USDT": 0.02336,
+    "OP/USDT:USDT": 0.06223,
+    "PEPE/USDT:USDT": 0.5774232,
+    "ENA/USDT:USDT": 0.1053
   },
   "peak_upnl_timestamps": {
-    "XTZ/USDT:USDT": null,
-    "XVG/USDT:USDT": "2025-12-30T23:04:06.375730",
-    "GLM/USDT:USDT": null,
-    "CAKE/USDT:USDT": null,
-    "CHZ/USDT:USDT": null
+    "USTC/USDT:USDT": "2026-01-01T16:08:02.692432+00:00",
+    "IMX/USDT:USDT": "2026-01-01T23:58:50.462950+00:00",
+    "ONDO/USDT:USDT": "2026-01-02T10:55:44.464020+00:00",
+    "CELO/USDT:USDT": "2026-01-02T10:48:53.700267+00:00",
+    "RDNT/USDT:USDT": "2026-01-02T12:28:00.325947+00:00",
+    "OP/USDT:USDT": "2026-01-02T10:51:16.734049+00:00",
+    "PEPE/USDT:USDT": "2026-01-02T10:48:53.701186+00:00",
+    "ENA/USDT:USDT": "2026-01-02T10:48:53.702218+00:00"
   },
   "surplus_dump_stage": {
-    "XTZ/USDT:USDT": 0,
-    "XVG/USDT:USDT": 0,
-    "GLM/USDT:USDT": 0,
-    "CAKE/USDT:USDT": 0,
-    "CHZ/USDT:USDT": 0
+    "USTC/USDT:USDT": 0,
+    "IMX/USDT:USDT": 0,
+    "ONDO/USDT:USDT": 0,
+    "CELO/USDT:USDT": 0,
+    "RDNT/USDT:USDT": 0,
+    "OP/USDT:USDT": 0,
+    "PEPE/USDT:USDT": 0,
+    "ENA/USDT:USDT": 0
   },
   "original_sizes": {
-    "XTZ/USDT:USDT": 45.0,
-    "XVG/USDT:USDT": 3781.0,
-    "GLM/USDT:USDT": 110.0,
-    "CAKE/USDT:USDT": 12.8,
-    "CHZ/USDT:USDT": 620.0
+    "USTC/USDT:USDT": 3342.0,
+    "IMX/USDT:USDT": 102.8,
+    "ONDO/USDT:USDT": 65.9,
+    "CELO/USDT:USDT": 223.3,
+    "RDNT/USDT:USDT": 2336.0,
+    "OP/USDT:USDT": 88.9,
+    "PEPE/USDT:USDT": 5119000.0,
+    "ENA/USDT:USDT": 117.0
   },
   "position_multipliers": {
-    "GLM/USDT:USDT": [
-      1.0,
-      1.0,
-      0.8,
-      0.8,
-      0.8,
-      0.8
-    ],
-    "XTZ/USDT:USDT": [
-      1.0,
-      1.0,
-      0.8,
-      0.8,
-      0.8,
-      0.8
-    ],
-    "XVG/USDT:USDT": [
-      1.0,
-      1.0,
-      0.8,
-      0.8,
-      0.8,
-      0.8
-    ],
-    "CAKE/USDT:USDT": [
-      1.0,
-      1.0,
-      0.8,
-      0.8,
-      0.8,
-      0.8
-    ],
-    "CHZ/USDT:USDT": [
-      1.0,
-      1.0,
-      0.8,
-      0.8,
-      0.8,
-      0.8
-    ]
+    "USTC/USDT:USDT": [],
+    "IMX/USDT:USDT": [],
+    "ONDO/USDT:USDT": [],
+    "CELO/USDT:USDT": [],
+    "RDNT/USDT:USDT": [],
+    "OP/USDT:USDT": [],
+    "PEPE/USDT:USDT": [],
+    "ENA/USDT:USDT": []
   }
 }
