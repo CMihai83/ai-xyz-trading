@@ -228,12 +228,18 @@ class AIXYZContinuousProfit:
             self.peak_upnl_timestamps = reconciled.get('peak_upnl_timestamps', {})
             self.averaging_steps = reconciled['averaging_steps']
             self.surplus_dump_stage = reconciled['surplus_dump_stage']
-            
+
             # Load original sizes or initialize
             self.original_sizes = reconciled.get('original_sizes', {})
-            
+
             # Load position multipliers or initialize
             self.position_multipliers = reconciled.get('position_multipliers', {})
+
+            # CRITICAL: Initialize pyramid_count for all loaded positions
+            for symbol in self.active_positions:
+                if 'pyramid_count' not in self.active_positions[symbol]:
+                    self.active_positions[symbol]['pyramid_count'] = 0
+                    print(f"  🔧 Initialized pyramid_count=0 for {symbol}")
 
             # COOLDOWN MECHANISM: Track recently closed symbols to prevent immediate reopening
             self.recently_closed_symbols = {}  # symbol -> timestamp
@@ -3607,6 +3613,9 @@ class AIXYZContinuousProfit:
             if symbol in self.active_positions:
                 self.active_positions[symbol]['pyramid_count'] = pyramid_count
 
+            print(f"  📊 Pyramid #{pyramid_count} executed for {symbol}")
+            print(f"     Pyramids remaining: {max(0, 2 - pyramid_count)}/2")
+
             # Save state
             if self.persistence:
                 self.persistence.save_position_state(
@@ -3894,7 +3903,8 @@ class AIXYZContinuousProfit:
                         'amount': ex_pos['contracts'],
                         'side': side,
                         'leverage': leverage,
-                        'opened_at': 'manual'
+                        'opened_at': 'manual',
+                        'pyramid_count': 0  # Initialize pyramid counter
                     }
                     
                     # STRICT: Try to load saved Fibonacci config from Redis first
