@@ -3551,7 +3551,12 @@ class AIXYZContinuousProfit:
                     pass
 
             # Check we haven't pyramided too much
-            pyramid_count = position.get('pyramid_count', 0)
+            # CRITICAL: Always check self.active_positions directly, not the position parameter
+            if symbol in self.active_positions:
+                pyramid_count = self.active_positions[symbol].get('pyramid_count', 0)
+            else:
+                pyramid_count = position.get('pyramid_count', 0)
+
             if pyramid_count >= 2:
                 print(f"  ⚠️ Pyramid blocked: Max pyramids reached ({pyramid_count}/2)")
                 return False
@@ -3608,13 +3613,17 @@ class AIXYZContinuousProfit:
                 self.active_positions[symbol]['amount'] += pyramid_size
 
             # Increment pyramid count
-            pyramid_count = position.get('pyramid_count', 0) + 1
-            position['pyramid_count'] = pyramid_count
+            # CRITICAL: Always update self.active_positions directly
             if symbol in self.active_positions:
+                pyramid_count = self.active_positions[symbol].get('pyramid_count', 0) + 1
                 self.active_positions[symbol]['pyramid_count'] = pyramid_count
+            else:
+                pyramid_count = position.get('pyramid_count', 0) + 1
+                position['pyramid_count'] = pyramid_count
 
             print(f"  📊 Pyramid #{pyramid_count} executed for {symbol}")
             print(f"     Pyramids remaining: {max(0, 2 - pyramid_count)}/2")
+            print(f"     ✅ Counter persisted in self.active_positions[{symbol}]")
 
             # Save state
             if self.persistence:
