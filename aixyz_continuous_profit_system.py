@@ -3576,19 +3576,54 @@ class AIXYZContinuousProfit:
             return False
 
     def execute_pyramid(self, symbol: str, position: Dict) -> bool:
-        """Execute pyramid position add"""
+        """
+        Execute pyramid position add
+
+        CRITICAL RULES:
+        1. Only pyramid if price IMPROVES weighted average (buy lower for LONG, sell higher for SHORT)
+        2. Max $8 margin per pyramid (before leverage)
+        3. Exchange automatically updates entry_price (weighted average) after execution
+        """
         try:
+            # Get current weighted average entry price (from exchange)
+            current_entry = position['entry_price']
+
+            # Get current market price
+            ticker = self.exchange.fetch_ticker(symbol)
+            current_price = ticker['last']
+
+            # CRITICAL CHECK: Price must IMPROVE weighted average
+            # This ensures we accumulate on pullbacks/reversals, not at top of trend
+            side = position['side']
+            if side == 'buy':  # LONG position
+                if current_price >= current_entry:
+                    print(f"  ❌ Pyramid blocked: Price ${current_price:.6f} >= Weighted Avg ${current_entry:.6f}")
+                    print(f"     Would DEGRADE average (buying at higher price than current avg)")
+                    print(f"     Wait for pullback below ${current_entry:.6f}")
+                    return False
+            else:  # SHORT position
+                if current_price <= current_entry:
+                    print(f"  ❌ Pyramid blocked: Price ${current_price:.6f} <= Weighted Avg ${current_entry:.6f}")
+                    print(f"     Would DEGRADE average (selling at lower price than current avg)")
+                    print(f"     Wait for bounce above ${current_entry:.6f}")
+                    return False
+
             # Add 25% of original position size
             original_size = self.original_sizes.get(symbol, position['amount'])
             pyramid_size = original_size * 0.25
 
-            # Get current price
-            ticker = self.exchange.fetch_ticker(symbol)
-            current_price = ticker['last']
-
             # Calculate required margin
             leverage = position.get('leverage', 10)
             required_margin = (pyramid_size * current_price) / leverage
+
+            # LIMIT: Max $8 margin per pyramid (before leverage)
+            MAX_PYRAMID_MARGIN = 8.0
+            if required_margin > MAX_PYRAMID_MARGIN:
+                # Scale down pyramid size to fit $8 margin limit
+                pyramid_size = (MAX_PYRAMID_MARGIN * leverage) / current_price
+                required_margin = MAX_PYRAMID_MARGIN
+                print(f"  📉 Pyramid size reduced to fit ${MAX_PYRAMID_MARGIN} margin limit")
+                print(f"  📊 Adjusted pyramid size: {pyramid_size:.4f} contracts")
 
             # Verify we have enough margin
             balance = self.exchange.fetch_balance()
@@ -3597,8 +3632,10 @@ class AIXYZContinuousProfit:
                 return False
 
             # Execute pyramid order
-            side = position['side']
-            print(f"\n🔺 Pyramiding {symbol}")
+            print(f"\n🔺 Pyramiding {symbol} - PRICE IMPROVED")
+            print(f"  Current Weighted Avg Entry: ${current_entry:.6f}")
+            print(f"  Pyramid Entry Price: ${current_price:.6f}")
+            print(f"  Price Improvement: {((current_entry - current_price) / current_entry * 100 if side == 'buy' else (current_price - current_entry) / current_entry * 100):.2f}%")
             print(f"  Adding: {pyramid_size:.4f} contracts")
             print(f"  Margin: ${required_margin:.2f}")
 
@@ -3607,10 +3644,13 @@ class AIXYZContinuousProfit:
                 params={'marginCoin': 'USDT'}
             )
 
-            # Update position
+            # Update position amount (exchange will update entry_price automatically)
             position['amount'] += pyramid_size
             if symbol in self.active_positions:
                 self.active_positions[symbol]['amount'] += pyramid_size
+
+            # NOTE: Exchange automatically calculates new weighted average entry price
+            # We'll sync it on next position fetch - don't manually calculate
 
             # Increment pyramid count
             # CRITICAL: Always update self.active_positions directly
