@@ -37,6 +37,7 @@ from margin_aware_position_sizer import MarginAwarePositionSizer
 from enhanced_market_scanner import EnhancedMarketScanner
 from scanner_v4 import ScannerV4  # V4: All-market intelligent scanner
 from dynamic_fibonacci_delta import DynamicFibonacciDeltaService  # Dynamic delta based on volatility
+from liquidation_protection_service import LiquidationProtectionService  # Liquidation protection
 
 # V1.1.0: Import new performance enhancement modules
 from momentum_burst_detector import MomentumBurstDetector
@@ -171,6 +172,13 @@ class AIXYZContinuousProfit:
         print("🎯 Dynamic Fibonacci Delta Service enabled")
         print("   📊 Volatility-adaptive delta calculation")
         print("   🔄 Adjusts to market conditions in real-time")
+
+        # Initialize Liquidation Protection Service
+        self.liquidation_protection = LiquidationProtectionService(exchange=self.exchange)
+        print("🛡️ Liquidation Protection Service enabled")
+        print("   💰 Additional $25 margin per position for protection")
+        print("   📊 Places limit orders at -82.5% UPNL (before liquidation)")
+        print("   🎯 Total capital per position: $50 ($25 averaging + $25 protection)")
 
         # V1.3.1: Initialize Advanced Unused Modules (Category 1 - High Priority)
         print("\n🚀 Initializing Category 1 Advanced Modules...")
@@ -320,6 +328,29 @@ class AIXYZContinuousProfit:
             # V1.3.0: Initialize Enhanced Position Sync
             print("🚀 Initializing Enhanced Live Position Sync v1.3.0")
             self.sync_integration = patch_trading_system(self)
+
+            # CRITICAL FIX: Import loaded state into enhanced sync system
+            # This preserves averaging_steps, peak_upnl, etc. from persistence
+            try:
+                legacy_state = {
+                    'active_positions': self.active_positions,
+                    'position_zones': self.position_zones,
+                    'averaging_steps': self.averaging_steps,
+                    'peak_upnl': self.peak_upnl,
+                    'peak_upnl_timestamps': self.peak_upnl_timestamps,
+                    'surplus_dump_stage': self.surplus_dump_stage,
+                    'original_sizes': self.original_sizes,
+                    'position_multipliers': self.position_multipliers,
+                    'fibonacci_configs': getattr(self, 'fibonacci_configs', {})
+                }
+                print(f"   📥 Importing {len(self.active_positions)} positions with averaging_steps: {self.averaging_steps}")
+                self.sync_integration.sync.from_legacy_format(legacy_state)
+                print(f"   ✅ Successfully imported legacy state to enhanced sync")
+            except Exception as e:
+                print(f"   ⚠️ Failed to import legacy state: {e}")
+                import traceback
+                traceback.print_exc()
+
             print("   🔄 Real-time position sync with Redis")
             print("   📦 Complete lifecycle state persistence")
             print("   🔐 Atomic state updates across all tracking")
@@ -527,8 +558,9 @@ class AIXYZContinuousProfit:
             base_position_size = min(8.0, PositionSizingConfig.BASE_POSITION_VALUE * 0.2)  # $8.0 initial position (20% of $40)
             
             # Calculate capital per position based on max positions allowed
-            positions_allowed = int(total_capital / 40) if total_capital >= 80 else 1
-            capital_per_position = min(40.0, total_capital / max(1, positions_allowed))
+            # $50 per position ($25 averaging + $25 liquidation protection)
+            positions_allowed = int(total_capital / 50) if total_capital >= 80 else 1
+            capital_per_position = min(50.0, total_capital / max(1, positions_allowed))
             
             # 70% for averaging calculations, 30% safety margin
             averaging_capital = capital_per_position * 0.70
@@ -2464,7 +2496,10 @@ class AIXYZContinuousProfit:
         
         # Remove the hardcoded -25% check - let Fibonacci thresholds work
         # The Fibonacci system calculates dynamic thresholds based on market conditions
-        
+
+        # DEBUG: Log averaging_steps before retrieving
+        print(f"  🐞 DEBUG averaging_steps dict: {self.averaging_steps}")
+
         step = self.averaging_steps[symbol]
         
         # STRICT: ONLY use Fibonacci config - NO FALLBACKS
@@ -2670,21 +2705,22 @@ class AIXYZContinuousProfit:
                     print(f"  🔍 DEBUG: Fetched balance: ${total_balance:.2f}")
                     print(f"  🔍 DEBUG: Balance info: {balance_info.get('USDT', {})}")
                     
-                    # FIXED: Use $25 per position regardless of max_positions
+                    # FIXED: Use $50 per position ($25 averaging + $25 liquidation protection)
                     # This is the total capital allocated for the position including all averaging
-                    max_margin_per_position = 25.0  # Fixed $25 per position
-                    
+                    # Note: Only $25 is used for averaging, additional $25 reserved for liquidation protection
+                    max_margin_per_position = 25.0  # $25 for averaging (liquidation protection uses separate $25)
+
                     # Use actual balance if less than $25
                     if total_balance < max_margin_per_position:
                         max_margin_per_position = total_balance
                         print(f"  ⚠️ Using available balance ${total_balance:.2f} (less than $25)")
                     else:
-                        print(f"  ✅ Using full $25 allocation (balance: ${total_balance:.2f})")
-                    
+                        print(f"  ✅ Using $25 for averaging (+ $25 reserved for liquidation protection)")
+
                     # This ensures:
-                    # - Full $25 is available for averaging steps
-                    # - 70% ($17.50) for normal averaging
-                    # - 30% ($7.50) for emergency safety margin
+                    # - $25 is available for Fibonacci averaging steps
+                    # - Additional $25 reserved for liquidation protection limit order
+                    # - Total per position: $50 ($25 averaging + $25 protection)
                     
                     # Calculate how much margin we've already used for this position
                     # Use ACTUAL position size from reconciliation, not original size
@@ -2952,7 +2988,25 @@ class AIXYZContinuousProfit:
                         self.active_positions[symbol]['amount'] += avg_amount
                         position['amount'] += avg_amount  # Update local reference too
                         print(f"  📊 Updated position size: {self.active_positions[symbol]['amount']:.4f}")
-                    
+
+                    # CRITICAL: Sync weighted average entry price from exchange after averaging
+                    # Exchange calculates exact weighted avg, we should use that value
+                    try:
+                        exchange_positions = self.exchange.fetch_positions([symbol])
+                        if exchange_positions and len(exchange_positions) > 0:
+                            ex_pos = exchange_positions[0]
+                            if ex_pos['contracts'] > 0:
+                                exchange_entry = ex_pos.get('entryPrice', 0)
+                                if exchange_entry > 0:
+                                    old_entry = self.active_positions[symbol].get('entry_price', 0)
+                                    self.active_positions[symbol]['entry_price'] = exchange_entry
+                                    position['entry_price'] = exchange_entry
+                                    improvement = ((old_entry - exchange_entry) / old_entry * 100) if old_entry > 0 else 0
+                                    print(f"  📊 Synced entry from exchange: ${old_entry:.6f} → ${exchange_entry:.6f}")
+                                    print(f"     Weighted average improved by {improvement:.2f}%")
+                    except Exception as e:
+                        print(f"  ⚠️ Could not sync entry price from exchange: {e}")
+
                     self.averaging_steps[symbol] += 1
 
                     # V3: Update performance learning
@@ -2981,6 +3035,27 @@ class AIXYZContinuousProfit:
                             self.position_multipliers
                         )
                         print(f"  💾 State saved - averaging_steps[{symbol}] = {self.averaging_steps[symbol]}")
+
+                    # CRITICAL: Place liquidation protection order when LAST averaging step executes
+                    # This is the user's express requirement - protection order placed immediately after last step
+                    current_step = self.averaging_steps[symbol]
+                    max_steps = fib_config.get('max_averaging_steps', 6)
+
+                    if current_step == max_steps:
+                        print(f"\n🛡️ LAST AVERAGING STEP EXECUTED - Placing liquidation protection order")
+                        print(f"   Step {current_step} of {max_steps} (FINAL)")
+                        print(f"   Protection will trigger at -82.5% UPNL to prevent liquidation")
+
+                        try:
+                            # Place the protection order immediately
+                            self.liquidation_protection.place_protection_order(
+                                symbol, position, additional_margin=25.0
+                            )
+                            print(f"   ✅ Liquidation protection order placed for {symbol}")
+                        except Exception as prot_error:
+                            print(f"   ⚠️ Failed to place protection order: {prot_error}")
+                    else:
+                        print(f"  📊 Step {current_step} of {max_steps} - {max_steps - current_step} steps remaining before protection")
 
                     print(f"  ✅ Averaging executed - Fibonacci step {step + 1}")
                     return True
@@ -3851,6 +3926,11 @@ class AIXYZContinuousProfit:
         self.profit_taker.reset_position(symbol)
         self.trailing_atr_stop.reset_peak(symbol)
 
+        # CRITICAL FIX: Cancel any liquidation protection orders for closed position
+        if symbol in self.liquidation_protection.protection_orders:
+            print(f"  🛡️ Cancelling liquidation protection order for closed position {symbol}")
+            self.liquidation_protection.cancel_protection_order(symbol)
+
         print(f"  🧹 Cleaned tracking data for closed position {symbol}")
 
         # COOLDOWN FIX: Add symbol to cooldown tracking to prevent immediate reopening
@@ -3910,6 +3990,8 @@ class AIXYZContinuousProfit:
             for symbol, ex_pos in active_exchange.items():
                 if symbol in self.active_positions:
                     # UPDATE existing position with real exchange data
+                    # DEBUG: Log that we're updating, not resetting
+                    print(f"  🔄 Reconcile: {symbol} already tracked (averaging_steps={self.averaging_steps.get(symbol, 'N/A')})")
                     old_amount = self.active_positions[symbol].get('amount', 0)
                     new_amount = ex_pos['contracts']
                     if old_amount != new_amount:
@@ -3986,7 +4068,13 @@ class AIXYZContinuousProfit:
                     # Initialize tracking with FRESH values for new position
                     # Even if same symbol was traded before, this is a NEW position
                     self.position_zones[symbol] = 'NEUTRAL'  # Always start at NEUTRAL
-                    self.averaging_steps[symbol] = 0  # No averaging steps yet
+
+                    # CRITICAL FIX: Preserve averaging_steps if already tracked (from persistence)
+                    # Don't reset to 0 if we already have a value loaded from saved state
+                    if symbol not in self.averaging_steps:
+                        self.averaging_steps[symbol] = 0  # No averaging steps yet
+                    else:
+                        print(f"  ⚠️ Preserving averaging_steps={self.averaging_steps[symbol]} for {symbol} (from saved state)")
                     self.peak_upnl[symbol] = 0  # Start fresh, don't use current UPNL
                     self.peak_upnl_timestamps[symbol] = None  # No peak timestamp yet
                     self.surplus_dump_stage[symbol] = 0  # No surplus dump stage
@@ -4112,7 +4200,37 @@ class AIXYZContinuousProfit:
         
         # Update Fibonacci configs regularly (every monitor cycle)
         self.update_fibonacci_configs()
-        
+
+        # CRITICAL: On first monitoring cycle after startup, check for positions at max averaging step
+        # Place protection orders for positions that reached their final step before restart
+        if not self._startup_protection_check_done:
+            print("\n🔍 Startup check: Looking for positions at max averaging step...")
+            for symbol in self.active_positions:
+                current_step = self.averaging_steps.get(symbol, 0)
+                fib_config = self.fibonacci_configs.get(symbol)
+
+                if fib_config:
+                    max_steps = fib_config.get('max_averaging_steps', 6)
+
+                    if current_step == max_steps:
+                        print(f"🛡️ {symbol} at FINAL step {current_step}/{max_steps} - placing protection order")
+
+                        if symbol not in self.liquidation_protection.protection_orders:
+                            try:
+                                self.liquidation_protection.place_protection_order(
+                                    symbol, self.active_positions[symbol], additional_margin=25.0
+                                )
+                                print(f"   ✅ Protection order placed for {symbol}")
+                            except Exception as e:
+                                print(f"   ⚠️ Failed to place protection: {e}")
+                        else:
+                            print(f"   ℹ️ Protection already exists for {symbol}")
+                    elif current_step > 0:
+                        print(f"   {symbol}: Step {current_step}/{max_steps} ({max_steps - current_step} remaining)")
+
+            self._startup_protection_check_done = True
+            print("")
+
         # Clean up any stale tracking data
         self.cleanup_stale_positions()
         
@@ -4164,8 +4282,17 @@ class AIXYZContinuousProfit:
                     
                     local_pos = self.active_positions[symbol]
 
-                    # Get entry price from position data
-                    entry_price = local_pos.get('entry_price', 0) or pos.get('entryPrice', 0)
+                    # CRITICAL: Always sync entry price from exchange (weighted average)
+                    # Exchange maintains exact weighted avg after averaging, we should use it
+                    exchange_entry = pos.get('entryPrice', 0)
+                    local_entry = local_pos.get('entry_price', 0)
+
+                    if exchange_entry > 0 and abs(exchange_entry - local_entry) > 0.0001:
+                        # Sync from exchange if different
+                        self.active_positions[symbol]['entry_price'] = exchange_entry
+                        entry_price = exchange_entry
+                    else:
+                        entry_price = local_entry or exchange_entry
 
                     # Update speed tracker with current price
                     current_price = pos.get('markPrice', 0)
@@ -4193,7 +4320,7 @@ class AIXYZContinuousProfit:
                     if upnl > 0:
                         self.positions_in_profit.add(symbol)
                         # Show profit detection in real-time
-                        if pct > (self.zone_thresholds['profit_taking'] * 100):  # +5%
+                        if pct > 1.5:  # +1.5% (lowered from 5%)
                             print(f"  💰 {symbol} in PROFIT: ${upnl:.4f} ({pct:.2f}%)")
 
                     # V1.2.0: Check ATR stop loss (for positions in loss)
@@ -4325,9 +4452,9 @@ class AIXYZContinuousProfit:
                             price_move_pct = ((current_price - entry_price) / entry_price) * 100
                         else:
                             price_move_pct = ((entry_price - current_price) / entry_price) * 100
-                        
+
                         # Simplified zone assignment
-                        if pct > (self.zone_thresholds['profit_taking'] * 100):  # +5%
+                        if pct > 1.5:  # +1.5% (lowered from 5%)
                             if self.averaging_steps[symbol] > 0:
                                 # Entering SURPLUS_DUMP zone - initialize peak if not set
                                 if self.position_zones[symbol] != 'SURPLUS_DUMP':
@@ -4341,13 +4468,22 @@ class AIXYZContinuousProfit:
                             self.position_zones[symbol] = 'AVERAGING'
                             print(f"  ⚠️ {symbol} in AVERAGING zone: P&L {pct:.2f}% <= {self.zone_thresholds['averaging']*100:.0f}%")
                         else:
-                            self.position_zones[symbol] = 'NEUTRAL'
+                            # Check for averaged positions in profit (any profit UPNL > $0)
+                            if self.averaging_steps.get(symbol, 0) > 0 and upnl > 0:
+                                if self.position_zones[symbol] != 'SURPLUS_DUMP':
+                                    if symbol not in self.peak_upnl or self.peak_upnl[symbol] == 0:
+                                        self.peak_upnl[symbol] = upnl
+                                        self.peak_upnl_timestamps[symbol] = datetime.now().isoformat()
+                                    print(f"  🔧 FIX: Moving {symbol} to SURPLUS_DUMP (steps={self.averaging_steps[symbol]}, UPNL=${upnl:.2f})")
+                                self.position_zones[symbol] = 'SURPLUS_DUMP'
+                            else:
+                                self.position_zones[symbol] = 'NEUTRAL'
                     else:
                         # Fallback to P&L%-based detection
                         # FIX: Use P&L percentage, not dollar amount!
                         if pct <= (self.zone_thresholds['averaging'] * 100):  # -25%
                             self.position_zones[symbol] = 'AVERAGING'
-                        elif pct > (self.zone_thresholds['profit_taking'] * 100):  # +5%
+                        elif pct > 1.5:  # +1.5% (lowered from 5%)
                             if self.averaging_steps[symbol] > 0:
                                 # Entering SURPLUS_DUMP zone - initialize peak if not set
                                 if self.position_zones[symbol] != 'SURPLUS_DUMP':
@@ -4359,12 +4495,12 @@ class AIXYZContinuousProfit:
                                 self.position_zones[symbol] = 'PROFIT_TAKING'
                         else:
                             # CRITICAL FIX: Check for averaged positions that should be in SURPLUS_DUMP
-                            # If position has averaging steps and has a profit peak, it should be in SURPLUS_DUMP
-                            if self.averaging_steps.get(symbol, 0) > 0 and self.peak_upnl.get(symbol, 0) > 0.10:
+                            # If position has averaging steps and has any profit peak, it should be in SURPLUS_DUMP
+                            if self.averaging_steps.get(symbol, 0) > 0 and self.peak_upnl.get(symbol, 0) > 0:
                                 if self.position_zones[symbol] != 'SURPLUS_DUMP':
                                     print(f"  🔧 SURPLUS RECOVERY: {symbol} has peak ${self.peak_upnl[symbol]:.2f}, entering SURPLUS_DUMP")
                                 self.position_zones[symbol] = 'SURPLUS_DUMP'
-                            # Original check for currently profitable averaged positions
+                            # Original check for currently profitable averaged positions (any profit UPNL > $0)
                             elif self.averaging_steps.get(symbol, 0) > 0 and upnl > 0:
                                 if self.position_zones[symbol] != 'SURPLUS_DUMP':
                                     # Initialize peak if not set
@@ -4393,7 +4529,14 @@ class AIXYZContinuousProfit:
                     
                     # Always check stop loss
                     self.check_stop_loss(symbol, local_pos, upnl, pct)
-            
+
+                    # NOTE: Liquidation protection is placed ONLY when last averaging step executes
+                    # See line 3039-3056 in check_averaging() function
+                    # Protection order is NOT placed during monitoring - only after final averaging execution
+
+            # Check status of placed protection orders
+            self.liquidation_protection.check_protection_orders()
+
             # Save state after monitoring
             if self.persistence:
                 self.persistence.save_position_state(
@@ -4570,9 +4713,10 @@ class AIXYZContinuousProfit:
         
         print("\n✅ All systems online!")
         print("Press Ctrl+C to stop\n")
-        
+
         self.running = True
-        
+        self._startup_protection_check_done = False  # Flag to run startup check after Fibonacci configs load
+
         # Run main loop
         try:
             last_scan = 0
