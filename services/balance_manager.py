@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Balance Manager Service - Automatically moves excess funds from futures to spot
-Maintains $50 in futures account, moving excess in $5 increments to spot
+Maintains $400 in futures account, moving excess in $15 increments to spot
 """
 
 import os
@@ -34,9 +34,9 @@ logger = logging.getLogger('BalanceManager')
 class BalanceManager:
     def __init__(self):
         """Initialize the balance manager with exchange connection"""
-        self.TARGET_BALANCE = 50.0  # Target futures balance in USDT
-        self.TRANSFER_INCREMENT = 5.0  # Transfer in $5 increments
-        self.MIN_TRANSFER = 5.0  # Minimum transfer amount
+        self.TARGET_BALANCE = 400.0  # Target futures balance in USDT
+        self.TRANSFER_INCREMENT = 15.0  # Transfer in $15 increments
+        self.MIN_TRANSFER = 15.0  # Minimum transfer amount
         
         # Initialize exchange
         self.exchange = self._init_exchange()
@@ -178,7 +178,7 @@ class BalanceManager:
                 
                 if transfer_amount >= self.MIN_TRANSFER:
                     logger.info(f"📈 Excess detected: ${excess:.2f}")
-                    logger.info(f"🔄 Will transfer: ${transfer_amount:.2f} ({num_increments} x $5 increments)")
+                    logger.info(f"🔄 Will transfer: ${transfer_amount:.2f} ({num_increments} x $15 increments)")
                     
                     # Execute transfer
                     success = self.transfer_to_spot(transfer_amount)

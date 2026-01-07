@@ -27,7 +27,26 @@ class BitgetSymbolsManager:
         })
         self.symbols_data = self.load_symbols_data()
         self.logger = self.setup_logger()
-        
+
+    def _convert_precision_to_decimals(self, precision_value) -> int:
+        """Convert precision value to decimal places.
+
+        Bitget returns precision as step size (e.g., 0.0001 for BTC).
+        This converts it to decimal places (e.g., 4).
+        """
+        import math
+        if precision_value is None:
+            return 0
+        precision_value = float(precision_value)
+        if precision_value <= 0:
+            return 0
+        if precision_value >= 1:
+            # Already decimal places (integer like 4) or no decimals needed
+            return int(precision_value) if precision_value < 20 else 0
+        # It's a step size like 0.0001, convert to decimal places
+        # -log10(0.0001) = 4
+        return int(round(-math.log10(precision_value)))
+
     def setup_logger(self):
         logging.basicConfig(
             level=logging.INFO,
@@ -92,16 +111,16 @@ class BitgetSymbolsManager:
             'min_amount': float(market_info.get('limits', {}).get('amount', {}).get('min', 1)) if market_info.get('limits', {}).get('amount', {}).get('min') else 1,
             'max_amount': float(market_info.get('limits', {}).get('amount', {}).get('max')) if market_info.get('limits', {}).get('amount', {}).get('max') else None,
             'min_cost': float(market_info.get('limits', {}).get('cost', {}).get('min', 5)) if market_info.get('limits', {}).get('cost', {}).get('min') else 5,
-            'amount_precision': int(market_info.get('precision', {}).get('amount', 0)) if market_info.get('precision', {}).get('amount') is not None else 0,
-            'price_precision': int(market_info.get('precision', {}).get('price', 4)) if market_info.get('precision', {}).get('price') is not None else 4,
+            'amount_precision': self._convert_precision_to_decimals(market_info.get('precision', {}).get('amount', 0)),
+            'price_precision': self._convert_precision_to_decimals(market_info.get('precision', {}).get('price', 4)),
             'tick_size': float(market_info.get('info', {}).get('priceStep', 0.0001)) if market_info.get('info', {}).get('priceStep') else 0.0001,
-            'lot_size': float(market_info.get('info', {}).get('sizeMultiplier', 1)) if market_info.get('info', {}).get('sizeMultiplier') else 1,
+            'lot_size': float(market_info.get('precision', {}).get('amount', 1)) if market_info.get('precision', {}).get('amount') else 1,
             'is_active': market_info.get('active', True),
             'maker_fee': market_info.get('maker', 0.0002),
             'taker_fee': market_info.get('taker', 0.0006),
             'max_leverage': market_info.get('info', {}).get('maxLever', 20),
             'last_updated': datetime.now().isoformat(),
-            'requires_whole_contracts': market_info.get('precision', {}).get('amount', 0) == 0
+            'requires_whole_contracts': self._convert_precision_to_decimals(market_info.get('precision', {}).get('amount', 0)) == 0
         }
     
     def update_all_symbols(self):
