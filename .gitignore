@@ -1,18 +1,65 @@
-# Log files
-*.log
-logs/*.log
-logs/**/*.log
+# Florin Trading System - Git Ignore File
+# ===========================================
+# Prevents sensitive and temporary files from being committed
 
-# Large data files
-*.csv
-backtest_data.csv
-
-# Environment files
+# ============================================
+# SENSITIVE FILES (NEVER COMMIT THESE!)
+# ============================================
 .env
-.env.*
-!.env.example
+.env.local
+.env.production
+*.key
+*.pem
+*.p12
+credentials.json
+secrets.json
 
-# Python cache
+# API Keys and Credentials
+*_api_key*
+*_secret*
+*_passphrase*
+
+# ============================================
+# STATE AND DATA FILES
+# ============================================
+# Trading state files
+position_state.json
+averaging_state.json
+continuous_trading_state.json
+performance_history.json
+trading_state.json
+
+# Position and trade data
+position_*.json
+trade_*.json
+closed_positions*.json
+averaging_trigger.json
+averaging_state*.json
+
+# Data directories
+data/
+*.db
+*.sqlite
+*.sqlite3
+
+# ============================================
+# LOG FILES
+# ============================================
+logs/
+*.log
+*.log.*
+*.log.gz
+*.log.old
+florin_*.log
+aixyz_*.log
+trade_audit.log
+monitor_*.log
+autonomous_sync*.log
+
+# ============================================
+# PYTHON
+# ============================================
+# Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
@@ -35,33 +82,149 @@ wheels/
 *.egg
 MANIFEST
 
-# Virtual environment
+# Virtual environments
 venv/
 ENV/
 env/
+.venv
 
-# IDE
+# PyInstaller
+*.manifest
+*.spec
+
+# Unit test / coverage
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# ============================================
+# DOCKER
+# ============================================
+# Docker volumes (local development)
+docker-compose.override.yml
+
+# ============================================
+# IDEs AND EDITORS
+# ============================================
+# VSCode
 .vscode/
+*.code-workspace
+
+# PyCharm
 .idea/
+*.iml
+*.iws
+*.ipr
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
 *.swp
 *.swo
 *~
+.*.sw?
 
-# OS
+# Emacs
+*~
+\#*\#
+.\#*
+
+# ============================================
+# OPERATING SYSTEM FILES
+# ============================================
+# macOS
 .DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# Windows
 Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
 
-# PID files
+# Linux
+.directory
+.Trash-*
+
+# ============================================
+# PID FILES
+# ============================================
 *.pid
+pids/
 
-# State/backup files
-position_state_backup_*.json
-*_backup_*.json
-backup_*/
-
-# Temporary files
+# ============================================
+# TEMPORARY FILES
+# ============================================
+tmp/
+temp/
 *.tmp
-*.temp
+*.bak
+*.backup
+*.old
+*.orig
+*_backup_*
+*_old_*
 
-# Docker volumes
-.docker/
+# Backups
+backup_*/
+backups/
+
+# ============================================
+# REPORTS AND ANALYSIS
+# ============================================
+reports/
+analysis/
+*.csv
+*.xlsx
+*.xls
+test_report_*.json
+test_scenarios_*.json
+edge_case_results_*.json
+health_reports/
+audits/
+
+# ============================================
+# CONFIGURATION OVERRIDES
+# ============================================
+config.local.json
+runtime_config.json
+services_config.json
+
+# ============================================
+# COMPRESSED FILES
+# ============================================
+*.zip
+*.tar.gz
+*.tgz
+*.rar
+*.7z
+
+# ============================================
+# KEEP THESE FILES
+# ============================================
+# Examples and templates (do commit these)
+!.env.example
+!config.example.json
+!README.md
+!docker-compose.yml
+!Dockerfile

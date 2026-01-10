@@ -1,0 +1,61 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info
+dist
+build
+.pytest_cache
+.coverage
+
+# Logs
+*.log
+logs/
+/tmp/
+
+# Documentation
+*.md
+docs/
+
+# Test files
+test_*
+*_test.py
+tests/
+
+# Backups
+*.backup
+*.bak
+*~
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Large data files
+*.zip
+*.tar.gz
+*.csv
+*.json.gz
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# Docker
+docker-compose.override.yml
+Dockerfile.dev
+
+# OS
+.DS_Store
+Thumbs.db

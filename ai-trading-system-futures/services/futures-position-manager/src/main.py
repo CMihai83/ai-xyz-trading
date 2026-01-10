@@ -76,14 +76,36 @@ class BitgetFuturesAPI:
         """Get futures account information."""
         timestamp = str(int(time.time() * 1000))
         request_path = "/api/mix/v1/account/account"
-        
+
         headers = self._get_headers(timestamp, 'GET', request_path)
-        
+
         async with aiohttp.ClientSession() as session:
             async with session.get(
                 f"{self.base_url}{request_path}",
                 headers=headers,
                 params={'productType': 'umcbl'}  # USDT-M futures
+            ) as response:
+                data = await response.json()
+                return data
+
+    async def set_position_mode(self, mode: str = "hedge_mode") -> Dict:
+        """Set position mode to hedge or one-way."""
+        timestamp = str(int(time.time() * 1000))
+        request_path = "/api/mix/v1/account/setPositionMode"
+
+        body_data = {
+            "productType": "umcbl",  # USDT-M futures
+            "posMode": mode  # "hedge_mode" or "one_way_mode"
+        }
+        body = json.dumps(body_data)
+
+        headers = self._get_headers(timestamp, 'POST', request_path, body)
+
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                f"{self.base_url}{request_path}",
+                headers=headers,
+                data=body
             ) as response:
                 data = await response.json()
                 return data
@@ -146,9 +168,12 @@ class BitgetFuturesAPI:
     
     async def place_order(self, order_data: Dict) -> Dict:
         """Place a futures order with proper formatting."""
+        # Ensure position mode is set to hedge
+        await self.set_position_mode("hedge_mode")
+
         timestamp = str(int(time.time() * 1000))
         request_path = "/api/mix/v1/order/placeOrder"
-        
+
         # Format order data according to Bitget requirements
         formatted_order = self._format_order_data(order_data)
         body = json.dumps(formatted_order)
@@ -184,13 +209,18 @@ class BitgetFuturesAPI:
         if not is_valid:
             raise ValueError(f"Invalid order size: {message}")
         
+        # Determine holdSide for hedge mode
+        side = order_data['side'].lower()
+        hold_side = 'long' if side == 'buy' else 'short'
+
         formatted_order = {
             'symbol': symbol,
             'productType': 'umcbl',  # USDT-M futures
             'marginCoin': 'USDT',
             'size': str(quantity),
             'price': str(price),
-            'side': order_data['side'].lower(),  # 'buy' or 'sell'
+            'side': side,  # 'buy' or 'sell'
+            'holdSide': hold_side,  # 'long' or 'short' for hedge mode
             'orderType': order_data.get('orderType', 'limit').lower(),
             'timeInForceValue': order_data.get('timeInForce', 'GTC'),
             'clientOid': order_data.get('clientOrderId', f"futures_{int(time.time() * 1000)}")

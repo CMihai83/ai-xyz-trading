@@ -84,7 +84,7 @@ class SmartCapitalAllocator:
     
     GOLDEN_RATIO_TIERS = [0.382, 0.236, 0.236, 0.146]  # Sum = 1.0
     
-    def __init__(self, total_capital: float = 3.50):
+    def __init__(self, total_capital: float = 2.80):  # Reduced for Florin's account
         self.total_capital = total_capital
         self.tier_capitals = [total_capital * tier for tier in self.GOLDEN_RATIO_TIERS]
         self.used_capital = 0.0
@@ -227,13 +227,14 @@ class AdaptiveFibonacciAveraging:
     Preserves core Fibonacci concepts while adapting to market conditions
     """
     
-    # Fibonacci sequence for thresholds (reverse order)
-    FIBONACCI_THRESHOLDS = [34, 21, 13, 8, 5, 3, 2]
+    # Fibonacci sequence for thresholds (reverse order) - REDUCED FOR FLORIN'S ACCOUNT ($5 capital)
+    FIBONACCI_THRESHOLDS = [34, 21, 13]  # Only 3 steps
+
+    # Fibonacci sequence for multipliers (natural order) - REDUCED FOR FLORIN'S ACCOUNT
+    # With $0.7 initial: Step1=$0.7, Step2=$0.7, Step3=$1.4 = Total $2.8 (70% of $5)
+    FIBONACCI_MULTIPLIERS = [1, 1, 2]  # Only 3 steps instead of 7
     
-    # Fibonacci sequence for multipliers (natural order)  
-    FIBONACCI_MULTIPLIERS = [1, 1, 2, 3, 5, 8, 13]
-    
-    def __init__(self, total_capital: float = 3.50):
+    def __init__(self, total_capital: float = 2.80):  # Reduced for Florin's account: $5 * 70% - $0.7 initial
         self.volatility_tracker = VolatilityTracker()
         self.capital_allocator = SmartCapitalAllocator(total_capital)
         self.efficiency_tracker = EfficiencyTracker()
