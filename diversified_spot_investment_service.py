@@ -12,8 +12,15 @@ Architecture (Based on Grok Consultation):
 
 Asset Categories:
 - Crypto: BTC, ETH, SOL, EGLD, etc. (spot)
-- Gold: XAUT (tokenized gold)
-- Stocks: Tokenized stocks (NVDA, TSLA, AAPL, etc.)
+- Gold: XAUT, PAXG (tokenized gold)
+- Stocks/RWA: ONDO (RWA protocol) + tech-correlated crypto (RENDER, LINK, etc.)
+  NOTE: xStocks (NVDAX, TSLAx, AAPLx) are on Bitget Onchain platform, not main API.
+        Using ONDO + high-beta tech crypto as stock exposure proxies.
+
+Market Hours Awareness:
+- US Stock Market: 9:30 AM - 4:00 PM ET (Mon-Fri)
+- During market hours: Stock-correlated assets have higher correlation
+- Off hours: Lower liquidity for stock proxies, adjust allocation weights
 """
 
 import asyncio
@@ -27,6 +34,7 @@ from enum import Enum
 import ccxt.async_support as ccxt
 from dotenv import load_dotenv
 import numpy as np
+import pytz  # For timezone handling
 
 load_dotenv()
 logger = structlog.get_logger(__name__)
@@ -127,19 +135,30 @@ class DiversifiedSpotInvestmentService:
             'PAXG/USDT',  # Pax Gold (backup)
         ]
 
+        # Stock/RWA Universe - Using proxies since xStocks are on Bitget Onchain (not main API)
+        # ONDO: RWA protocol behind tokenized stocks/bonds
+        # RENDER: GPU compute (correlates with NVIDIA)
+        # FET: AI/compute (correlates with tech stocks)
+        # LINK: Oracle infrastructure (DeFi/TradFi bridge)
+        # PENDLE: Yield tokenization (DeFi/finance proxy)
+        # NOTE: When Bitget adds xStocks to main API, add: NVDAX_USDT, TSLAx_USDT, etc.
         self.STOCKS_UNIVERSE = [
-            # Tokenized stocks (if available on exchange)
-            # Note: Bitget may have limited tokenized stocks
-            # These are typical examples - check exchange availability
-            'NVDA/USDT',   # Simulated via crypto with similar behavior
-            'TSLA/USDT',   # If tokenized available
-            'AAPL/USDT',
-            'MSFT/USDT',
-            'GOOGL/USDT',
-            'AMZN/USDT',
-            'META/USDT',
-            'AMD/USDT',
+            'ONDO/USDT',   # RWA protocol - primary stock exposure proxy
+            'RENDER/USDT', # GPU compute - NVIDIA correlation
+            'FET/USDT',    # AI/compute - tech sector proxy
+            'LINK/USDT',   # Oracle/infrastructure - TradFi bridge
+            'PENDLE/USDT', # Yield tokenization - finance proxy
+            'MKR/USDT',    # DeFi governance - finance sector
+            'AAVE/USDT',   # DeFi lending - banking proxy
+            'SNX/USDT',    # Synthetic assets - derivatives proxy
         ]
+
+        # US Market hours configuration
+        self.US_MARKET_TZ = pytz.timezone('America/New_York')
+        self.MARKET_OPEN_HOUR = 9
+        self.MARKET_OPEN_MINUTE = 30
+        self.MARKET_CLOSE_HOUR = 16
+        self.MARKET_CLOSE_MINUTE = 0
 
         # Portfolio state
         self.portfolio_state: Optional[PortfolioState] = None
@@ -190,6 +209,88 @@ class DiversifiedSpotInvestmentService:
                    crypto=len(self.CRYPTO_UNIVERSE),
                    gold=len(self.GOLD_UNIVERSE),
                    stocks=len(self.STOCKS_UNIVERSE))
+
+    # =========================================================================
+    # MARKET HOURS AWARENESS
+    # =========================================================================
+
+    def is_us_market_open(self) -> bool:
+        """
+        Check if US stock market is currently open.
+        Market hours: 9:30 AM - 4:00 PM ET, Monday-Friday
+        """
+        try:
+            current_time_et = datetime.now(self.US_MARKET_TZ)
+
+            # Check if weekday (0=Monday, 4=Friday)
+            if current_time_et.weekday() > 4:  # Saturday or Sunday
+                return False
+
+            # Check if within market hours
+            market_open = current_time_et.replace(
+                hour=self.MARKET_OPEN_HOUR,
+                minute=self.MARKET_OPEN_MINUTE,
+                second=0, microsecond=0
+            )
+            market_close = current_time_et.replace(
+                hour=self.MARKET_CLOSE_HOUR,
+                minute=self.MARKET_CLOSE_MINUTE,
+                second=0, microsecond=0
+            )
+
+            return market_open <= current_time_et <= market_close
+
+        except Exception as e:
+            logger.warning("Market hours check failed", error=str(e))
+            return False
+
+    def get_market_status(self) -> Dict:
+        """Get detailed US market status"""
+        try:
+            current_time_et = datetime.now(self.US_MARKET_TZ)
+            is_open = self.is_us_market_open()
+
+            # Calculate time to open/close
+            market_open = current_time_et.replace(
+                hour=self.MARKET_OPEN_HOUR,
+                minute=self.MARKET_OPEN_MINUTE,
+                second=0, microsecond=0
+            )
+            market_close = current_time_et.replace(
+                hour=self.MARKET_CLOSE_HOUR,
+                minute=self.MARKET_CLOSE_MINUTE,
+                second=0, microsecond=0
+            )
+
+            if is_open:
+                time_to_close = (market_close - current_time_et).total_seconds() / 3600
+                status = "OPEN"
+            else:
+                # Calculate time to next open
+                if current_time_et.weekday() >= 4:  # Friday after close or weekend
+                    days_to_monday = (7 - current_time_et.weekday()) % 7
+                    if days_to_monday == 0:
+                        days_to_monday = 7
+                    next_open = market_open + timedelta(days=days_to_monday)
+                elif current_time_et < market_open:
+                    next_open = market_open
+                else:
+                    next_open = market_open + timedelta(days=1)
+                time_to_close = (next_open - current_time_et).total_seconds() / 3600
+                status = "CLOSED"
+
+            return {
+                'status': status,
+                'is_open': is_open,
+                'current_time_et': current_time_et.strftime('%Y-%m-%d %H:%M:%S ET'),
+                'weekday': current_time_et.strftime('%A'),
+                'hours_to_next_event': round(time_to_close, 2),
+                'note': 'Stock-correlated assets (ONDO, RENDER, etc.) have higher correlation during market hours'
+            }
+
+        except Exception as e:
+            logger.warning("Market status check failed", error=str(e))
+            return {'status': 'UNKNOWN', 'is_open': False, 'error': str(e)}
 
     # =========================================================================
     # MARGIN MANAGEMENT MODULE (MMM)
@@ -914,10 +1015,24 @@ async def main():
             print("MULTI-ASSET MARKET SCAN")
             print("="*70)
 
+            # Show market status
+            market_status = service.get_market_status()
+            print(f"\nUS Market Status: {market_status['status']}")
+            print(f"Current Time: {market_status.get('current_time_et', 'N/A')} ({market_status.get('weekday', 'N/A')})")
+            if market_status['is_open']:
+                print(f"Hours to close: {market_status.get('hours_to_next_event', 'N/A')}")
+            else:
+                print(f"Hours to open: {market_status.get('hours_to_next_event', 'N/A')}")
+            print(f"Note: {market_status.get('note', '')}")
+            print("-" * 70)
+
             results = await service.scan_all_categories()
 
             for category, opportunities in results.items():
-                print(f"\n{category.value.upper()} ({len(opportunities)} assets):")
+                category_note = ""
+                if category == AssetCategory.STOCKS:
+                    category_note = " (RWA/Stock Proxies)"
+                print(f"\n{category.value.upper()}{category_note} ({len(opportunities)} assets):")
                 print("-" * 50)
 
                 for opp in opportunities[:5]:
