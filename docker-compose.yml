@@ -162,7 +162,12 @@ services:
       - "8004:8000"
     environment:
       - REDIS_URL=redis://redis:6379/0
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
       - DATABASE_URL=postgresql://${DB_USER:-ai_xyz_user}:${DB_PASSWORD:-ai_xyz_pass}@postgres:5432/${DB_NAME:-ai_xyz}
+      - BITGET_API_KEY=${BITGET_API_KEY}
+      - BITGET_API_SECRET=${BITGET_API_SECRET}
+      - BITGET_API_PASSPHRASE=${BITGET_API_PASSPHRASE}
     networks:
       - ai_xyz_network
     depends_on:

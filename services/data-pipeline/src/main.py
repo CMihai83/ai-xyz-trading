@@ -1,5 +1,6 @@
 """
-Data Pipeline - Real-time data ingestion and processing.
+Data Pipeline - Real-time data ingestion using Bitget API
+Supports: Crypto, Tokenized Stocks, RWAs (Gold/Silver)
 """
 
 from fastapi import FastAPI, HTTPException
@@ -9,9 +10,11 @@ from typing import Dict, List, Optional, Any
 from datetime import datetime, timedelta
 import asyncio
 import os
-import pandas as pd
-import numpy as np
-import yfinance as yf
+import aiohttp
+import hmac
+import hashlib
+import base64
+import time
 import redis
 import json
 import structlog
@@ -19,9 +22,9 @@ import structlog
 logger = structlog.get_logger(__name__)
 
 app = FastAPI(
-    title="Data Pipeline",
-    description="Real-time data ingestion and processing",
-    version="1.0.0"
+    title="Data Pipeline - Bitget API",
+    description="Real-time data ingestion for Crypto, Stocks, and RWAs via Bitget",
+    version="2.0.0"
 )
 
 app.add_middleware(
@@ -32,420 +35,711 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-class DataPipeline:
-    """Real-time data pipeline for market data."""
-    
+
+class BitgetDataPipeline:
+    """
+    Real-time data pipeline using Bitget Spot API V2.
+    Supports: Crypto, Tokenized Stocks, RWAs (Gold/Silver)
+    """
+
+    # Bitget API endpoints
+    BASE_URL = "https://api.bitget.com"
+
+    # Asset categories with Bitget symbols
+    CRYPTO_SYMBOLS = [
+        "BTCUSDT", "ETHUSDT", "SOLUSDT", "XRPUSDT", "ADAUSDT",
+        "DOGEUSDT", "LINKUSDT", "AVAXUSDT", "DOTUSDT", "MATICUSDT",
+        "LTCUSDT", "UNIUSDT", "ATOMUSDT", "NEARUSDT", "AAVEUSDT"
+    ]
+
+    # Tokenized Stocks (via xStock/Ondo on Bitget)
+    STOCK_SYMBOLS = [
+        "NVDAUSDT",   # NVIDIA
+        "TSLAUSDT",   # Tesla
+        "AAPLUSDT",   # Apple
+        "MSFTUSDT",   # Microsoft
+        "AMZNUSDT",   # Amazon
+        "GOOGLAUSDT", # Google
+        "METAUSDT",   # Meta
+        "NFLXUSDT",   # Netflix
+        "AMDUSDT",    # AMD
+        "INTCUSDT",   # Intel
+    ]
+
+    # RWAs - Real World Assets (Gold, Silver, etc.)
+    RWA_SYMBOLS = [
+        "XAUTUSDT",   # Tether Gold (tokenized gold)
+        "PAXGUSDT",   # Paxos Gold
+        "XAGUSDT",    # Tokenized Silver (if available)
+    ]
+
     def __init__(self):
+        # Redis connection
         redis_host = os.getenv('REDIS_HOST', 'localhost')
         redis_port = int(os.getenv('REDIS_PORT', 6379))
         self.redis_client = redis.Redis(host=redis_host, port=redis_port, db=4, decode_responses=True)
-        self.data_sources = {
-            'yahoo_finance': self.fetch_yahoo_finance_data,
-            'alpha_vantage': self.fetch_alpha_vantage_data,
-            'polygon': self.fetch_polygon_data
+
+        # API credentials (optional - for private endpoints)
+        self.api_key = os.getenv('BITGET_API_KEY', '')
+        self.api_secret = os.getenv('BITGET_API_SECRET', '')
+        self.api_passphrase = os.getenv('BITGET_API_PASSPHRASE', '')
+
+        # Combine all symbols
+        self.symbols = {
+            'crypto': self.CRYPTO_SYMBOLS,
+            'stocks': self.STOCK_SYMBOLS,
+            'rwa': self.RWA_SYMBOLS
         }
-        self.symbols = [
-            'AAPL', 'GOOGL', 'MSFT', 'AMZN', 'TSLA', 'META', 'NVDA', 'NFLX',
-            'SPY', 'QQQ', 'IWM', 'GLD', 'SLV', 'TLT', 'VIX'
-        ]
+        self.all_symbols = self.CRYPTO_SYMBOLS + self.STOCK_SYMBOLS + self.RWA_SYMBOLS
+
+        # Available symbols cache (validated against Bitget)
+        self.available_symbols = set()
+
         self.running = False
-    
+        self.session: Optional[aiohttp.ClientSession] = None
+
+        logger.info(f"BitgetDataPipeline initialized with {len(self.all_symbols)} symbols")
+
+    async def create_session(self):
+        """Create aiohttp session."""
+        if not self.session:
+            self.session = aiohttp.ClientSession()
+
+    async def close_session(self):
+        """Close aiohttp session."""
+        if self.session:
+            await self.session.close()
+            self.session = None
+
+    def _generate_signature(self, timestamp: str, method: str, request_path: str, body: str = "") -> str:
+        """Generate HMAC SHA256 signature for authenticated requests."""
+        message = timestamp + method + request_path + body
+        signature = hmac.new(
+            self.api_secret.encode('utf-8'),
+            message.encode('utf-8'),
+            hashlib.sha256
+        ).digest()
+        return base64.b64encode(signature).decode()
+
+    def _get_headers(self, method: str = "GET", request_path: str = "", body: str = "") -> Dict:
+        """Get headers for API request."""
+        timestamp = str(int(time.time() * 1000))
+        headers = {
+            "Content-Type": "application/json",
+            "locale": "en-US"
+        }
+
+        # Add authentication if credentials available
+        if self.api_key and self.api_secret:
+            headers.update({
+                "ACCESS-KEY": self.api_key,
+                "ACCESS-SIGN": self._generate_signature(timestamp, method, request_path, body),
+                "ACCESS-TIMESTAMP": timestamp,
+                "ACCESS-PASSPHRASE": self.api_passphrase
+            })
+
+        return headers
+
+    async def fetch_available_symbols(self) -> List[str]:
+        """Fetch all available spot symbols from Bitget."""
+        try:
+            url = f"{self.BASE_URL}/api/v2/spot/public/symbols"
+
+            async with self.session.get(url) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    if data.get('code') == '00000':
+                        symbols = [item['symbol'] for item in data.get('data', [])]
+                        self.available_symbols = set(symbols)
+                        logger.info(f"Fetched {len(symbols)} available symbols from Bitget")
+                        return symbols
+
+            return []
+        except Exception as e:
+            logger.error(f"Error fetching available symbols: {e}")
+            return []
+
+    async def fetch_ticker(self, symbol: str) -> Optional[Dict]:
+        """
+        Fetch real-time ticker data for a symbol.
+        GET /api/v2/spot/market/tickers
+        """
+        try:
+            url = f"{self.BASE_URL}/api/v2/spot/market/tickers"
+            params = {"symbol": symbol}
+
+            async with self.session.get(url, params=params) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    if data.get('code') == '00000' and data.get('data'):
+                        ticker = data['data'][0] if isinstance(data['data'], list) else data['data']
+                        return {
+                            'symbol': symbol,
+                            'price': float(ticker.get('lastPr', 0)),
+                            'open24h': float(ticker.get('open', 0)),
+                            'high24h': float(ticker.get('high24h', 0)),
+                            'low24h': float(ticker.get('low24h', 0)),
+                            'volume24h': float(ticker.get('baseVolume', 0)),
+                            'quoteVolume24h': float(ticker.get('quoteVolume', 0)),
+                            'change24h': float(ticker.get('change24h', 0)),
+                            'changePercent24h': float(ticker.get('changeUtc24h', 0)),
+                            'bid': float(ticker.get('bidPr', 0)),
+                            'ask': float(ticker.get('askPr', 0)),
+                            'timestamp': ticker.get('ts', str(int(time.time() * 1000))),
+                            'source': 'bitget'
+                        }
+                elif response.status == 429:
+                    logger.warning(f"Rate limited for {symbol}, waiting...")
+                    await asyncio.sleep(5)
+
+            return None
+        except Exception as e:
+            logger.error(f"Error fetching ticker for {symbol}: {e}")
+            return None
+
+    async def fetch_all_tickers(self) -> List[Dict]:
+        """Fetch all tickers at once (more efficient)."""
+        try:
+            url = f"{self.BASE_URL}/api/v2/spot/market/tickers"
+
+            async with self.session.get(url) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    if data.get('code') == '00000':
+                        tickers = []
+                        for ticker in data.get('data', []):
+                            symbol = ticker.get('symbol', '')
+                            if symbol in self.all_symbols or symbol.replace('USDT', '') in [s.replace('USDT', '') for s in self.all_symbols]:
+                                tickers.append({
+                                    'symbol': symbol,
+                                    'price': float(ticker.get('lastPr', 0)),
+                                    'open24h': float(ticker.get('open', 0)),
+                                    'high24h': float(ticker.get('high24h', 0)),
+                                    'low24h': float(ticker.get('low24h', 0)),
+                                    'volume24h': float(ticker.get('baseVolume', 0)),
+                                    'quoteVolume24h': float(ticker.get('quoteVolume', 0)),
+                                    'change24h': float(ticker.get('change24h', 0)),
+                                    'changePercent24h': float(ticker.get('changeUtc24h', 0)),
+                                    'bid': float(ticker.get('bidPr', 0)),
+                                    'ask': float(ticker.get('askPr', 0)),
+                                    'timestamp': ticker.get('ts', str(int(time.time() * 1000))),
+                                    'source': 'bitget'
+                                })
+                        return tickers
+            return []
+        except Exception as e:
+            logger.error(f"Error fetching all tickers: {e}")
+            return []
+
+    async def fetch_candles(self, symbol: str, granularity: str = "1H", limit: int = 100) -> List[Dict]:
+        """
+        Fetch historical candle data.
+        GET /api/v2/spot/market/candles
+
+        Granularity options: 1min, 5min, 15min, 30min, 1H, 4H, 1D, 1W
+        """
+        try:
+            url = f"{self.BASE_URL}/api/v2/spot/market/candles"
+            params = {
+                "symbol": symbol,
+                "granularity": granularity,
+                "limit": str(limit)
+            }
+
+            async with self.session.get(url, params=params) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    if data.get('code') == '00000':
+                        candles = []
+                        for candle in data.get('data', []):
+                            # Bitget returns: [ts, open, high, low, close, volume, quoteVolume]
+                            candles.append({
+                                'timestamp': candle[0],
+                                'open': float(candle[1]),
+                                'high': float(candle[2]),
+                                'low': float(candle[3]),
+                                'close': float(candle[4]),
+                                'volume': float(candle[5]),
+                                'quoteVolume': float(candle[6]) if len(candle) > 6 else 0
+                            })
+                        return candles
+            return []
+        except Exception as e:
+            logger.error(f"Error fetching candles for {symbol}: {e}")
+            return []
+
+    async def fetch_orderbook(self, symbol: str, limit: int = 20) -> Optional[Dict]:
+        """
+        Fetch order book depth.
+        GET /api/v2/spot/market/orderbook
+        """
+        try:
+            url = f"{self.BASE_URL}/api/v2/spot/market/orderbook"
+            params = {
+                "symbol": symbol,
+                "limit": str(limit)
+            }
+
+            async with self.session.get(url, params=params) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    if data.get('code') == '00000':
+                        book = data.get('data', {})
+                        return {
+                            'symbol': symbol,
+                            'bids': [[float(b[0]), float(b[1])] for b in book.get('bids', [])],
+                            'asks': [[float(a[0]), float(a[1])] for a in book.get('asks', [])],
+                            'timestamp': book.get('ts', str(int(time.time() * 1000)))
+                        }
+            return None
+        except Exception as e:
+            logger.error(f"Error fetching orderbook for {symbol}: {e}")
+            return None
+
+    async def fetch_recent_trades(self, symbol: str, limit: int = 100) -> List[Dict]:
+        """
+        Fetch recent trades.
+        GET /api/v2/spot/market/fills
+        """
+        try:
+            url = f"{self.BASE_URL}/api/v2/spot/market/fills"
+            params = {
+                "symbol": symbol,
+                "limit": str(limit)
+            }
+
+            async with self.session.get(url, params=params) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    if data.get('code') == '00000':
+                        trades = []
+                        for trade in data.get('data', []):
+                            trades.append({
+                                'tradeId': trade.get('tradeId'),
+                                'price': float(trade.get('price', 0)),
+                                'size': float(trade.get('size', 0)),
+                                'side': trade.get('side'),
+                                'timestamp': trade.get('ts')
+                            })
+                        return trades
+            return []
+        except Exception as e:
+            logger.error(f"Error fetching trades for {symbol}: {e}")
+            return []
+
     async def start_pipeline(self):
         """Start the data pipeline."""
         self.running = True
-        logger.info("Starting data pipeline...")
-        
+        await self.create_session()
+
+        # Fetch available symbols first
+        await self.fetch_available_symbols()
+
+        logger.info("Starting Bitget data pipeline...")
+        logger.info(f"  Crypto: {len(self.CRYPTO_SYMBOLS)} symbols")
+        logger.info(f"  Stocks: {len(self.STOCK_SYMBOLS)} symbols")
+        logger.info(f"  RWAs: {len(self.RWA_SYMBOLS)} symbols")
+
         # Start background tasks
         asyncio.create_task(self.real_time_data_task())
         asyncio.create_task(self.historical_data_task())
         asyncio.create_task(self.data_cleanup_task())
-    
+
     async def stop_pipeline(self):
         """Stop the data pipeline."""
         self.running = False
-        logger.info("Stopping data pipeline...")
-    
+        await self.close_session()
+        logger.info("Stopped Bitget data pipeline")
+
     async def real_time_data_task(self):
         """Continuously fetch real-time market data."""
         while self.running:
             try:
-                for symbol in self.symbols:
-                    await self.fetch_and_store_real_time_data(symbol)
-                    await asyncio.sleep(1)  # Rate limiting
-                
-                await asyncio.sleep(30)  # Wait 30 seconds before next cycle
-                
+                # Fetch all tickers at once (efficient)
+                tickers = await self.fetch_all_tickers()
+
+                for ticker in tickers:
+                    symbol = ticker['symbol']
+
+                    # Categorize the asset
+                    category = 'crypto'
+                    if symbol in self.STOCK_SYMBOLS or any(s in symbol for s in ['NVDA', 'TSLA', 'AAPL', 'MSFT', 'AMZN', 'GOOGL', 'META', 'NFLX', 'AMD', 'INTC']):
+                        category = 'stocks'
+                    elif symbol in self.RWA_SYMBOLS or any(s in symbol for s in ['XAU', 'PAXG', 'XAG']):
+                        category = 'rwa'
+
+                    ticker['category'] = category
+
+                    # Store in Redis
+                    key = f"realtime:{symbol}"
+                    self.redis_client.setex(key, 300, json.dumps(ticker))
+
+                    # Store in time series
+                    ts_key = f"timeseries:{symbol}:{datetime.now().strftime('%Y%m%d')}"
+                    self.redis_client.lpush(ts_key, json.dumps(ticker))
+                    self.redis_client.expire(ts_key, 86400)
+                    self.redis_client.ltrim(ts_key, 0, 999)
+
+                logger.info(f"Updated {len(tickers)} tickers from Bitget")
+                await asyncio.sleep(30)  # Update every 30 seconds
+
             except Exception as e:
-                logger.error(f"Error in real-time data task: {str(e)}")
+                logger.error(f"Error in real-time data task: {e}")
                 await asyncio.sleep(60)
-    
+
     async def historical_data_task(self):
         """Fetch and update historical data."""
         while self.running:
             try:
-                for symbol in self.symbols:
-                    await self.fetch_and_store_historical_data(symbol)
-                    await asyncio.sleep(5)  # Rate limiting
-                
-                await asyncio.sleep(3600)  # Update every hour
-                
+                for symbol in self.all_symbols:
+                    # Check if symbol exists on Bitget
+                    if self.available_symbols and symbol not in self.available_symbols:
+                        continue
+
+                    # Fetch different timeframes
+                    timeframes = {
+                        '1D': 100,   # Daily candles
+                        '1H': 100,   # Hourly candles
+                        '15min': 100  # 15-minute candles
+                    }
+
+                    for granularity, limit in timeframes.items():
+                        candles = await self.fetch_candles(symbol, granularity, limit)
+
+                        if candles:
+                            key = f"historical:{symbol}:{granularity}"
+                            self.redis_client.setex(key, 3600, json.dumps(candles))
+                            logger.debug(f"Updated {symbol} {granularity}: {len(candles)} candles")
+
+                        await asyncio.sleep(0.5)  # Rate limiting
+
+                    await asyncio.sleep(1)  # Between symbols
+
+                await asyncio.sleep(3600)  # Update hourly
+
             except Exception as e:
-                logger.error(f"Error in historical data task: {str(e)}")
-                await asyncio.sleep(1800)  # Wait 30 minutes on error
-    
+                logger.error(f"Error in historical data task: {e}")
+                await asyncio.sleep(1800)
+
     async def data_cleanup_task(self):
-        """Clean up old data to manage storage."""
+        """Clean up old data from Redis."""
         while self.running:
             try:
-                await self.cleanup_old_data()
-                await asyncio.sleep(3600)  # Run every hour
-                
-            except Exception as e:
-                logger.error(f"Error in data cleanup task: {str(e)}")
                 await asyncio.sleep(3600)
-    
-    async def fetch_and_store_real_time_data(self, symbol: str):
-        """Fetch and store real-time data for a symbol."""
-        try:
-            # Fetch current quote
-            ticker = yf.Ticker(symbol)
-            info = ticker.info
-            
-            real_time_data = {
-                'symbol': symbol,
-                'price': info.get('currentPrice', info.get('regularMarketPrice', 0)),
-                'change': info.get('regularMarketChange', 0),
-                'change_percent': info.get('regularMarketChangePercent', 0),
-                'volume': info.get('regularMarketVolume', 0),
-                'bid': info.get('bid', 0),
-                'ask': info.get('ask', 0),
-                'bid_size': info.get('bidSize', 0),
-                'ask_size': info.get('askSize', 0),
-                'market_cap': info.get('marketCap', 0),
-                'timestamp': datetime.now().isoformat()
-            }
-            
-            # Store in Redis with expiration
-            key = f"realtime:{symbol}"
-            self.redis_client.setex(key, 300, json.dumps(real_time_data))  # 5 minute expiration
-            
-            # Also store in time series for charts
-            ts_key = f"timeseries:{symbol}:{datetime.now().strftime('%Y%m%d')}"
-            self.redis_client.lpush(ts_key, json.dumps(real_time_data))
-            self.redis_client.expire(ts_key, 86400)  # 24 hour expiration
-            
-            # Keep only last 1000 entries per day
-            self.redis_client.ltrim(ts_key, 0, 999)
-            
-        except Exception as e:
-            logger.error(f"Error fetching real-time data for {symbol}: {str(e)}")
-    
-    async def fetch_and_store_historical_data(self, symbol: str):
-        """Fetch and store historical data for a symbol."""
-        try:
-            ticker = yf.Ticker(symbol)
-            
-            # Fetch different timeframes
-            timeframes = {
-                '1d': '1y',    # 1 day bars for 1 year
-                '1h': '1mo',   # 1 hour bars for 1 month
-                '5m': '5d'     # 5 minute bars for 5 days
-            }
-            
-            for interval, period in timeframes.items():
-                df = ticker.history(period=period, interval=interval)
-                
-                if not df.empty:
-                    # Convert to JSON format
-                    historical_data = []
-                    for index, row in df.iterrows():
-                        historical_data.append({
-                            'timestamp': index.isoformat(),
-                            'open': float(row['Open']),
-                            'high': float(row['High']),
-                            'low': float(row['Low']),
-                            'close': float(row['Close']),
-                            'volume': int(row['Volume'])
-                        })
-                    
-                    # Store in Redis
-                    key = f"historical:{symbol}:{interval}"
-                    self.redis_client.setex(key, 3600, json.dumps(historical_data))  # 1 hour expiration
-                    
-                    logger.info(f"Updated historical data for {symbol} ({interval}): {len(historical_data)} bars")
-        
-        except Exception as e:
-            logger.error(f"Error fetching historical data for {symbol}: {str(e)}")
-    
-    async def fetch_yahoo_finance_data(self, symbol: str, period: str = "1d") -> Dict:
-        """Fetch data from Yahoo Finance."""
-        try:
-            ticker = yf.Ticker(symbol)
-            df = ticker.history(period=period)
-            
-            if df.empty:
-                return {}
-            
-            latest = df.iloc[-1]
-            return {
-                'source': 'yahoo_finance',
-                'symbol': symbol,
-                'price': float(latest['Close']),
-                'volume': int(latest['Volume']),
-                'high': float(latest['High']),
-                'low': float(latest['Low']),
-                'open': float(latest['Open']),
-                'timestamp': df.index[-1].isoformat()
-            }
-            
-        except Exception as e:
-            logger.error(f"Yahoo Finance fetch error for {symbol}: {str(e)}")
-            return {}
-    
-    async def fetch_alpha_vantage_data(self, symbol: str) -> Dict:
-        """Fetch data from Alpha Vantage (placeholder)."""
-        # Placeholder for Alpha Vantage integration
-        return {
-            'source': 'alpha_vantage',
-            'symbol': symbol,
-            'status': 'not_implemented'
-        }
-    
-    async def fetch_polygon_data(self, symbol: str) -> Dict:
-        """Fetch data from Polygon.io (placeholder)."""
-        # Placeholder for Polygon.io integration
-        return {
-            'source': 'polygon',
-            'symbol': symbol,
-            'status': 'not_implemented'
-        }
-    
+
+                all_keys = self.redis_client.keys("timeseries:*")
+                cutoff_date = (datetime.now() - timedelta(days=7)).strftime('%Y%m%d')
+
+                deleted = 0
+                for key in all_keys:
+                    parts = key.split(':')
+                    if len(parts) >= 3 and parts[-1] < cutoff_date:
+                        self.redis_client.delete(key)
+                        deleted += 1
+
+                if deleted:
+                    logger.info(f"Cleaned up {deleted} old time series keys")
+
+            except Exception as e:
+                logger.error(f"Error in cleanup task: {e}")
+                await asyncio.sleep(3600)
+
     async def get_real_time_data(self, symbol: str) -> Optional[Dict]:
         """Get real-time data for a symbol."""
         try:
             key = f"realtime:{symbol}"
             data = self.redis_client.get(key)
-            
+
             if data:
                 return json.loads(data)
-            else:
-                # Fetch fresh data if not in cache
-                await self.fetch_and_store_real_time_data(symbol)
-                data = self.redis_client.get(key)
-                return json.loads(data) if data else None
-                
+
+            # Fetch fresh if not cached
+            ticker = await self.fetch_ticker(symbol)
+            if ticker:
+                self.redis_client.setex(key, 300, json.dumps(ticker))
+            return ticker
+
         except Exception as e:
-            logger.error(f"Error getting real-time data for {symbol}: {str(e)}")
+            logger.error(f"Error getting real-time data for {symbol}: {e}")
             return None
-    
-    async def get_historical_data(self, symbol: str, interval: str = "1d") -> Optional[List[Dict]]:
+
+    async def get_historical_data(self, symbol: str, granularity: str = "1D") -> List[Dict]:
         """Get historical data for a symbol."""
         try:
-            key = f"historical:{symbol}:{interval}"
+            key = f"historical:{symbol}:{granularity}"
             data = self.redis_client.get(key)
-            
+
             if data:
                 return json.loads(data)
-            else:
-                # Fetch fresh data if not in cache
-                await self.fetch_and_store_historical_data(symbol)
-                data = self.redis_client.get(key)
-                return json.loads(data) if data else []
-                
+
+            # Fetch fresh if not cached
+            candles = await self.fetch_candles(symbol, granularity)
+            if candles:
+                self.redis_client.setex(key, 3600, json.dumps(candles))
+            return candles
+
         except Exception as e:
-            logger.error(f"Error getting historical data for {symbol}: {str(e)}")
+            logger.error(f"Error getting historical data for {symbol}: {e}")
             return []
-    
+
     async def get_time_series_data(self, symbol: str, date: str = None) -> List[Dict]:
-        """Get intraday time series data for a symbol."""
+        """Get intraday time series data."""
         try:
             if not date:
                 date = datetime.now().strftime('%Y%m%d')
-            
+
             key = f"timeseries:{symbol}:{date}"
             data = self.redis_client.lrange(key, 0, -1)
-            
+
             return [json.loads(item) for item in data]
-            
+
         except Exception as e:
-            logger.error(f"Error getting time series data for {symbol}: {str(e)}")
+            logger.error(f"Error getting time series for {symbol}: {e}")
             return []
-    
-    async def cleanup_old_data(self):
-        """Clean up old data from Redis."""
-        try:
-            # Get all keys
-            all_keys = self.redis_client.keys("*")
-            
-            # Clean up old time series data (older than 7 days)
-            cutoff_date = (datetime.now() - timedelta(days=7)).strftime('%Y%m%d')
-            
-            for key in all_keys:
-                if key.startswith('timeseries:') and key.split(':')[-1] < cutoff_date:
-                    self.redis_client.delete(key)
-                    logger.info(f"Deleted old time series data: {key}")
-            
-        except Exception as e:
-            logger.error(f"Error cleaning up old data: {str(e)}")
-    
+
     async def get_pipeline_status(self) -> Dict:
-        """Get data pipeline status."""
+        """Get pipeline status."""
         try:
-            # Count cached symbols
             realtime_keys = self.redis_client.keys("realtime:*")
             historical_keys = self.redis_client.keys("historical:*")
             timeseries_keys = self.redis_client.keys("timeseries:*")
-            
-            # Get memory usage
             memory_info = self.redis_client.info('memory')
-            
+
             return {
                 'running': self.running,
-                'symbols_tracked': len(self.symbols),
-                'realtime_cached': len(realtime_keys),
-                'historical_cached': len(historical_keys),
-                'timeseries_cached': len(timeseries_keys),
+                'source': 'bitget',
+                'symbols': {
+                    'crypto': len(self.CRYPTO_SYMBOLS),
+                    'stocks': len(self.STOCK_SYMBOLS),
+                    'rwa': len(self.RWA_SYMBOLS),
+                    'total': len(self.all_symbols)
+                },
+                'available_on_exchange': len(self.available_symbols),
+                'cached': {
+                    'realtime': len(realtime_keys),
+                    'historical': len(historical_keys),
+                    'timeseries': len(timeseries_keys)
+                },
                 'memory_used_mb': memory_info.get('used_memory', 0) / 1024 / 1024,
-                'data_sources': list(self.data_sources.keys()),
                 'last_update': datetime.now().isoformat()
             }
-            
+
         except Exception as e:
-            logger.error(f"Error getting pipeline status: {str(e)}")
+            logger.error(f"Error getting pipeline status: {e}")
             return {'error': str(e)}
 
-# Initialize data pipeline
-data_pipeline = DataPipeline()
+    def get_symbols_by_category(self, category: str) -> List[str]:
+        """Get symbols by category."""
+        return self.symbols.get(category, [])
+
+
+# Initialize pipeline
+data_pipeline = BitgetDataPipeline()
+
 
 @app.on_event("startup")
 async def startup_event():
-    """Start data pipeline on startup."""
+    """Start pipeline on startup."""
     await data_pipeline.start_pipeline()
+
 
 @app.on_event("shutdown")
 async def shutdown_event():
-    """Stop data pipeline on shutdown."""
+    """Stop pipeline on shutdown."""
     await data_pipeline.stop_pipeline()
+
 
 @app.get("/")
 async def root():
     return {
         "service": "data-pipeline",
+        "version": "2.0.0",
+        "source": "bitget",
         "status": "operational",
-        "timestamp": datetime.now().isoformat(),
-        "symbols_tracked": len(data_pipeline.symbols)
+        "assets": {
+            "crypto": len(data_pipeline.CRYPTO_SYMBOLS),
+            "stocks": len(data_pipeline.STOCK_SYMBOLS),
+            "rwa": len(data_pipeline.RWA_SYMBOLS)
+        },
+        "timestamp": datetime.now().isoformat()
     }
+
 
 @app.get("/health")
 async def health_check():
     return {
         "status": "healthy",
         "service": "data-pipeline",
+        "source": "bitget",
         "timestamp": datetime.now().isoformat()
     }
 
+
 @app.get("/status")
 async def get_pipeline_status():
-    """Get data pipeline status."""
+    """Get pipeline status."""
     try:
-        status = await data_pipeline.get_pipeline_status()
-        return status
+        return await data_pipeline.get_pipeline_status()
     except Exception as e:
-        logger.error(f"Error getting pipeline status: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error getting pipeline status: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/symbols")
+async def get_symbols():
+    """Get all tracked symbols by category."""
+    return {
+        "crypto": data_pipeline.CRYPTO_SYMBOLS,
+        "stocks": data_pipeline.STOCK_SYMBOLS,
+        "rwa": data_pipeline.RWA_SYMBOLS,
+        "all": data_pipeline.all_symbols,
+        "count": len(data_pipeline.all_symbols),
+        "timestamp": datetime.now().isoformat()
+    }
+
+
+@app.get("/symbols/{category}")
+async def get_symbols_by_category(category: str):
+    """Get symbols by category (crypto, stocks, rwa)."""
+    symbols = data_pipeline.get_symbols_by_category(category)
+    if not symbols:
+        raise HTTPException(status_code=404, detail=f"Category '{category}' not found")
+    return {
+        "category": category,
+        "symbols": symbols,
+        "count": len(symbols),
+        "timestamp": datetime.now().isoformat()
+    }
+
 
 @app.get("/data/realtime/{symbol}")
 async def get_real_time_data(symbol: str):
-    """Get real-time data for a symbol."""
+    """Get real-time ticker data for a symbol."""
     try:
         data = await data_pipeline.get_real_time_data(symbol.upper())
         if data:
             return data
-        else:
-            raise HTTPException(status_code=404, detail=f"No real-time data found for {symbol}")
+        raise HTTPException(status_code=404, detail=f"No data found for {symbol}")
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error getting real-time data: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error getting real-time data: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.get("/data/historical/{symbol}")
-async def get_historical_data(symbol: str, interval: str = "1d"):
-    """Get historical data for a symbol."""
+async def get_historical_data(symbol: str, granularity: str = "1D"):
+    """Get historical candle data for a symbol."""
     try:
-        data = await data_pipeline.get_historical_data(symbol.upper(), interval)
+        data = await data_pipeline.get_historical_data(symbol.upper(), granularity)
         return {
-            "symbol": symbol,
-            "interval": interval,
+            "symbol": symbol.upper(),
+            "granularity": granularity,
             "data": data,
             "count": len(data),
             "timestamp": datetime.now().isoformat()
         }
     except Exception as e:
-        logger.error(f"Error getting historical data: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error getting historical data: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.get("/data/timeseries/{symbol}")
 async def get_time_series_data(symbol: str, date: str = None):
-    """Get intraday time series data for a symbol."""
+    """Get intraday time series data."""
     try:
         data = await data_pipeline.get_time_series_data(symbol.upper(), date)
         return {
-            "symbol": symbol,
+            "symbol": symbol.upper(),
             "date": date or datetime.now().strftime('%Y%m%d'),
             "data": data,
             "count": len(data),
             "timestamp": datetime.now().isoformat()
         }
     except Exception as e:
-        logger.error(f"Error getting time series data: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error getting time series data: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/symbols")
-async def get_tracked_symbols():
-    """Get list of tracked symbols."""
-    return {
-        "symbols": data_pipeline.symbols,
-        "count": len(data_pipeline.symbols),
-        "timestamp": datetime.now().isoformat()
-    }
 
-@app.post("/symbols/{symbol}")
-async def add_symbol(symbol: str):
-    """Add a symbol to tracking."""
+@app.get("/data/orderbook/{symbol}")
+async def get_orderbook(symbol: str, limit: int = 20):
+    """Get order book for a symbol."""
     try:
-        symbol = symbol.upper()
-        if symbol not in data_pipeline.symbols:
-            data_pipeline.symbols.append(symbol)
-            # Immediately fetch data for the new symbol
-            await data_pipeline.fetch_and_store_real_time_data(symbol)
-            await data_pipeline.fetch_and_store_historical_data(symbol)
-            
+        data = await data_pipeline.fetch_orderbook(symbol.upper(), limit)
+        if data:
+            return data
+        raise HTTPException(status_code=404, detail=f"No orderbook found for {symbol}")
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/data/trades/{symbol}")
+async def get_trades(symbol: str, limit: int = 100):
+    """Get recent trades for a symbol."""
+    try:
+        data = await data_pipeline.fetch_recent_trades(symbol.upper(), limit)
         return {
-            "message": f"Symbol {symbol} added to tracking",
-            "symbols": data_pipeline.symbols,
+            "symbol": symbol.upper(),
+            "trades": data,
+            "count": len(data),
             "timestamp": datetime.now().isoformat()
         }
     except Exception as e:
-        logger.error(f"Error adding symbol: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error adding symbol: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/symbols/{symbol}")
+async def add_symbol(symbol: str, category: str = "crypto"):
+    """Add a symbol to tracking."""
+    try:
+        symbol = symbol.upper()
+        if category == "crypto":
+            if symbol not in data_pipeline.CRYPTO_SYMBOLS:
+                data_pipeline.CRYPTO_SYMBOLS.append(symbol)
+        elif category == "stocks":
+            if symbol not in data_pipeline.STOCK_SYMBOLS:
+                data_pipeline.STOCK_SYMBOLS.append(symbol)
+        elif category == "rwa":
+            if symbol not in data_pipeline.RWA_SYMBOLS:
+                data_pipeline.RWA_SYMBOLS.append(symbol)
+
+        data_pipeline.all_symbols = (
+            data_pipeline.CRYPTO_SYMBOLS +
+            data_pipeline.STOCK_SYMBOLS +
+            data_pipeline.RWA_SYMBOLS
+        )
+
+        return {
+            "message": f"Symbol {symbol} added to {category}",
+            "symbols": data_pipeline.get_symbols_by_category(category),
+            "timestamp": datetime.now().isoformat()
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.delete("/symbols/{symbol}")
 async def remove_symbol(symbol: str):
     """Remove a symbol from tracking."""
     try:
         symbol = symbol.upper()
-        if symbol in data_pipeline.symbols:
-            data_pipeline.symbols.remove(symbol)
-            
+        for category in ['CRYPTO_SYMBOLS', 'STOCK_SYMBOLS', 'RWA_SYMBOLS']:
+            symbols_list = getattr(data_pipeline, category)
+            if symbol in symbols_list:
+                symbols_list.remove(symbol)
+
+        data_pipeline.all_symbols = (
+            data_pipeline.CRYPTO_SYMBOLS +
+            data_pipeline.STOCK_SYMBOLS +
+            data_pipeline.RWA_SYMBOLS
+        )
+
         return {
-            "message": f"Symbol {symbol} removed from tracking",
-            "symbols": data_pipeline.symbols,
+            "message": f"Symbol {symbol} removed",
+            "total_symbols": len(data_pipeline.all_symbols),
             "timestamp": datetime.now().isoformat()
         }
     except Exception as e:
-        logger.error(f"Error removing symbol: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error removing symbol: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 if __name__ == "__main__":
     import uvicorn
