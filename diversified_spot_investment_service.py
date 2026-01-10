@@ -121,13 +121,27 @@ class DiversifiedSpotInvestmentService:
         self.MAX_DRAWDOWN = 0.15  # 15% max drawdown
         self.CASH_BUFFER = 0.05  # 5% cash buffer
 
-        # Asset universe by category
+        # Asset universe by category - Expanded to 60+ crypto assets
         self.CRYPTO_UNIVERSE = [
-            'BTC/USDT', 'ETH/USDT', 'SOL/USDT', 'EGLD/USDT',
-            'AVAX/USDT', 'LINK/USDT', 'DOT/USDT', 'MATIC/USDT',
-            'ADA/USDT', 'XRP/USDT', 'DOGE/USDT', 'ATOM/USDT',
-            'UNI/USDT', 'NEAR/USDT', 'APT/USDT', 'ARB/USDT',
-            'OP/USDT', 'SUI/USDT', 'INJ/USDT', 'TIA/USDT'
+            # Top 10 by Market Cap
+            'BTC/USDT', 'ETH/USDT', 'XRP/USDT', 'SOL/USDT', 'BNB/USDT',
+            'DOGE/USDT', 'ADA/USDT', 'TRX/USDT', 'AVAX/USDT', 'LINK/USDT',
+            # Top 11-25
+            'TON/USDT', 'SHIB/USDT', 'DOT/USDT', 'XLM/USDT', 'HBAR/USDT',
+            'BCH/USDT', 'UNI/USDT', 'LTC/USDT', 'PEPE/USDT', 'NEAR/USDT',
+            'ATOM/USDT', 'ICP/USDT', 'APT/USDT', 'ETC/USDT', 'MATIC/USDT',
+            # Top 26-40
+            'FIL/USDT', 'IMX/USDT', 'STX/USDT', 'RENDER/USDT', 'ARB/USDT',
+            'OP/USDT', 'INJ/USDT', 'VET/USDT', 'FTM/USDT', 'THETA/USDT',
+            'ALGO/USDT', 'GRT/USDT', 'SAND/USDT', 'MANA/USDT', 'SEI/USDT',
+            # Top 41-60 + DeFi/Gaming/AI
+            'SUI/USDT', 'TIA/USDT', 'EGLD/USDT', 'AAVE/USDT', 'MKR/USDT',
+            'RUNE/USDT', 'LDO/USDT', 'FET/USDT', 'AGIX/USDT', 'OCEAN/USDT',
+            'AXS/USDT', 'GALA/USDT', 'ENJ/USDT', 'CHZ/USDT', 'FLOW/USDT',
+            'KCS/USDT', 'CRV/USDT', 'SNX/USDT', 'COMP/USDT', '1INCH/USDT',
+            # L2s and Infrastructure
+            'STRK/USDT', 'ZK/USDT', 'BLUR/USDT', 'WLD/USDT', 'JUP/USDT',
+            'PYTH/USDT', 'JTO/USDT', 'BONK/USDT', 'WIF/USDT', 'ORDI/USDT',
         ]
 
         self.GOLD_UNIVERSE = [
@@ -148,6 +162,9 @@ class DiversifiedSpotInvestmentService:
             'FET/USDT',    # AI/compute - tech sector proxy
             'LINK/USDT',   # Oracle/infrastructure - TradFi bridge
             'PENDLE/USDT', # Yield tokenization - finance proxy
+            'AGIX/USDT',   # AI - SingularityNET
+            'OCEAN/USDT',  # AI data marketplace
+            'TAO/USDT',    # AI/ML network
             'MKR/USDT',    # DeFi governance - finance sector
             'AAVE/USDT',   # DeFi lending - banking proxy
             'SNX/USDT',    # Synthetic assets - derivatives proxy
@@ -170,8 +187,8 @@ class DiversifiedSpotInvestmentService:
         try:
             self.exchange = ccxt.bitget({
                 'apiKey': os.getenv('BITGET_API_KEY'),
-                'secret': os.getenv('BITGET_SECRET'),
-                'password': os.getenv('BITGET_PASSPHRASE'),
+                'secret': os.getenv('BITGET_API_SECRET'),
+                'password': os.getenv('BITGET_API_PASSPHRASE'),
                 'enableRateLimit': True,
                 'options': {
                     'defaultType': 'spot',  # SPOT for this service
@@ -305,8 +322,8 @@ class DiversifiedSpotInvestmentService:
             # Get futures account balance
             futures_exchange = ccxt.bitget({
                 'apiKey': os.getenv('BITGET_API_KEY'),
-                'secret': os.getenv('BITGET_SECRET'),
-                'password': os.getenv('BITGET_PASSPHRASE'),
+                'secret': os.getenv('BITGET_API_SECRET'),
+                'password': os.getenv('BITGET_API_PASSPHRASE'),
                 'enableRateLimit': True,
                 'options': {'defaultType': 'swap'}
             })

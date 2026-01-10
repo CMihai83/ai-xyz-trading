@@ -3105,7 +3105,7 @@ class AIXYZContinuousProfit:
                         print(f"  🚨🚨 EMERGENCY CLOSE - Averaging failed at {upnl_pct*100:.1f}% UPNL!")
                         print(f"  🚨🚨 Closing position to prevent liquidation!")
                         try:
-                            close_side = 'sell' if position['side'] == 'buy' else 'buy'
+                            close_side = 'sell' if position['side'] in ['buy', 'long'] else 'buy'
                             emergency_order = self.exchange.create_market_order(
                                 symbol, close_side, position['amount'],
                                 params={'reduceOnly': True, 'marginCoin': 'USDT'}
@@ -3232,7 +3232,7 @@ class AIXYZContinuousProfit:
                         return False
                 
                 dump_amount = surplus * 0.5  # Dump 50% of surplus in stage 1
-                close_side = 'sell' if position['side'] == 'buy' else 'buy'
+                close_side = 'sell' if position['side'] in ['buy', 'long'] else 'buy'
                 
                 print(f"\n💰 Surplus Dump {symbol} - Stage 1 (50%)")
                 print(f"  Peak UPNL: ${peak:.4f}")
@@ -3300,7 +3300,7 @@ class AIXYZContinuousProfit:
                     return False
                 
                 dump_amount = remaining_surplus  # Dump all remaining surplus
-                close_side = 'sell' if position['side'] == 'buy' else 'buy'
+                close_side = 'sell' if position['side'] in ['buy', 'long'] else 'buy'
                 
                 print(f"\n💰 Surplus Dump {symbol} - Stage 2 (Final 50%)")
                 print(f"  Peak UPNL: ${peak:.4f}")
@@ -3476,7 +3476,7 @@ class AIXYZContinuousProfit:
             
         if should_take_profit:
             try:
-                close_side = 'sell' if position['side'] == 'buy' else 'buy'
+                close_side = 'sell' if position['side'] in ['buy', 'long'] else 'buy'
                 
                 print(f"\n🎯 Taking profit on {symbol}")
                 print(f"  UPNL: ${upnl:.4f} ({pct:.2f}%)")
@@ -3553,7 +3553,7 @@ class AIXYZContinuousProfit:
             if not self.check_averaging(symbol, position, upnl):
                 # Averaging failed - must close to prevent liquidation
                 try:
-                    close_side = 'sell' if position['side'] == 'buy' else 'buy'
+                    close_side = 'sell' if position['side'] in ['buy', 'long'] else 'buy'
                     
                     print(f"\n🛑 EMERGENCY STOP LOSS on {symbol}")
                     print(f"  UPNL: ${upnl:.4f} ({upnl_pct*100:.1f}%)")
@@ -4375,27 +4375,39 @@ class AIXYZContinuousProfit:
                             print(f"  💰 {symbol} in PROFIT: ${upnl:.4f} ({pct:.2f}%)")
 
                     # V1.2.0: Check ATR stop loss (for positions in loss)
+                    # Only trigger ATR stop AFTER all averaging steps are exhausted
                     if upnl < 0:
+                        current_avg_steps = self.averaging_steps.get(symbol, 0)
+                        max_avg_steps = self.fibonacci_configs.get(symbol, {}).get('max_averaging_steps', 4)
+                        averaging_exhausted = current_avg_steps >= max_avg_steps
+
                         atr_decision = self.trailing_atr_stop.update_trailing_stop(
                             symbol, entry_price, current_price, local_pos.get('side', 'buy')
                         )
                         if atr_decision.should_stop:
-                            print(f"  🛡️  ATR STOP HIT: {atr_decision.reason}")
-                            # Close position with stop loss
-                            try:
-                                close_side = 'sell' if local_pos.get('side') == 'buy' else 'buy'
-                                order = self.exchange.create_market_order(
-                                    symbol, close_side, local_pos.get('amount', 0),
-                                    params={'reduceOnly': True, 'marginCoin': 'USDT'}
-                                )
-                                self.total_pnl += upnl
-                                self.positions_closed += 1
-                                del self.active_positions[symbol]
-                                self.cleanup_position_tracking(symbol)
-                                print(f"  ✅ ATR stop executed: {symbol} @ loss=${upnl:.4f}")
-                                continue
-                            except Exception as e:
-                                print(f"  ❌ Failed ATR stop: {e}")
+                            if not averaging_exhausted:
+                                # Don't stop yet - still have averaging steps available
+                                print(f"  ⏳ ATR stop triggered but BLOCKED: {symbol} has {current_avg_steps}/{max_avg_steps} averaging steps used")
+                                print(f"     Waiting for averaging to complete before stop loss")
+                            else:
+                                # All averaging steps exhausted - execute stop
+                                print(f"  🛡️  ATR STOP HIT: {atr_decision.reason}")
+                                print(f"     Averaging exhausted ({current_avg_steps}/{max_avg_steps} steps used)")
+                                # Close position with stop loss
+                                try:
+                                    close_side = 'sell' if local_pos.get('side') in ['buy', 'long'] else 'buy'
+                                    order = self.exchange.create_market_order(
+                                        symbol, close_side, local_pos.get('amount', 0),
+                                        params={'reduceOnly': True, 'marginCoin': 'USDT'}
+                                    )
+                                    self.total_pnl += upnl
+                                    self.positions_closed += 1
+                                    del self.active_positions[symbol]
+                                    self.cleanup_position_tracking(symbol)
+                                    print(f"  ✅ ATR stop executed: {symbol} @ loss=${upnl:.4f}")
+                                    continue
+                                except Exception as e:
+                                    print(f"  ❌ Failed ATR stop: {e}")
 
                     # Category 3.2: Check pyramid opportunity on winning positions (+40% profit on trends)
                     if upnl > 0 and pct > 3.0:  # At least 3% profit
@@ -4417,7 +4429,7 @@ class AIXYZContinuousProfit:
                             print(f"  🎯 PARTIAL CLOSE: {partial_decision.reason}")
                             # Execute partial close
                             try:
-                                close_side = 'sell' if local_pos.get('side') == 'buy' else 'buy'
+                                close_side = 'sell' if local_pos.get('side') in ['buy', 'long'] else 'buy'
                                 close_amount = local_pos.get('amount', 0) * partial_decision.close_percentage
 
                                 order = self.exchange.create_market_order(
@@ -4468,7 +4480,7 @@ class AIXYZContinuousProfit:
 
                         # Execute position closure
                         try:
-                            close_side = 'sell' if local_pos.get('side') == 'buy' else 'buy'
+                            close_side = 'sell' if local_pos.get('side') in ['buy', 'long'] else 'buy'
                             amount = local_pos.get('amount', 0)
 
                             order = self.exchange.create_market_order(
