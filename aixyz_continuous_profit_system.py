@@ -129,9 +129,9 @@ class AIXYZContinuousProfit:
         # Initialize timeframe speed tracker for dynamic threshold adjustment
         self.speed_tracker = TimeframeSpeedTracker()
         
-        # Initialize adaptive Fibonacci averaging system (capital available for averaging after $5 initial margin)
-        # With $25 total capital, 70% trading ($17.50), minus $5 initial = $12.50 for averaging
-        self.adaptive_fibonacci = AdaptiveFibonacciAveraging(total_capital=12.50)
+        # Initialize adaptive Fibonacci averaging system (capital available for averaging after $0.7 initial margin)
+        # With $5 total capital, 70% trading ($3.50), minus $0.7 initial = $2.80 for averaging
+        self.adaptive_fibonacci = AdaptiveFibonacciAveraging(total_capital=2.80)
         print("🧮 Adaptive Fibonacci Averaging System initialized - preserving core concepts with dynamic adaptation")
 
         # Initialize margin-aware position sizer
@@ -558,9 +558,9 @@ class AIXYZContinuousProfit:
             base_position_size = min(8.0, PositionSizingConfig.BASE_POSITION_VALUE * 0.2)  # $8.0 initial position (20% of $40)
             
             # Calculate capital per position based on max positions allowed
-            # $50 per position ($25 averaging + $25 liquidation protection)
-            positions_allowed = int(total_capital / 50) if total_capital >= 80 else 1
-            capital_per_position = min(50.0, total_capital / max(1, positions_allowed))
+            # $5 per position ($3.50 averaging + $1.50 protection) - Reduced for Florin's account
+            positions_allowed = int(total_capital / 5) if total_capital >= 10 else 1
+            capital_per_position = min(5.0, total_capital / max(1, positions_allowed))
             
             # 70% for averaging calculations, 30% safety margin
             averaging_capital = capital_per_position * 0.70
@@ -1301,8 +1301,8 @@ class AIXYZContinuousProfit:
             account_balance = balance['USDT']['free'] + balance['USDT']['used']
             
             # Use 70% of capital allocation for position + averaging
-            # With $1 initial margin, total capital needed = $1 + averaging steps
-            max_capital_per_position = 25.0  # $1 initial + $24 for averaging steps
+            # With $0.7 initial margin, total capital needed = $0.7 + averaging steps
+            max_capital_per_position = 5.0  # $0.7 initial + $2.8 for averaging steps (3 steps max)
             capital_allocation_percent = 0.70  # 70% for trading, 30% reserve
             
             # Use lesser of actual balance or max capital
@@ -1564,7 +1564,7 @@ class AIXYZContinuousProfit:
             # This is needed for the position opening logic later
             balance = self.exchange.fetch_balance()
             account_balance = balance['USDT']['free'] + balance['USDT']['used']
-            max_capital_per_position = 80.0
+            max_capital_per_position = 5.0  # Reduced for Florin's account
             capital_allocation_percent = 0.70
             effective_capital = min(account_balance, max_capital_per_position)
             available_margin = effective_capital * capital_allocation_percent
@@ -1747,11 +1747,11 @@ class AIXYZContinuousProfit:
             print(f"  📦 Final order amount: {amount} contracts (${amount * price:.2f})")
 
             # Execute market order with explicit Bitget params
-            order_params = {'marginCoin': 'USDT'}
-            if side == 'buy':
-                order = self.exchange.create_market_buy_order(symbol, amount, params=order_params)
-            else:
-                order = self.exchange.create_market_sell_order(symbol, amount, params=order_params)
+            # For one-way position mode, only marginCoin is needed
+            order_params = {
+                'marginCoin': 'USDT'
+            }
+            order = self.exchange.create_market_order(symbol, side, amount, params=order_params)
             
             # Safety margin is reserved for last averaging step, not added at opening
             if sizing['safety_margin'] > 0:
@@ -2517,7 +2517,7 @@ class AIXYZContinuousProfit:
         
         # Get base allocations for timeframe mapping
         allocator = TimeframeCapitalAllocator(
-            total_capital=min(80.0, self.exchange.fetch_balance()['USDT']['total']),
+            total_capital=min(5.0, self.exchange.fetch_balance()['USDT']['total']),  # Reduced for Florin's account
             allocation_percent=0.70
         )
         base_allocations = allocator.calculate_timeframe_allocations(
@@ -3049,7 +3049,7 @@ class AIXYZContinuousProfit:
                         try:
                             # Place the protection order immediately
                             self.liquidation_protection.place_protection_order(
-                                symbol, position, additional_margin=25.0
+                                symbol, position, additional_margin=1.0  # Reduced for Florin's account ($5 total capital)
                             )
                             print(f"   ✅ Liquidation protection order placed for {symbol}")
                         except Exception as prot_error:
@@ -3138,7 +3138,7 @@ class AIXYZContinuousProfit:
         # Dynamic threshold based on margin size - UPDATED to use 5% baseline
         # All positions now use 5% threshold as the baseline (was 15%)
         if margin > 10.0:
-            profit_threshold = 0.03  # 3% for large positions (unchanged)
+            profit_threshold = 0.015  # 1.5% for large positions
             print(f"  📊 Using reduced surplus dump threshold: {profit_threshold*100:.1f}% (margin: ${margin:.2f})")
         else:
             profit_threshold = 0.05  # 5% for normal positions (was 15%)
@@ -4218,7 +4218,7 @@ class AIXYZContinuousProfit:
                         if symbol not in self.liquidation_protection.protection_orders:
                             try:
                                 self.liquidation_protection.place_protection_order(
-                                    symbol, self.active_positions[symbol], additional_margin=25.0
+                                    symbol, self.active_positions[symbol], additional_margin=1.0  # Reduced for Florin's account
                                 )
                                 print(f"   ✅ Protection order placed for {symbol}")
                             except Exception as e:
