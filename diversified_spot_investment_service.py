@@ -485,6 +485,50 @@ class DiversifiedSpotInvestmentService:
             logger.warning(f"VSA calculation failed for {symbol}", error=str(e))
             return 5.0, {'error': str(e)}
 
+    async def check_multi_timeframe_confirmation(self, symbol: str) -> Tuple[bool, Dict]:
+        """
+        Check momentum confirmation across multiple timeframes
+        Returns True if momentum is positive across all timeframes
+        """
+        try:
+            timeframes = ['1d', '4h', '1h']
+            confirmations = {}
+            bullish_count = 0
+
+            for tf in timeframes:
+                ohlcv = await self.exchange.fetch_ohlcv(symbol, tf, limit=10)
+                if len(ohlcv) < 5:
+                    confirmations[tf] = 'insufficient_data'
+                    continue
+
+                closes = [c[4] for c in ohlcv]
+                # Check if price is trending up (last close > 5-period SMA)
+                sma_5 = sum(closes[-5:]) / 5
+                current_price = closes[-1]
+                is_bullish = current_price > sma_5
+
+                # Also check momentum (current > previous)
+                momentum = closes[-1] > closes[-2]
+
+                confirmations[tf] = 'bullish' if (is_bullish and momentum) else 'bearish'
+                if is_bullish and momentum:
+                    bullish_count += 1
+
+                await asyncio.sleep(0.05)  # Rate limiting
+
+            # Require at least 2 out of 3 timeframes to be bullish
+            confirmed = bullish_count >= 2
+
+            return confirmed, {
+                'confirmations': confirmations,
+                'bullish_count': bullish_count,
+                'total_timeframes': len(timeframes)
+            }
+
+        except Exception as e:
+            logger.warning(f"MTF check failed for {symbol}", error=str(e))
+            return False, {'error': str(e)}
+
     # =========================================================================
     # OPPORTUNITY COST ANALYSIS
     # =========================================================================
@@ -583,13 +627,65 @@ class DiversifiedSpotInvestmentService:
                 # Combined score (50-50 weight as per Grok)
                 combined_score = (vsa_score * self.VSA_WEIGHT) + (oc_score * self.OC_WEIGHT)
 
-                # Determine signal
+                # Get momentum metrics for signal determination
+                expected_return_7d = oc_reasoning.get('expected_return_7d', 0)
+                expected_return_30d = oc_reasoning.get('expected_return_30d', 0)
+                sharpe_ratio = oc_reasoning.get('sharpe_ratio', 0)
+
+                # Determine signal with momentum-based entries + breakout detection + MTF confirmation
+                signal = 'hold'  # Default
+                buy_reason = None
+                preliminary_buy = False
+
+                # Get VSA pattern for breakout detection
+                vsa_pattern = vsa_reasoning.get('pattern', '')
+                is_breakout = vsa_pattern == 'BREAKOUT' and vsa_reasoning.get('price_position', 0) > 0.5
+                is_accumulation = vsa_pattern == 'ACCUMULATION'
+
+                # 1. Strong buy: High combined score (original logic)
                 if combined_score >= 7:
-                    signal = 'buy'
+                    preliminary_buy = True
+                    buy_reason = 'strong_score'
+
+                # 2. Momentum buy: Positive 7d return + decent score + good risk-adjusted return
+                elif expected_return_7d > 0.02 and combined_score >= 5.0 and sharpe_ratio > 0.5:
+                    preliminary_buy = True
+                    buy_reason = f'momentum_7d:{expected_return_7d*100:.1f}%_sharpe:{sharpe_ratio:.2f}'
+
+                # 3. Trend buy: Strong 30d trend + positive 7d momentum
+                elif expected_return_30d > 0.05 and expected_return_7d > 0 and combined_score >= 4.5:
+                    preliminary_buy = True
+                    buy_reason = f'trend_30d:{expected_return_30d*100:.1f}%_7d:{expected_return_7d*100:.1f}%'
+
+                # 4. Breakout buy: VSA breakout pattern + positive momentum
+                elif is_breakout and expected_return_7d > 0 and combined_score >= 4.0:
+                    preliminary_buy = True
+                    buy_reason = f'breakout_volume:{vsa_reasoning.get("volume_ratio", 0):.1f}x'
+
+                # 5. Accumulation buy: VSA accumulation pattern (strong buy signal)
+                elif is_accumulation and combined_score >= 4.0:
+                    preliminary_buy = True
+                    buy_reason = 'accumulation_pattern'
+
+                # 6. Sell signal
                 elif combined_score <= 3:
                     signal = 'sell'
-                else:
-                    signal = 'hold'
+
+                # Multi-timeframe confirmation for buy signals
+                mtf_info = {}
+                if preliminary_buy:
+                    mtf_confirmed, mtf_info = await self.check_multi_timeframe_confirmation(symbol)
+                    if mtf_confirmed:
+                        signal = 'buy'
+                        buy_reason = f'{buy_reason}|MTF:{mtf_info.get("bullish_count", 0)}/3'
+                    else:
+                        logger.debug(f"MTF rejected: {symbol}", mtf=mtf_info)
+
+                # Log buy signals with reason
+                if signal == 'buy':
+                    logger.info(f"Buy signal: {symbol}", reason=buy_reason,
+                               combined=f"{combined_score:.1f}", ret_7d=f"{expected_return_7d*100:.1f}%",
+                               pattern=vsa_pattern, mtf=mtf_info.get('confirmations', {}))
 
                 # Get current price
                 ticker = await self.exchange.fetch_ticker(symbol)
@@ -767,21 +863,31 @@ class DiversifiedSpotInvestmentService:
                     continue
 
                 if diff > 1.0:  # Buy $1+ worth
-                    amount = diff / current_price
+                    # For Bitget spot market buy, use limit order with current price
+                    cost = diff  # Amount in USDT to spend
+                    amount = cost / current_price  # Calculate amount to buy
 
-                    # Check minimum order size
-                    market = self.exchange.markets.get(symbol)
-                    min_amount = market.get('limits', {}).get('amount', {}).get('min', 0)
+                    # Check minimum order amount
+                    market = self.exchange.markets.get(symbol, {})
+                    min_amount = market.get('limits', {}).get('amount', {}).get('min', 0.0001)
 
                     if amount >= min_amount:
-                        order = await self.exchange.create_market_buy_order(symbol, amount)
+                        # Use limit order at market price (more reliable than market order on Bitget spot)
+                        ticker = await self.exchange.fetch_ticker(symbol)
+                        buy_price = ticker.get('ask') or ticker.get('last') or current_price
+                        buy_price = buy_price * 1.001  # Slightly above ask
+
+                        order = await self.exchange.create_limit_buy_order(
+                            symbol, amount, buy_price
+                        )
+                        bought_amount = order.get('filled') or order.get('amount') or amount
                         results['buys'].append({
                             'symbol': symbol,
-                            'amount': amount,
+                            'amount': float(bought_amount) if bought_amount else amount,
                             'value': diff,
                             'order_id': order.get('id')
                         })
-                        logger.info(f"Bought {amount} {symbol} for ${diff:.2f}")
+                        logger.info(f"Bought {float(bought_amount or amount):.4f} {symbol} for ${diff:.2f}")
 
                 elif diff < -1.0:  # Sell $1+ worth
                     amount = abs(diff) / current_price
