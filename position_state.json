@@ -1,33 +1,187 @@
 {
-  "timestamp": "2026-01-06T22:49:47.368313",
+  "timestamp": "2026-01-10T08:22:25.316200",
   "active_positions": {
-    "USTC/USDT:USDT": {
-      "entry_price": 0.00758,
-      "amount": 3.0,
-      "side": "sell",
+    "GLM/USDT:USDT": {
+      "entry_price": 0.2951,
+      "amount": 120.0,
+      "side": "buy",
       "leverage": 10.0,
-      "opened_at": "2026-01-06T15:49:00.038375+00:00"
+      "opened_at": "2026-01-10T06:02:06.014226+00:00"
+    },
+    "ID/USDT:USDT": {
+      "entry_price": 0.0761,
+      "amount": 484.06,
+      "side": "buy",
+      "leverage": 10.0,
+      "opened_at": "2026-01-10T07:16:47.027748+00:00"
+    },
+    "XMR/USDT:USDT": {
+      "entry_price": 457.941363636367,
+      "amount": 0.22,
+      "side": "buy",
+      "leverage": 10.0,
+      "opened_at": "2026-01-08T19:05:10.444015+00:00"
+    },
+    "CHZ/USDT:USDT": {
+      "entry_price": 0.04517051613,
+      "amount": 930.0,
+      "side": "buy",
+      "leverage": 10.0,
+      "opened_at": "2026-01-09T12:00:28.313644+00:00"
+    },
+    "CAKE/USDT:USDT": {
+      "entry_price": 1.9996,
+      "amount": 18.4,
+      "side": "buy",
+      "leverage": 10.0,
+      "opened_at": "2026-01-10T07:13:43.279451+00:00"
+    },
+    "MAGIC/USDT:USDT": {
+      "entry_price": 0.105511249775,
+      "amount": 2163.6,
+      "side": "buy",
+      "leverage": 10.0,
+      "opened_at": "2026-01-08T23:07:32.109721+00:00"
+    },
+    "TRX/USDT:USDT": {
+      "entry_price": 0.29797,
+      "amount": 68.0,
+      "side": "buy",
+      "leverage": 10.0,
+      "opened_at": "2026-01-07T21:01:49.863420+00:00"
+    },
+    "BNB/USDT:USDT": {
+      "entry_price": 896.8,
+      "amount": 0.02,
+      "side": "buy",
+      "leverage": 10.0,
+      "opened_at": "2026-01-09T05:04:24.474939+00:00"
+    },
+    "ATOM/USDT:USDT": {
+      "entry_price": 2.596983333334,
+      "amount": 24.0,
+      "side": "buy",
+      "leverage": 10.0,
+      "opened_at": "2026-01-09T21:10:22.931680+00:00"
+    },
+    "STORJ/USDT:USDT": {
+      "entry_price": 0.141358409877,
+      "amount": 696.8,
+      "side": "buy",
+      "leverage": 10.0,
+      "opened_at": "2026-01-09T12:46:05.997499+00:00"
+    },
+    "XVG/USDT:USDT": {
+      "entry_price": 0.005797089859,
+      "amount": 43571.0,
+      "side": "buy",
+      "leverage": 10.0,
+      "opened_at": "2026-01-09T05:00:37.755322+00:00"
+    },
+    "GRT/USDT:USDT": {
+      "entry_price": 0.042145901244,
+      "amount": 6018.4,
+      "side": "buy",
+      "leverage": 10.0,
+      "opened_at": "2026-01-09T16:12:43.926849+00:00"
     }
   },
   "position_zones": {
-    "USTC/USDT:USDT": "PROFIT_TAKING"
+    "GLM/USDT:USDT": "NEUTRAL",
+    "ID/USDT:USDT": "NEUTRAL",
+    "XMR/USDT:USDT": "NEUTRAL",
+    "CHZ/USDT:USDT": "NEUTRAL",
+    "CAKE/USDT:USDT": "NEUTRAL",
+    "MAGIC/USDT:USDT": "NEUTRAL",
+    "TRX/USDT:USDT": "NEUTRAL",
+    "BNB/USDT:USDT": "PROFIT_TAKING",
+    "ATOM/USDT:USDT": "SURPLUS_DUMP",
+    "STORJ/USDT:USDT": "NEUTRAL",
+    "XVG/USDT:USDT": "SURPLUS_DUMP",
+    "GRT/USDT:USDT": "NEUTRAL"
   },
   "averaging_steps": {
-    "USTC/USDT:USDT": 0
+    "GLM/USDT:USDT": 0,
+    "ID/USDT:USDT": 0,
+    "XMR/USDT:USDT": 0,
+    "CHZ/USDT:USDT": 0,
+    "CAKE/USDT:USDT": 0,
+    "MAGIC/USDT:USDT": 0,
+    "TRX/USDT:USDT": 0,
+    "BNB/USDT:USDT": 0,
+    "ATOM/USDT:USDT": 1,
+    "STORJ/USDT:USDT": 0,
+    "XVG/USDT:USDT": 3,
+    "GRT/USDT:USDT": 0
   },
   "peak_upnl": {
-    "USTC/USDT:USDT": 0.19584
+    "GLM/USDT:USDT": 0.288,
+    "ID/USDT:USDT": 0.217827,
+    "XMR/USDT:USDT": 0.534699999999,
+    "CHZ/USDT:USDT": 0.1948199991,
+    "CAKE/USDT:USDT": 0.00736,
+    "MAGIC/USDT:USDT": 5.218039996319,
+    "TRX/USDT:USDT": 0.10608,
+    "BNB/USDT:USDT": 0.2568,
+    "ATOM/USDT:USDT": 1.245999999984,
+    "STORJ/USDT:USDT": 0.211589999949,
+    "XVG/USDT:USDT": 2.348918753511,
+    "GRT/USDT:USDT": 0.927684984961
   },
   "peak_upnl_timestamps": {
-    "USTC/USDT:USDT": null
+    "GLM/USDT:USDT": "2026-01-10T06:12:06.715563+00:00",
+    "ID/USDT:USDT": "2026-01-10T07:17:31.330675+00:00",
+    "XMR/USDT:USDT": "2026-01-09T08:28:01.113073+00:00",
+    "CHZ/USDT:USDT": "2026-01-10T06:39:06.279963+00:00",
+    "CAKE/USDT:USDT": "2026-01-10T07:14:02.648752+00:00",
+    "MAGIC/USDT:USDT": "2026-01-09T03:23:16.832379+00:00",
+    "TRX/USDT:USDT": "2026-01-09T21:31:43.333038+00:00",
+    "BNB/USDT:USDT": "2026-01-10T05:39:40.911827+00:00",
+    "ATOM/USDT:USDT": "2026-01-10T08:22:23.562754",
+    "STORJ/USDT:USDT": "2026-01-09T15:33:13.859273+00:00",
+    "XVG/USDT:USDT": "2026-01-10T08:22:22.093771",
+    "GRT/USDT:USDT": "2026-01-09T23:10:26.000538+00:00"
   },
   "surplus_dump_stage": {
-    "USTC/USDT:USDT": 0
+    "GLM/USDT:USDT": 0,
+    "ID/USDT:USDT": 0,
+    "XMR/USDT:USDT": 0,
+    "CHZ/USDT:USDT": 0,
+    "CAKE/USDT:USDT": 0,
+    "MAGIC/USDT:USDT": 0,
+    "TRX/USDT:USDT": 0,
+    "BNB/USDT:USDT": 0,
+    "ATOM/USDT:USDT": 0,
+    "STORJ/USDT:USDT": 0,
+    "XVG/USDT:USDT": 0,
+    "GRT/USDT:USDT": 0
   },
   "original_sizes": {
-    "USTC/USDT:USDT": 3.0
+    "GLM/USDT:USDT": 120.0,
+    "ID/USDT:USDT": 484.06,
+    "XMR/USDT:USDT": 0.05,
+    "CHZ/USDT:USDT": 528.0,
+    "CAKE/USDT:USDT": 18.4,
+    "MAGIC/USDT:USDT": 218.9,
+    "TRX/USDT:USDT": 68.0,
+    "BNB/USDT:USDT": 0.02,
+    "ATOM/USDT:USDT": 16.0,
+    "STORJ/USDT:USDT": 166.1,
+    "XVG/USDT:USDT": 3948.0,
+    "GRT/USDT:USDT": 575.3
   },
   "position_multipliers": {
-    "USTC/USDT:USDT": []
+    "GLM/USDT:USDT": [],
+    "ID/USDT:USDT": [],
+    "XMR/USDT:USDT": [],
+    "CHZ/USDT:USDT": [],
+    "CAKE/USDT:USDT": [],
+    "MAGIC/USDT:USDT": [],
+    "TRX/USDT:USDT": [],
+    "BNB/USDT:USDT": [],
+    "ATOM/USDT:USDT": [],
+    "STORJ/USDT:USDT": [],
+    "XVG/USDT:USDT": [],
+    "GRT/USDT:USDT": []
   }
 }
