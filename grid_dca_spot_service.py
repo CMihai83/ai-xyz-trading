@@ -55,6 +55,13 @@ from dotenv import load_dotenv
 import numpy as np
 import structlog
 
+# Import from spot investment service for shared scanner/opportunity engine
+from diversified_spot_investment_service import (
+    DiversifiedSpotInvestmentService,
+    AssetOpportunity,
+    AssetCategory
+)
+
 load_dotenv()
 logger = structlog.get_logger(__name__)
 
@@ -532,66 +539,85 @@ class FibonacciProfitTargets:
 
 class MarketScannerIntegration:
     """
-    Integrates with market scanner to get entry signals.
-    Enhanced with ADX filter and volume profile checks (Grok improvements).
+    Integrates with the DiversifiedSpotInvestmentService scanner and opportunity engine.
+    Uses VSA scoring + Opportunity Cost from the main spot service.
+    Enhanced with ADX filter for grid-specific market regime detection.
     """
 
-    def __init__(self, exchange: ccxt.Exchange):
+    def __init__(self, exchange: ccxt.Exchange, spot_service: DiversifiedSpotInvestmentService = None):
         self.exchange = exchange
         self.adx_filter = ADXFilter()
         self.volume_filter = VolumeProfileFilter()
+        self.spot_service = spot_service  # Reference to spot service for VSA/OC scoring
 
     async def check_entry_signal(
         self,
         symbol: str,
-        min_score: float = 0.5
+        min_score: float = 5.0  # Minimum combined score (0-10 scale)
     ) -> Tuple[bool, Dict]:
         """
-        Check if asset has positive entry signal from market scanner.
+        Check if asset has positive entry signal using spot service scanner.
 
-        Uses simplified VSA + MTF confirmation (same as spot service).
+        Combines:
+        1. VSA Score from spot service (Volume Spread Analysis)
+        2. Opportunity Cost Score from spot service
+        3. Multi-timeframe confirmation from spot service
+        4. ADX filter for market regime (grid-specific)
+        5. Volume profile check (manipulation detection)
 
         Returns:
             Tuple of (should_enter, signal_data)
         """
         try:
-            # Get multi-timeframe data
-            timeframes = ['1d', '4h', '1h']
-            bullish_count = 0
-            confirmations = {}
+            vsa_score = 5.0
+            oc_score = 5.0
+            vsa_reasoning = {}
+            oc_reasoning = {}
+            mtf_confirmed = False
+            mtf_info = {}
 
-            for tf in timeframes:
-                ohlcv = await self.exchange.fetch_ohlcv(symbol, tf, limit=20)
-                if len(ohlcv) < 10:
-                    confirmations[tf] = 'insufficient_data'
-                    continue
+            # Use spot service scanner if available
+            if self.spot_service:
+                # Get VSA score from spot service
+                vsa_score, vsa_reasoning = await self.spot_service.calculate_vsa_score(symbol)
 
-                closes = [c[4] for c in ohlcv]
-                volumes = [c[5] for c in ohlcv]
+                # Get Opportunity Cost score from spot service
+                oc_score, oc_reasoning = await self.spot_service.calculate_opportunity_cost_score(symbol)
 
-                # Simple momentum check
-                sma_5 = sum(closes[-5:]) / 5
-                sma_10 = sum(closes[-10:]) / 10
-                current = closes[-1]
+                # Get MTF confirmation from spot service
+                mtf_confirmed, mtf_info = await self.spot_service.check_multi_timeframe_confirmation(symbol)
 
-                # Volume confirmation
-                avg_volume = sum(volumes[-10:]) / 10
-                current_volume = volumes[-1]
-                volume_confirmed = current_volume > avg_volume * 0.8
+                logger.info(
+                    "spot_service_scores",
+                    symbol=symbol,
+                    vsa_score=f"{vsa_score:.1f}",
+                    oc_score=f"{oc_score:.1f}",
+                    mtf_confirmed=mtf_confirmed
+                )
+            else:
+                # Fallback: Basic MTF check if spot service not available
+                timeframes = ['1d', '4h', '1h']
+                bullish_count = 0
 
-                # Bullish if price above both SMAs with volume
-                is_bullish = current > sma_5 > sma_10 and volume_confirmed
+                for tf in timeframes:
+                    ohlcv = await self.exchange.fetch_ohlcv(symbol, tf, limit=20)
+                    if len(ohlcv) >= 10:
+                        closes = [c[4] for c in ohlcv]
+                        sma_5 = sum(closes[-5:]) / 5
+                        current = closes[-1]
+                        if current > sma_5:
+                            bullish_count += 1
+                    await asyncio.sleep(0.05)
 
-                confirmations[tf] = 'bullish' if is_bullish else 'bearish'
-                if is_bullish:
-                    bullish_count += 1
+                mtf_confirmed = bullish_count >= 2
+                mtf_info = {'bullish_count': bullish_count, 'fallback': True}
 
-                await asyncio.sleep(0.05)
+            # Combined score (weighted average like spot service)
+            VSA_WEIGHT = 0.6
+            OC_WEIGHT = 0.4
+            combined_score = (vsa_score * VSA_WEIGHT) + (oc_score * OC_WEIGHT)
 
-            # Need 2/3 timeframes bullish (basic check)
-            basic_signal = bullish_count >= 2
-
-            # GROK ENHANCEMENT 1: ADX filter for market regime
+            # GRID-SPECIFIC: ADX filter for market regime
             adx, regime = await self.adx_filter.calculate_adx(
                 self.exchange, symbol, '1d'
             )
@@ -599,44 +625,63 @@ class MarketScannerIntegration:
             # Grid trading works best in ranging markets (ADX < 25)
             adx_favorable = regime in ['ranging', 'transitional']
 
-            # GROK ENHANCEMENT 2: Volume profile check (avoid manipulation)
+            # Volume profile check (avoid manipulation)
             volume_safe, volume_data = await self.volume_filter.check_volume_profile(
                 self.exchange, symbol
             )
 
-            # Combined decision: all conditions must pass
-            should_enter = basic_signal and adx_favorable and volume_safe
+            # Combined decision for grid entry:
+            # 1. Combined score >= min_score (from VSA + OC)
+            # 2. MTF confirmed OR high combined score
+            # 3. ADX favorable (ranging/transitional market)
+            # 4. Volume safe (no whale manipulation)
+            score_ok = combined_score >= min_score
+            signal_ok = mtf_confirmed or combined_score >= 7.0
 
-            # Calculate trend score
+            should_enter = score_ok and signal_ok and adx_favorable and volume_safe
+
+            # Get current price
             ticker = await self.exchange.fetch_ticker(symbol)
             change_24h = ticker.get('percentage', 0) or 0
 
             signal_data = {
-                'confirmations': confirmations,
-                'bullish_count': bullish_count,
-                'change_24h': change_24h,
-                'current_price': ticker.get('last', 0),
-                # Grok-enhanced data
+                # Spot service scores
+                'vsa_score': vsa_score,
+                'opportunity_cost_score': oc_score,
+                'combined_score': combined_score,
+                'vsa_reasoning': vsa_reasoning,
+                'oc_reasoning': oc_reasoning,
+                # MTF confirmation
+                'mtf_confirmed': mtf_confirmed,
+                'mtf_info': mtf_info,
+                # Grid-specific filters
                 'adx': adx,
                 'market_regime': regime,
                 'volume_safe': volume_safe,
                 'volume_data': volume_data,
+                # Price data
+                'change_24h': change_24h,
+                'current_price': ticker.get('last', 0),
+                # Filter results
                 'filters_passed': {
-                    'mtf_bullish': basic_signal,
+                    'score_ok': score_ok,
+                    'signal_ok': signal_ok,
                     'adx_favorable': adx_favorable,
                     'volume_safe': volume_safe
                 }
             }
 
             logger.info(
-                "entry_signal_check_enhanced",
+                "entry_signal_check_integrated",
                 symbol=symbol,
                 should_enter=should_enter,
-                bullish_count=f"{bullish_count}/3",
+                combined_score=f"{combined_score:.1f}",
+                vsa=f"{vsa_score:.1f}",
+                oc=f"{oc_score:.1f}",
+                mtf=mtf_confirmed,
                 adx=f"{adx:.1f}",
                 regime=regime,
-                volume_safe=volume_safe,
-                change_24h=f"{change_24h:.2f}%"
+                volume_safe=volume_safe
             )
 
             return should_enter, signal_data
@@ -824,8 +869,8 @@ class TradeJournal:
     - Signal quality correlation
     """
 
-    def __init__(self, journal_file: str = '/root/ai_xyz/grid_trade_journal.json'):
-        self.journal_file = journal_file
+    def __init__(self, journal_file: str = None):
+        self.journal_file = journal_file or os.getenv('GRID_JOURNAL_FILE', '/app/grid_trade_journal.json')
         self.trades: List[TradeRecord] = []
         self.load_journal()
 
@@ -927,7 +972,8 @@ class DynamicGridDCAService:
 
     def __init__(self):
         self.exchange = None
-        self.state_file = '/root/ai_xyz/grid_dca_state.json'
+        self.spot_service = None  # Spot service for VSA/Opportunity Cost scoring
+        self.state_file = os.getenv('GRID_STATE_FILE', '/app/grid_dca_state.json')
 
         # Components
         self.atr_calc = ATRCalculator(period=14)
@@ -946,7 +992,7 @@ class DynamicGridDCAService:
         # Eligible assets for grid trading (high volume, stable)
         self.ELIGIBLE_ASSETS = [
             'BTC/USDT', 'ETH/USDT', 'SOL/USDT', 'BNB/USDT',
-            'XRP/USDT', 'ADA/USDT', 'DOGE/USDT', 'MATIC/USDT',
+            'XRP/USDT', 'ADA/USDT', 'DOGE/USDT', 'POL/USDT',
             'DOT/USDT', 'LINK/USDT', 'AVAX/USDT', 'ATOM/USDT',
             'UNI/USDT', 'LTC/USDT', 'TRX/USDT', 'ETC/USDT'
         ]
@@ -959,7 +1005,7 @@ class DynamicGridDCAService:
         self.GRID_CHECK_INTERVAL = 60  # seconds
 
     async def initialize(self):
-        """Initialize exchange connection and load state"""
+        """Initialize exchange connection, spot service, and load state"""
         try:
             self.exchange = ccxt.bitget({
                 'apiKey': os.getenv('BITGET_API_KEY'),
@@ -970,7 +1016,13 @@ class DynamicGridDCAService:
 
             await self.exchange.load_markets()
 
-            self.scanner = MarketScannerIntegration(self.exchange)
+            # Initialize the spot investment service for VSA/Opportunity Cost scoring
+            self.spot_service = DiversifiedSpotInvestmentService()
+            await self.spot_service.initialize()
+            logger.info("spot_service_connected", status="VSA + Opportunity Cost engine ready")
+
+            # Create scanner with spot service integration
+            self.scanner = MarketScannerIntegration(self.exchange, self.spot_service)
             self.order_manager = LimitOrderManager(self.exchange)
 
             # Load existing state
@@ -984,7 +1036,8 @@ class DynamicGridDCAService:
             logger.info(
                 "grid_dca_service_initialized",
                 total_capital=f"${self.total_capital:.2f}",
-                active_grids=len(self.active_grids)
+                active_grids=len(self.active_grids),
+                spot_service="connected"
             )
 
         except Exception as e:

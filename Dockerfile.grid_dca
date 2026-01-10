@@ -3,13 +3,18 @@ FROM python:3.11-slim
 WORKDIR /app
 
 # Install dependencies
-RUN pip install --no-cache-dir ccxt python-dotenv numpy structlog
+RUN pip install --no-cache-dir ccxt python-dotenv numpy structlog pytz
 
-# Copy service file
+# Copy service files (grid DCA + spot service for VSA/OC integration)
 COPY grid_dca_spot_service.py .
+COPY diversified_spot_investment_service.py .
 COPY .env .
 
 # Create logs directory
 RUN mkdir -p logs
+
+# Environment variables for file paths
+ENV GRID_STATE_FILE=/app/grid_dca_state.json
+ENV GRID_JOURNAL_FILE=/app/grid_trade_journal.json
 
 CMD ["python3", "grid_dca_spot_service.py"]
