@@ -3130,12 +3130,12 @@ class AIXYZContinuousProfit:
         ============================================================================
         Purpose: Take profits from the "surplus" (extra position from averaging)
         while keeping the original position intact.
-        
+
         TRIGGERS:
         1. Position must have taken averaging steps (steps > 0)
         2. UPNL must reach +5% profit (recovery point) - UPDATED from 15%
         3. Then tracks peak UPNL and dumps at 70% of peak
-        
+
         PROCESS:
         - Surplus = Current Position Size - Original Position Size
         - At 70% of peak UPNL: Dump 100% of surplus
@@ -3143,6 +3143,7 @@ class AIXYZContinuousProfit:
         - Original position continues running
         ============================================================================
         """
+
         # Check if we have averaged either through steps OR size increase
         # Surplus dump triggers when UPNL reaches +5% or more (UPDATED from 15%)
         current_size = position.get('amount', 0)
@@ -3164,6 +3165,16 @@ class AIXYZContinuousProfit:
         # Calculate UPNL percentage
         # Check both field names (camelCase from exchange, snake_case from our storage)
         margin = position.get('initialMargin', 0) or position.get('initial_margin', 0)
+
+        # FIX: If margin not available from exchange, calculate from stored values
+        if margin <= 0:
+            entry_price = position.get('entry_price', 0) or position.get('entryPrice', 0)
+            amount = position.get('amount', 0)
+            leverage = position.get('leverage', 10.0)  # Default to 10x if not stored
+            if entry_price > 0 and amount > 0 and leverage > 0:
+                margin = (amount * entry_price) / leverage
+                print(f"  📊 Calculated margin for surplus dump: ${margin:.4f} (amount={amount:.2f} × price={entry_price:.6f} ÷ lev={leverage})")
+
         if margin > 0:
             upnl_pct = (upnl / margin)
         else:
