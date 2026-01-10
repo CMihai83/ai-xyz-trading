@@ -2,23 +2,29 @@
 Liquidation Protection Service
 
 Prevents position liquidation by placing limit orders at critical price levels
-when averaging has exhausted and position is in danger zone (-70% to -82.5% UPNL).
+when averaging has exhausted and position is in danger zone.
 
 Key Features:
-- Calculates liquidation price at -82.5% UPNL (before exchange liquidation at ~-90%)
+- Calculates liquidation price at configurable UPNL% (default -82.5%)
 - Places LIMIT orders (not market) to add position size at calculated price
-- Uses additional $25 margin per position (total becomes $50)
+- Uses margin equal to margin used so far (via LIQUIDATION_ORDER_MARGIN_MULTIPLIER)
 - Only triggers after last Fibonacci averaging steps (5+)
 - Tracks placed orders to avoid duplicates
 - Syncs entry price from exchange weighted average
 
+Configuration (from PositionSizingConfig):
+- LIQUIDATION_ORDER_UPNL_PERCENT: -82.5% (trigger for limit order)
+- LIQUIDATION_ORDER_MARGIN_MULTIPLIER: 1.0x (matches margin used so far)
+
 Author: AI-XYZ Trading System
 Date: 2026-01-03
+Updated: 2026-01-10 (Config-based values, FIFO integration)
 """
 
 from datetime import datetime, timezone
 from typing import Dict, Optional
 import structlog
+from position_sizing_config import PositionSizingConfig
 
 logger = structlog.get_logger()
 
@@ -48,7 +54,7 @@ class LiquidationProtectionService:
         entry_price: float,
         side: str,
         leverage: float,
-        target_upnl_pct: float = -82.5
+        target_upnl_pct: float = None
     ) -> float:
         """
         Calculate price at which UPNL reaches target percentage
@@ -72,6 +78,10 @@ class LiquidationProtectionService:
             liquidation_price = $1.00 × (1 + (-82.5) / (10 × 100))
             liquidation_price = $1.00 × 0.9175 = $0.9175
         """
+        # Use config default if not provided
+        if target_upnl_pct is None:
+            target_upnl_pct = PositionSizingConfig.LIQUIDATION_ORDER_UPNL_PERCENT
+
         # Convert UPNL% to ratio relative to price movement
         # For 10x leverage: -82.5% UPNL = -8.25% price move
         upnl_ratio = target_upnl_pct / (leverage * 100)
@@ -170,28 +180,41 @@ class LiquidationProtectionService:
         self,
         symbol: str,
         position: Dict,
-        additional_margin: float = 25.0,
-        target_upnl_pct: float = -82.5
+        margin_used_so_far: float = None,
+        additional_margin: float = None,
+        target_upnl_pct: float = None
     ) -> bool:
         """
         Place limit order at liquidation price to prevent liquidation
 
         Process:
         1. Fetch current weighted average entry from exchange
-        2. Calculate liquidation price at target UPNL% (default -82.5%)
-        3. Calculate contracts for additional margin ($25 default)
+        2. Calculate liquidation price at target UPNL% (from config)
+        3. Calculate contracts for additional margin (based on margin used so far)
         4. Place LIMIT order (maker, not taker)
         5. Track order for monitoring
 
         Args:
             symbol: Trading pair
             position: Position dictionary
-            additional_margin: Additional margin to use (default $25)
-            target_upnl_pct: Target UPNL for protection (default -82.5%)
+            margin_used_so_far: Total margin used for this position (for calculating protection margin)
+            additional_margin: Override for additional margin to use (default: margin_used × multiplier)
+            target_upnl_pct: Target UPNL for protection (default from config: -82.5%)
 
         Returns:
             True if order placed successfully
         """
+        # Use config values as defaults
+        if target_upnl_pct is None:
+            target_upnl_pct = PositionSizingConfig.LIQUIDATION_ORDER_UPNL_PERCENT
+
+        # Calculate additional margin based on margin used and multiplier
+        if additional_margin is None:
+            if margin_used_so_far is not None:
+                additional_margin = margin_used_so_far * PositionSizingConfig.LIQUIDATION_ORDER_MARGIN_MULTIPLIER
+            else:
+                # Fallback to full capital if margin used not provided
+                additional_margin = PositionSizingConfig.TOTAL_CAPITAL
         try:
             print(f"\n🛡️ LIQUIDATION PROTECTION - {symbol}")
             print("=" * 80)

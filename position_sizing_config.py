@@ -1,123 +1,129 @@
 #!/usr/bin/env python3
 """
 Position Sizing Configuration
-Default: $6.5 after leverage
-Higher size only when confidence > 0.7
+- Full capital utilization (no safety reserve)
+- Safety replaced by limit orders before liquidation
+- FIFO margin allocation for capital increases
 """
 
 class PositionSizingConfig:
-    # Total capital available for allocation
-    TOTAL_CAPITAL = 25.0  # $25 total capital per position (increased from $20)
-    
-    # Capital allocation strategy
-    SAFETY_MARGIN_PERCENT = 0.30  # 30% reserved as safety margin ($7.50)
-    TRADING_CAPITAL_PERCENT = 0.70  # 70% for initial + averaging ($17.50)
-    
+    # Total capital available for allocation (can be dynamically updated)
+    TOTAL_CAPITAL = 25.0  # $25 total capital per position (default)
+
+    # Capital allocation strategy - USE FULL CAPITAL
+    # Safety is now handled by limit orders before liquidation price
+    SAFETY_MARGIN_PERCENT = 0.0   # NO safety reserve - full capital for trading
+    TRADING_CAPITAL_PERCENT = 1.0  # 100% for initial + averaging
+
     # Base position margin - $5.00 initial margin (before leverage)
     BASE_MARGIN_SIZE = 5.00  # $5.00 initial margin (FIXED)
 
     # Base position value after leverage (assuming ~6.5x average leverage)
     BASE_POSITION_VALUE = 32.50  # $32.50 position value after leverage ($5 margin * 6.5x leverage)
-    
-    # Capital breakdown
-    SAFETY_MARGIN = TOTAL_CAPITAL * SAFETY_MARGIN_PERCENT  # $7.50 safety margin
-    TRADING_CAPITAL = TOTAL_CAPITAL * TRADING_CAPITAL_PERCENT  # $17.50 for initial + averaging
-    AVERAGING_CAPITAL = TRADING_CAPITAL - BASE_MARGIN_SIZE  # $16.50 for averaging steps
-    
-    # Safety margin usage
-    NORMAL_MARGIN_USAGE = 0.70  # Use 70% of averaging capital normally
-    EMERGENCY_MARGIN_USAGE = 0.30  # Reserve 30% for emergency final step
-    
+
+    # Capital breakdown - FULL UTILIZATION
+    SAFETY_MARGIN = 0.0  # No safety margin - replaced by limit orders
+    TRADING_CAPITAL = TOTAL_CAPITAL  # Full $25 for trading
+    AVERAGING_CAPITAL = TOTAL_CAPITAL - BASE_MARGIN_SIZE  # $20 for averaging steps
+
+    # Liquidation Protection (replaces safety margin)
+    LIQUIDATION_PROTECTION_ENABLED = True
+    LIQUIDATION_ORDER_UPNL_PERCENT = -82.5  # Place limit order at -82.5% UPNL
+    LIQUIDATION_ORDER_MARGIN_MULTIPLIER = 1.0  # Match margin used so far
+
+    # FIFO Margin Allocation
+    FIFO_ENABLED = True  # First positions get priority for extra margin
+    MIN_CAPITAL_PER_POSITION = 25.0  # Minimum capital allocation
+    MAX_CAPITAL_PER_POSITION = 50.0  # Maximum capital allocation
+
     # Confidence threshold for larger positions
     HIGH_CONFIDENCE_THRESHOLD = 0.7
-    
+
     # Maximum position size multiplier when high confidence
     MAX_SIZE_MULTIPLIER = 2.0  # Can go up to 2x base size
-    
+
+    @classmethod
+    def update_total_capital(cls, new_capital: float):
+        """
+        Dynamically update total capital per position.
+        Used for FIFO margin allocation.
+
+        Args:
+            new_capital: New capital amount (e.g., $40 instead of $25)
+        """
+        cls.TOTAL_CAPITAL = new_capital
+        cls.TRADING_CAPITAL = new_capital  # Full capital for trading
+        cls.AVERAGING_CAPITAL = new_capital - cls.BASE_MARGIN_SIZE
+        print(f"📊 Updated Position Sizing: Total=${new_capital:.2f}, Averaging=${cls.AVERAGING_CAPITAL:.2f}")
+
     @staticmethod
     def calculate_position_size(leverage: float, confidence: float = 0.5) -> dict:
         """
         Calculate position size based on confidence level
-        
+
         Args:
             leverage: Leverage to use (7x-10x)
             confidence: Signal confidence (0-1)
-            
+
         Returns:
             dict with margin_size and position_value
         """
         # Default position value after leverage
         position_value = PositionSizingConfig.BASE_MARGIN_SIZE * leverage
-        
+
         # Only increase size if confidence > 0.7
         if confidence > PositionSizingConfig.HIGH_CONFIDENCE_THRESHOLD:
             # Scale size based on confidence above threshold
-            # confidence 0.7 = 1x, confidence 0.85 = 2x, confidence 1.0 = 3x
             confidence_factor = (confidence - PositionSizingConfig.HIGH_CONFIDENCE_THRESHOLD) / 0.3
             size_multiplier = 1.0 + (confidence_factor * (PositionSizingConfig.MAX_SIZE_MULTIPLIER - 1.0))
             base_position_value = PositionSizingConfig.BASE_MARGIN_SIZE * leverage
             position_value = base_position_value * size_multiplier
-        
+
         # Calculate margin required
         margin_size = position_value / leverage
-        
+
         return {
             'margin_size': margin_size,
             'position_value': position_value,
             'confidence': confidence,
             'size_multiplier': position_value / (PositionSizingConfig.BASE_MARGIN_SIZE * leverage)
         }
-    
+
     @staticmethod
     def get_position_size_for_signal(signal: dict) -> dict:
         """
         Get position size for a trading signal
-        
+
         Args:
             signal: Trading signal with confidence and leverage
-            
+
         Returns:
             dict with sizing information
         """
         confidence = signal.get('confidence', 0.5)
         leverage = signal.get('leverage', 7)
-        
+
         sizing = PositionSizingConfig.calculate_position_size(leverage, confidence)
-        
+
         # Add explanation
         if confidence > PositionSizingConfig.HIGH_CONFIDENCE_THRESHOLD:
             sizing['reason'] = f"High confidence ({confidence:.2f}) - using {sizing['size_multiplier']:.1f}x base size"
         else:
-            sizing['reason'] = f"Standard confidence ({confidence:.2f}) - using base size $6.50"
-        
+            sizing['reason'] = f"Standard confidence ({confidence:.2f}) - using base size ${PositionSizingConfig.BASE_MARGIN_SIZE:.2f}"
+
         return sizing
+
 
 # Example usage
 if __name__ == "__main__":
     print("="*60)
-    print("POSITION SIZING CONFIGURATION")
+    print("POSITION SIZING CONFIGURATION (FULL CAPITAL)")
     print("="*60)
-    print(f"Base Position Value: ${PositionSizingConfig.BASE_POSITION_VALUE} (after leverage)")
-    print(f"High Confidence Threshold: {PositionSizingConfig.HIGH_CONFIDENCE_THRESHOLD}")
-    print(f"Max Size Multiplier: {PositionSizingConfig.MAX_SIZE_MULTIPLIER}x")
-    
-    print("\n" + "="*60)
-    print("SIZING EXAMPLES")
-    print("="*60)
-    
-    test_cases = [
-        {'confidence': 0.3, 'leverage': 7},
-        {'confidence': 0.5, 'leverage': 8},
-        {'confidence': 0.69, 'leverage': 9},
-        {'confidence': 0.7, 'leverage': 10},
-        {'confidence': 0.75, 'leverage': 8},
-        {'confidence': 0.85, 'leverage': 9},
-        {'confidence': 1.0, 'leverage': 10}
-    ]
-    
-    for test in test_cases:
-        result = PositionSizingConfig.calculate_position_size(test['leverage'], test['confidence'])
-        print(f"\nConfidence: {test['confidence']:.2f}, Leverage: {test['leverage']}x")
-        print(f"  Position Value: ${result['position_value']:.2f}")
-        print(f"  Margin Required: ${result['margin_size']:.2f}")
-        print(f"  Size Multiplier: {result['size_multiplier']:.1f}x")
+    print(f"Total Capital: ${PositionSizingConfig.TOTAL_CAPITAL:.2f}")
+    print(f"Trading Capital: ${PositionSizingConfig.TRADING_CAPITAL:.2f} (100%)")
+    print(f"Base Margin: ${PositionSizingConfig.BASE_MARGIN_SIZE:.2f}")
+    print(f"Averaging Capital: ${PositionSizingConfig.AVERAGING_CAPITAL:.2f}")
+    print(f"Safety Margin: ${PositionSizingConfig.SAFETY_MARGIN:.2f} (replaced by limit orders)")
+    print(f"\nLiquidation Protection: {PositionSizingConfig.LIQUIDATION_PROTECTION_ENABLED}")
+    print(f"Limit Order Trigger: {PositionSizingConfig.LIQUIDATION_ORDER_UPNL_PERCENT}% UPNL")
+    print(f"FIFO Allocation: {PositionSizingConfig.FIFO_ENABLED}")

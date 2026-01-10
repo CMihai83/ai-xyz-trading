@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
 Timeframe-based Capital Allocation System
-Distributes the full 70% capital ($17.50) across averaging steps based on timeframe expansion
+Distributes full 100% capital ($25) across averaging steps based on timeframe expansion
+Safety margin replaced by limit orders before liquidation price
 """
 
 import numpy as np
@@ -46,7 +47,7 @@ class TimeframeCapitalAllocator:
 
         Args:
             total_capital: Total capital available (default from PositionSizingConfig)
-            allocation_percent: Percent to allocate for trading (default 70%)
+            allocation_percent: Percent to allocate for trading (default 100% - safety via limit orders)
             min_initial_position: Minimum initial position size after leverage (default BASE_POSITION_VALUE)
         """
         # Use config values as defaults

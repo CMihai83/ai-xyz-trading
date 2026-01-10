@@ -74,8 +74,8 @@ class DynamicPositionSizer:
 
         print(f"📊 DynamicPositionSizer initialized")
         print(f"   Total Capital: ${total_capital:.2f}")
-        print(f"   Trading Capital: ${self.trading_capital:.2f} (70%)")
-        print(f"   Safety Reserve: ${self.safety_reserve:.2f} (30%)")
+        print(f"   Trading Capital: ${self.trading_capital:.2f} (100%)")
+        print(f"   Safety: Replaced by limit orders at {PositionSizingConfig.LIQUIDATION_ORDER_UPNL_PERCENT}% UPNL")
 
     def calc_initial_margin(self, delta: float, vol_mult: float, regime: str) -> float:
         """
@@ -267,7 +267,8 @@ class DynamicPositionSizer:
             'step_position_values': [m * leverage for m in result.step_margins],
             'total_margin': result.total_margin,
             'total_position_value': result.total_margin * leverage,
-            'safety_reserve': self.safety_reserve,
+            'liquidation_protection_enabled': PositionSizingConfig.LIQUIDATION_PROTECTION_ENABLED,
+            'liquidation_order_upnl': PositionSizingConfig.LIQUIDATION_ORDER_UPNL_PERCENT,
             'delta_percent': result.delta * 100,
             'regime': result.regime,
             'vol_mult': result.vol_mult,
@@ -322,4 +323,4 @@ if __name__ == "__main__":
         print(f"  Multipliers: {sizing['multipliers']}")
         print(f"  Step Margins: ${sizing['step_margins']}")
         print(f"  Total Margin: ${sizing['total_margin']:.2f}")
-        print(f"  Safety Reserve: ${sizing['safety_reserve']:.2f}")
+        print(f"  Liquidation Protection: {sizing['liquidation_protection_enabled']} (limit order at {sizing['liquidation_order_upnl']}% UPNL)")
