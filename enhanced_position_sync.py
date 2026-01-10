@@ -21,6 +21,7 @@ Features:
 
 import asyncio
 import json
+import os
 import time
 import redis
 from datetime import datetime, timezone
@@ -197,8 +198,10 @@ class EnhancedPositionSync:
     GLOBAL_STATE_KEY = KEY_PREFIX + "global_state"
     SYNC_LOCK_KEY = KEY_PREFIX + "lock"
 
-    def __init__(self, exchange: ccxt.Exchange, redis_host: str = 'localhost',
-                 redis_port: int = 6379, redis_db: int = 0):
+    def __init__(self, exchange: ccxt.Exchange, redis_host: str = None,
+                 redis_port: int = None, redis_db: int = 0):
+        redis_host = redis_host or os.getenv('REDIS_HOST', 'localhost')
+        redis_port = redis_port or int(os.getenv('REDIS_PORT', 6379))
         """
         Initialize enhanced position sync
 

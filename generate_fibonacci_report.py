@@ -18,7 +18,9 @@ load_dotenv('/app/.env')
 async def get_current_positions():
     """Get current positions from Redis"""
     try:
-        r = redis.Redis(host='localhost', port=6379, db=0, decode_responses=True)
+        redis_host = os.getenv('REDIS_HOST', 'localhost')
+        redis_port = int(os.getenv('REDIS_PORT', 6379))
+        r = redis.Redis(host=redis_host, port=redis_port, db=0, decode_responses=True)
         positions = []
         
         # Get all position keys

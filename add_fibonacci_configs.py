@@ -94,7 +94,9 @@ def main():
         print(f"     Multipliers: {fib_config['position_multipliers']}")
     
     # Save configs to Redis for the system to pick up
-    r = redis.Redis(host='localhost', port=6379, db=0, decode_responses=True)
+    redis_host = os.getenv('REDIS_HOST', 'localhost')
+    redis_port = int(os.getenv('REDIS_PORT', 6379))
+    r = redis.Redis(host=redis_host, port=redis_port, db=0, decode_responses=True)
     
     # Store in a key the system can read
     for symbol, config in configs.items():

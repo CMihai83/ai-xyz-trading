@@ -5,6 +5,7 @@ Central nervous system for all position tracking and state management
 
 import asyncio
 import json
+import os
 import time
 from datetime import datetime
 from typing import Dict, List, Optional, Any
@@ -174,8 +175,10 @@ class LivePositionsRegistry:
     Uses Redis for sub-millisecond access and persistence
     """
     
-    def __init__(self, redis_url: str = "redis://localhost:6379"):
-        self.redis_url = redis_url
+    def __init__(self, redis_url: str = None):
+        redis_host = os.getenv('REDIS_HOST', 'localhost')
+        redis_port = os.getenv('REDIS_PORT', '6379')
+        self.redis_url = redis_url or f"redis://{redis_host}:{redis_port}"
         self.redis_client: Optional[redis.Redis] = None
         self.positions_key = "positions:active"
         self.position_prefix = "position:"

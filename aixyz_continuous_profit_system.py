@@ -213,8 +213,10 @@ class AIXYZContinuousProfit:
         
         # Initialize persistence manager if available
         if PERSISTENCE_AVAILABLE:
-            self.persistence = PositionPersistenceManager(self.exchange)
-            print("💾 Position Persistence Manager enabled")
+            redis_host = os.getenv('REDIS_HOST', 'localhost')
+            redis_port = int(os.getenv('REDIS_PORT', 6379))
+            self.persistence = PositionPersistenceManager(self.exchange, redis_host=redis_host, redis_port=redis_port)
+            print(f"💾 Position Persistence Manager enabled (Redis: {redis_host}:{redis_port})")
             
             # Load saved state or initialize from exchange
             saved_state = self.persistence.load_position_state()
@@ -4080,7 +4082,7 @@ class AIXYZContinuousProfit:
                     saved_config = None
                     try:
                         import redis
-                        r = redis.Redis(host='localhost', port=6379, db=0, decode_responses=True)
+                        r = redis.Redis(host=os.getenv('REDIS_HOST', 'localhost'), port=int(os.getenv('REDIS_PORT', 6379)), db=0, decode_responses=True)
                         saved_data = r.get(fib_key)
                         if saved_data:
                             saved_config = json.loads(saved_data)
@@ -4165,7 +4167,7 @@ class AIXYZContinuousProfit:
                     # Save to Redis for persistence
                     try:
                         import redis
-                        r = redis.Redis(host='localhost', port=6379, db=0, decode_responses=True)
+                        r = redis.Redis(host=os.getenv('REDIS_HOST', 'localhost'), port=int(os.getenv('REDIS_PORT', 6379)), db=0, decode_responses=True)
                         fib_key = f'fibonacci_config:{symbol}'
                         r.set(fib_key, json.dumps(fib_params))
                     except:

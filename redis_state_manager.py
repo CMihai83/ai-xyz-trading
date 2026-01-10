@@ -6,6 +6,7 @@ Solves the race condition and concurrency issues
 """
 
 import json
+import os
 import redis
 import time
 from typing import Dict, Optional, List, Any
@@ -19,7 +20,9 @@ class RedisStateManager:
     Provides atomic operations for position management
     """
 
-    def __init__(self, host='localhost', port=6379, db=0):
+    def __init__(self, host=None, port=None, db=0):
+        host = host or os.getenv('REDIS_HOST', 'localhost')
+        port = port or int(os.getenv('REDIS_PORT', 6379))
         """
         Initialize Redis connection
 

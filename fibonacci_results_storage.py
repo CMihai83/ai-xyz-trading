@@ -6,6 +6,7 @@ Provides detailed reports on position configurations
 """
 
 import json
+import os
 import redis
 from datetime import datetime
 from typing import Dict, List, Optional
@@ -18,7 +19,9 @@ class FibonacciResultsStorage:
     """Stores and manages Fibonacci averaging service results for all positions"""
     
     def __init__(self):
-        self.redis_client = redis.Redis(host='localhost', port=6379, db=0, decode_responses=True)
+        redis_host = os.getenv('REDIS_HOST', 'localhost')
+        redis_port = int(os.getenv('REDIS_PORT', 6379))
+        self.redis_client = redis.Redis(host=redis_host, port=redis_port, db=0, decode_responses=True)
         self.storage_key = "fibonacci_results"
         self.file_backup = Path("/app/fibonacci_results_backup.json")
         

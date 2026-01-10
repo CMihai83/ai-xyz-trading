@@ -5,6 +5,7 @@ Ensures position state survives system restarts
 """
 
 import json
+import os
 import redis
 import ccxt
 from datetime import datetime
@@ -18,7 +19,9 @@ class PositionPersistenceManager:
     Manages persistent storage and recovery of position state
     """
     
-    def __init__(self, exchange, redis_host='localhost', redis_port=6379, redis_db=1):
+    def __init__(self, exchange, redis_host=None, redis_port=None, redis_db=1):
+        redis_host = redis_host or os.getenv('REDIS_HOST', 'localhost')
+        redis_port = redis_port or int(os.getenv('REDIS_PORT', 6379))
         """
         Initialize persistence manager
         

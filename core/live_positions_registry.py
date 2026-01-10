@@ -10,6 +10,7 @@ Implements all requirements from CARDINAL_RULES_TRADING_SYSTEM.md
 
 import asyncio
 import json
+import os
 import time
 from datetime import datetime, timezone
 from typing import Dict, List, Optional, Any, Tuple
@@ -209,9 +210,9 @@ class LivePositionsRegistry:
     Cardinal Rule 8: Real-time data has priority lanes
     """
     
-    def __init__(self, redis_host='localhost', redis_port=6379, redis_db=0):
-        self.redis_host = redis_host
-        self.redis_port = redis_port
+    def __init__(self, redis_host=None, redis_port=None, redis_db=0):
+        self.redis_host = redis_host or os.getenv('REDIS_HOST', 'localhost')
+        self.redis_port = redis_port or int(os.getenv('REDIS_PORT', 6379))
         self.redis_db = redis_db
         self.redis_client: Optional[redis.Redis] = None
         self._lock = asyncio.Lock()

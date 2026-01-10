@@ -3,6 +3,7 @@ Enhanced Fibonacci Service with Backtesting and Candle Storage
 Includes historical data caching and backtesting results
 """
 
+import os
 import numpy as np
 import pandas as pd
 from typing import Dict, List, Tuple, Optional, Union
@@ -56,7 +57,9 @@ class CandleStorage:
     """Stores and manages historical candle data for reuse"""
     
     def __init__(self):
-        self.redis_client = redis.Redis(host='localhost', port=6379, db=1, decode_responses=False)
+        redis_host = os.getenv('REDIS_HOST', 'localhost')
+        redis_port = int(os.getenv('REDIS_PORT', 6379))
+        self.redis_client = redis.Redis(host=redis_host, port=redis_port, db=1, decode_responses=False)
         self.cache_ttl = 3600  # 1 hour cache
         
     def _get_cache_key(self, symbol: str, timeframe: str, limit: int) -> str:

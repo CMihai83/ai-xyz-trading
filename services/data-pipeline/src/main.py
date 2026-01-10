@@ -8,6 +8,7 @@ from pydantic import BaseModel
 from typing import Dict, List, Optional, Any
 from datetime import datetime, timedelta
 import asyncio
+import os
 import pandas as pd
 import numpy as np
 import yfinance as yf
@@ -35,7 +36,9 @@ class DataPipeline:
     """Real-time data pipeline for market data."""
     
     def __init__(self):
-        self.redis_client = redis.Redis(host='localhost', port=6379, db=4, decode_responses=True)
+        redis_host = os.getenv('REDIS_HOST', 'localhost')
+        redis_port = int(os.getenv('REDIS_PORT', 6379))
+        self.redis_client = redis.Redis(host=redis_host, port=redis_port, db=4, decode_responses=True)
         self.data_sources = {
             'yahoo_finance': self.fetch_yahoo_finance_data,
             'alpha_vantage': self.fetch_alpha_vantage_data,

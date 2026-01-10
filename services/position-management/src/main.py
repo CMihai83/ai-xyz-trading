@@ -10,6 +10,7 @@ from typing import Dict, List, Optional, Any
 from enum import Enum
 from datetime import datetime, timedelta
 import asyncio
+import os
 import numpy as np
 import pandas as pd
 import json
@@ -34,7 +35,9 @@ app.add_middleware(
 )
 
 # Redis connection
-redis_client = redis.Redis(host='localhost', port=6379, db=3, decode_responses=True)
+redis_host = os.getenv('REDIS_HOST', 'localhost')
+redis_port = int(os.getenv('REDIS_PORT', 6379))
+redis_client = redis.Redis(host=redis_host, port=redis_port, db=3, decode_responses=True)
 
 class PositionStatus(str, Enum):
     OPEN = "OPEN"
