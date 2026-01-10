@@ -4536,11 +4536,15 @@ class AIXYZContinuousProfit:
                             has_surplus = self.averaging_steps[symbol] > 0 or (original_size > 0 and current_size > original_size * 1.1)
 
                             if has_surplus:
-                                # Entering SURPLUS_DUMP zone - initialize peak if not set
+                                # Entering SURPLUS_DUMP zone - only update peak if higher than existing
                                 if self.position_zones[symbol] != 'SURPLUS_DUMP':
-                                    self.peak_upnl[symbol] = upnl
-                                    self.peak_upnl_timestamps[symbol] = datetime.now().isoformat()
-                                    print(f"  🎯 Entering SURPLUS_DUMP zone with peak UPNL: ${upnl:.2f}")
+                                    existing_peak = self.peak_upnl.get(symbol, 0)
+                                    if upnl > existing_peak:
+                                        self.peak_upnl[symbol] = upnl
+                                        self.peak_upnl_timestamps[symbol] = datetime.now().isoformat()
+                                        print(f"  🎯 Entering SURPLUS_DUMP zone with peak UPNL: ${upnl:.2f}")
+                                    else:
+                                        print(f"  🎯 Re-entering SURPLUS_DUMP zone (keeping existing peak: ${existing_peak:.2f}, current: ${upnl:.2f})")
                                 self.position_zones[symbol] = 'SURPLUS_DUMP'
                             else:
                                 self.position_zones[symbol] = 'PROFIT_TAKING'
@@ -4575,11 +4579,15 @@ class AIXYZContinuousProfit:
                             self.position_zones[symbol] = 'AVERAGING'
                         elif pct > 1.5 and upnl >= self.neutral_zone_upper_usd:  # +1.5% AND minimum UPNL
                             if has_surplus:
-                                # Entering SURPLUS_DUMP zone - initialize peak if not set
+                                # Entering SURPLUS_DUMP zone - only update peak if higher than existing
                                 if self.position_zones[symbol] != 'SURPLUS_DUMP':
-                                    self.peak_upnl[symbol] = upnl
-                                    self.peak_upnl_timestamps[symbol] = datetime.now().isoformat()
-                                    print(f"  🎯 Entering SURPLUS_DUMP zone with peak UPNL: ${upnl:.2f}")
+                                    existing_peak = self.peak_upnl.get(symbol, 0)
+                                    if upnl > existing_peak:
+                                        self.peak_upnl[symbol] = upnl
+                                        self.peak_upnl_timestamps[symbol] = datetime.now().isoformat()
+                                        print(f"  🎯 Entering SURPLUS_DUMP zone with peak UPNL: ${upnl:.2f}")
+                                    else:
+                                        print(f"  🎯 Re-entering SURPLUS_DUMP zone (keeping existing peak: ${existing_peak:.2f}, current: ${upnl:.2f})")
                                 self.position_zones[symbol] = 'SURPLUS_DUMP'
                             else:
                                 self.position_zones[symbol] = 'PROFIT_TAKING'
@@ -4797,9 +4805,9 @@ class AIXYZContinuousProfit:
         print(f"  Leverage Range: 7x-10x")
         from position_sizing_config import PositionSizingConfig
         print(f"  Base Margin: ${PositionSizingConfig.BASE_MARGIN_SIZE:.2f} (initial position)")
-        print(f"  Total Capital: $5.00")
-        print(f"  Averaging Capital: $3.50 (70%)")
-        print(f"  Safety Reserve: $1.50 (30%)")
+        print(f"  Total Capital: ${PositionSizingConfig.TOTAL_CAPITAL:.2f}")
+        print(f"  Averaging Capital: ${PositionSizingConfig.AVERAGING_CAPITAL:.2f} (70%)")
+        print(f"  Safety Reserve: ${PositionSizingConfig.SAFETY_MARGIN:.2f} (30%)")
         
         print("\n✅ All systems online!")
         print("Press Ctrl+C to stop\n")
