@@ -46,6 +46,32 @@ services:
       start_period: 60s
 
   # ==========================================================================
+  # GRID DCA SPOT SERVICE
+  # ==========================================================================
+  # UNIQUE SERVICE - Dynamic Grid DCA trading for spot account
+  # Features: ATR-based grid spacing, ADX/Volume filters, limit orders
+  # --------------------------------------------------------------------------
+  grid_dca:
+    build:
+      context: .
+      dockerfile: Dockerfile.grid_dca
+    container_name: ai_xyz_grid_dca
+    restart: unless-stopped
+    environment:
+      - BITGET_API_KEY=${BITGET_API_KEY}
+      - BITGET_API_SECRET=${BITGET_API_SECRET}
+      - BITGET_API_PASSPHRASE=${BITGET_API_PASSPHRASE}
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ./logs:/app/logs
+      - ./grid_dca_state.json:/app/grid_dca_state.json
+      - ./grid_trade_journal.json:/app/grid_trade_journal.json
+    networks:
+      - ai_xyz_network
+    depends_on:
+      - ai_xyz_trading
+
+  # ==========================================================================
   # BALANCE MANAGER SERVICE
   # ==========================================================================
   # UNIQUE SERVICE - Margin management between futures and spot accounts

@@ -1,0 +1,15 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install dependencies
+RUN pip install --no-cache-dir ccxt python-dotenv numpy structlog
+
+# Copy service file
+COPY grid_dca_spot_service.py .
+COPY .env .
+
+# Create logs directory
+RUN mkdir -p logs
+
+CMD ["python3", "grid_dca_spot_service.py"]
