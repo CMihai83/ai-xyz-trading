@@ -229,45 +229,113 @@ class AdaptiveFibonacciAveraging:
     """
     Main adaptive Fibonacci averaging system
     Preserves core Fibonacci concepts while adapting to market conditions
-    """
-    
-    # Fibonacci sequence for thresholds (reverse order)
-    # Larger numbers = wider spacing for early steps, smaller = tighter spacing near liquidation
-    FIBONACCI_THRESHOLDS = [21, 13, 8, 5, 3]  # 5 steps
 
-    # Fibonacci sequence for multipliers (NATURAL ORDER - larger at end for liquidation protection)
-    # Last steps are LARGEST to bring average entry down significantly when near liquidation
-    # [1, 1, 2, 3, 5] = 12 units total
-    FIBONACCI_MULTIPLIERS = [1, 1, 2, 3, 5]  # 5 steps - larger amounts near liquidation
+    NOW USES DYNAMIC POSITION SIZER (Grok AI optimized formulas)
+    - Initial margin, steps, and multipliers calculated dynamically
+    - Adapts to delta, volatility, and market regime
+    """
+
+    # Default thresholds (used when dynamic calculation not available)
+    DEFAULT_THRESHOLDS = [21, 13, 8, 5, 3]
+    DEFAULT_MULTIPLIERS = [1, 1, 2, 3, 5]
 
     def __init__(self, total_capital: float = None):
         # Use PositionSizingConfig if not provided
         if total_capital is None:
             from position_sizing_config import PositionSizingConfig
             total_capital = PositionSizingConfig.AVERAGING_CAPITAL  # $12.50
+
+        # Initialize dynamic position sizer
+        from dynamic_position_sizer import DynamicPositionSizer
+        self.dynamic_sizer = DynamicPositionSizer()
+
         self.volatility_tracker = VolatilityTracker()
         self.capital_allocator = SmartCapitalAllocator(total_capital)
         self.efficiency_tracker = EfficiencyTracker()
-        
-        # Position tracking
+
+        # Position tracking with dynamic sizing
         self.active_positions = {}  # symbol -> position data
         self.base_deltas = {}  # symbol -> original delta
-        
+        self.position_sizing = {}  # symbol -> DynamicSizingResult
+
+        # Current dynamic values (updated per position)
+        self.FIBONACCI_THRESHOLDS = self.DEFAULT_THRESHOLDS
+        self.FIBONACCI_MULTIPLIERS = self.DEFAULT_MULTIPLIERS
+
         logger.info(
-            "AdaptiveFibonacciAveraging initialized",
+            "AdaptiveFibonacciAveraging initialized with DYNAMIC SIZER",
             total_capital=total_capital,
-            fibonacci_thresholds=self.FIBONACCI_THRESHOLDS,
-            fibonacci_multipliers=self.FIBONACCI_MULTIPLIERS
+            default_thresholds=self.DEFAULT_THRESHOLDS,
+            default_multipliers=self.DEFAULT_MULTIPLIERS
         )
     
+    def calculate_dynamic_sizing(self, delta: float, vol_mult: float = 1.0,
+                                   regime: str = 'NORMAL_VOLATILITY'):
+        """
+        Calculate dynamic sizing for a position based on current conditions.
+
+        Args:
+            delta: Price movement percentage as decimal (e.g., 0.021 for 2.1%)
+            vol_mult: Volatility multiplier (0.5 to 2.0)
+            regime: Market regime (LOW_VOLATILITY, NORMAL_VOLATILITY, HIGH_VOLATILITY)
+
+        Returns:
+            DynamicSizingResult with all sizing parameters
+        """
+        result = self.dynamic_sizer.calculate_sizing(delta, vol_mult, regime)
+
+        # Update class-level thresholds and multipliers
+        self.FIBONACCI_MULTIPLIERS = result.multipliers
+        # Generate thresholds based on num_steps (Fibonacci in reverse)
+        self.FIBONACCI_THRESHOLDS = self._generate_thresholds(result.num_steps)
+
+        return result
+
+    def _generate_thresholds(self, num_steps: int) -> list:
+        """
+        Generate Fibonacci thresholds in reverse order for cumulative triggers.
+
+        Args:
+            num_steps: Number of averaging steps
+
+        Returns:
+            List of Fibonacci thresholds (reverse order)
+        """
+        # Fibonacci sequence for thresholds
+        fib_full = [3, 5, 8, 13, 21, 34, 55]
+
+        # Take num_steps from the sequence, reversed (larger first)
+        if num_steps <= len(fib_full):
+            thresholds = fib_full[:num_steps][::-1]
+        else:
+            thresholds = fib_full[::-1]
+
+        return thresholds
+
     def start_position(
         self,
         symbol: str,
         entry_price: float,
         initial_size: float,
-        base_delta: float
+        base_delta: float,
+        vol_mult: float = 1.0,
+        regime: str = 'NORMAL_VOLATILITY'
     ):
-        """Start tracking a new position"""
+        """
+        Start tracking a new position with dynamic sizing.
+
+        Args:
+            symbol: Trading pair
+            entry_price: Entry price
+            initial_size: Initial position size
+            base_delta: Worst case price movement (decimal, e.g., 0.021)
+            vol_mult: Volatility multiplier (0.5-2.0)
+            regime: Market regime
+        """
+        # Calculate dynamic sizing for this position
+        sizing = self.calculate_dynamic_sizing(base_delta, vol_mult, regime)
+        self.position_sizing[symbol] = sizing
+
         self.active_positions[symbol] = {
             'entry_price': entry_price,
             'initial_size': initial_size,
@@ -276,16 +344,21 @@ class AdaptiveFibonacciAveraging:
             'avg_price': entry_price,
             'start_time': time.time(),
             'max_drawdown': 0.0,
-            'allocated_capital': 0.0
+            'allocated_capital': 0.0,
+            'dynamic_sizing': sizing  # Store sizing with position
         }
-        
+
         self.base_deltas[symbol] = base_delta
-        
+
         logger.info(
-            "Started position tracking",
+            "Started position tracking with DYNAMIC SIZING",
             symbol=symbol,
             entry_price=entry_price,
-            base_delta=base_delta
+            base_delta=f"{base_delta*100:.2f}%",
+            initial_margin=f"${sizing.initial_margin:.2f}",
+            num_steps=sizing.num_steps,
+            multipliers=sizing.multipliers,
+            regime=regime
         )
     
     def update_price(self, symbol: str, current_price: float):
@@ -310,23 +383,31 @@ class AdaptiveFibonacciAveraging:
             self._execute_averaging_step(symbol, current_price, upnl_pct)
     
     def _should_average(self, symbol: str, upnl_pct: float) -> bool:
-        """Determine if we should take an averaging step"""
+        """Determine if we should take an averaging step using DYNAMIC sizing"""
         position = self.active_positions[symbol]
         step = position['steps_taken']
-        
+
+        # Get dynamic sizing for this position
+        sizing = position.get('dynamic_sizing')
+        if sizing:
+            num_steps = sizing.num_steps
+            thresholds = self._generate_thresholds(num_steps)
+        else:
+            thresholds = self.FIBONACCI_THRESHOLDS
+
         # No more steps available
-        if step >= len(self.FIBONACCI_THRESHOLDS):
+        if step >= len(thresholds):
             return False
-        
+
         # Calculate adaptive delta
         adaptive_delta = self._calculate_adaptive_delta(symbol)
-        
+
         # Get Fibonacci threshold for this step
-        fib_threshold = self.FIBONACCI_THRESHOLDS[step]
-        
+        fib_threshold = thresholds[step]
+
         # Calculate actual threshold percentage
         threshold_pct = (adaptive_delta * fib_threshold) / 100
-        
+
         # Check if we've hit the threshold (negative for drawdown)
         return upnl_pct <= -threshold_pct
     
@@ -364,34 +445,46 @@ class AdaptiveFibonacciAveraging:
         return adaptive_delta
     
     def _execute_averaging_step(self, symbol: str, current_price: float, upnl_pct: float):
-        """Execute an averaging step"""
+        """Execute an averaging step using DYNAMIC sizing"""
         position = self.active_positions[symbol]
         step = position['steps_taken']
-        
-        if step >= len(self.FIBONACCI_MULTIPLIERS):
+
+        # Get dynamic sizing for this position
+        sizing = position.get('dynamic_sizing')
+        if sizing:
+            multipliers = sizing.multipliers
+            step_margins = sizing.step_margins
+        else:
+            multipliers = self.FIBONACCI_MULTIPLIERS
+            step_margins = None
+
+        if step >= len(multipliers):
             return
-        
+
         # Get Fibonacci multiplier for this step
-        fib_multiplier = self.FIBONACCI_MULTIPLIERS[step]
-        
-        # Allocate capital for this step
-        step_capital = self.capital_allocator.allocate_for_step(step, fib_multiplier)
-        
+        fib_multiplier = multipliers[step]
+
+        # Get step margin from dynamic sizing or calculate from allocator
+        if step_margins and step < len(step_margins):
+            step_capital = step_margins[step]
+        else:
+            step_capital = self.capital_allocator.allocate_for_step(step, fib_multiplier)
+
         # Calculate position size (assuming leverage calculation handled elsewhere)
         additional_size = position['initial_size'] * fib_multiplier
-        
+
         # Update position
         old_total_size = position['total_size']
         old_avg_price = position['avg_price']
-        
+
         new_total_size = old_total_size + additional_size
         new_avg_price = (old_avg_price * old_total_size + current_price * additional_size) / new_total_size
-        
+
         position['total_size'] = new_total_size
         position['avg_price'] = new_avg_price
         position['steps_taken'] += 1
         position['allocated_capital'] += step_capital
-        
+
         # Reserve capital
         self.capital_allocator.reserve_capital(step_capital)
         
