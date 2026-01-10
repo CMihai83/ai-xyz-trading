@@ -48,6 +48,9 @@ services:
   # ==========================================================================
   # BALANCE MANAGER SERVICE
   # ==========================================================================
+  # UNIQUE SERVICE - Margin management between futures and spot accounts
+  # NOT a duplicate - transfers excess margin ($400 threshold, $15 increments)
+  # --------------------------------------------------------------------------
   balance_manager:
     build:
       context: ./services
@@ -71,6 +74,14 @@ services:
   # ==========================================================================
   # MICROSERVICES
   # ==========================================================================
+
+  # --------------------------------------------------------------------------
+  # DUPLICATE SERVICE - Functionality exists in main trading system
+  # Reference: aixyz_continuous_profit_system.py
+  #   - LiquidationProtectionService (line 64)
+  #   - ATRStopLoss, TrailingATRStop (lines 50-51)
+  #   - Zone-based risk management (lines 488-493)
+  # --------------------------------------------------------------------------
   risk-engine:
     build:
       context: ./services/risk-engine
@@ -86,6 +97,14 @@ services:
     depends_on:
       - redis
 
+  # --------------------------------------------------------------------------
+  # DUPLICATE SERVICE - Functionality exists in main trading system
+  # Reference: aixyz_continuous_profit_system.py
+  #   - LivePositionsRegistry (line 94)
+  #   - PositionPersistenceManager (line 96)
+  #   - EnhancedPositionSync v1.3.0 (line 69)
+  #   - Position zones management (lines 488-545)
+  # --------------------------------------------------------------------------
   position-management:
     build:
       context: ./services/position-management
@@ -104,6 +123,13 @@ services:
     depends_on:
       - redis
 
+  # --------------------------------------------------------------------------
+  # DUPLICATE SERVICE - Functionality exists in main trading system
+  # Reference: aixyz_continuous_profit_system.py
+  #   - ScannerV4 (line 31) - All-market intelligent scanner
+  #   - EnhancedMarketScanner (line 28)
+  #   - VSA scoring, two-stage filtering (497 markets)
+  # --------------------------------------------------------------------------
   market-scanner:
     build:
       context: ./services/market-scanner
@@ -122,6 +148,10 @@ services:
     depends_on:
       - redis
 
+  # --------------------------------------------------------------------------
+  # UNIQUE SERVICE - Historical data storage and processing
+  # NOT a duplicate - provides data persistence not in main system
+  # --------------------------------------------------------------------------
   data-pipeline:
     build:
       context: ./services/data-pipeline
@@ -139,6 +169,15 @@ services:
       - redis
       - postgres
 
+  # --------------------------------------------------------------------------
+  # DUPLICATE SERVICE - ML functionality exists in main trading system
+  # Reference: aixyz_continuous_profit_system.py
+  #   - RLClosingAgent (line 44) - Q-learning exit timing
+  #   - MarkowitzOptimizer (line 45) - Portfolio optimization
+  #   - CorrelationMatrixAnalyzer (line 46)
+  #   - OpportunityCostPredictor (line 47)
+  #   - V3 AI: AdaptiveThresholdEngine, AIMarketIntelligence (lines 71-75)
+  # --------------------------------------------------------------------------
   ml-framework:
     build:
       context: ./services/ml-framework
@@ -154,6 +193,10 @@ services:
     depends_on:
       - redis
 
+  # --------------------------------------------------------------------------
+  # UNIQUE SERVICE - System metrics and health monitoring
+  # NOT a duplicate - provides monitoring dashboard not in main system
+  # --------------------------------------------------------------------------
   monitoring-service:
     build:
       context: ./services/monitoring-service
@@ -169,6 +212,11 @@ services:
     depends_on:
       - redis
 
+  # --------------------------------------------------------------------------
+  # DUPLICATE SERVICE - Notifications handled by telegram-bot service
+  # Reference: telegram-bot container (ai_xyz_telegram_bot)
+  #   - Already running and handling all notifications
+  # --------------------------------------------------------------------------
   notification-service:
     build:
       context: ./services/notification-service

@@ -7,9 +7,10 @@ RUN apt-get update && apt-get install -y \
     gcc \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements and install
+# Copy balance manager script
 COPY balance_manager.py .
-COPY ../requirements.txt .
+
+# Install Python dependencies
 RUN pip install --no-cache-dir ccxt structlog python-dotenv
 
 # Set environment variables
