@@ -61,16 +61,23 @@ class MonitoringService:
         self.service_health = {}
         self.alert_rules = {}
         self.alerts = []
+        # Services to monitor - using Docker service names and internal port 8000
+        # Only monitoring services with HTTP health endpoints
         self.services = {
-            'market-scanner': 'http://localhost:8001',
-            'ai-decision-engine': 'http://localhost:8002',
-            'position-management': 'http://localhost:8003',
-            'backtesting-engine': 'http://localhost:8004',
-            'ml-framework': 'http://localhost:8005',
-            'notification-service': 'http://localhost:8007',
-            'data-pipeline': 'http://localhost:8008',
-            'risk-engine': 'http://localhost:8009'
+            # UNIQUE SERVICES with HTTP health endpoints
+            'data-pipeline': 'http://data-pipeline:8000',
         }
+
+        # Services without HTTP endpoints (monitored separately via Docker)
+        # - balance_manager: Python script (no HTTP)
+        # - ai_xyz_trading: Python script (no HTTP)
+        # - redis: TCP 6379 (checked via redis-cli)
+        # - postgres: TCP 5432 (checked via pg_isready)
+        # - telegram_bot: Python script (no HTTP)
+
+        # DUPLICATE SERVICES (not started - functionality in main trading system):
+        # - risk-engine, position-management, market-scanner
+        # - ml-framework, notification-service
         
         # Initialize default alert rules
         self.setup_default_alert_rules()
