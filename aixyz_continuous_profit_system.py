@@ -582,9 +582,9 @@ class AIXYZContinuousProfit:
             base_position_size = min(8.0, PositionSizingConfig.BASE_POSITION_VALUE * 0.2)  # $8.0 initial position (20% of $40)
             
             # Calculate capital per position based on max positions allowed
-            # $5 per position ($3.50 averaging + $1.50 protection) - Reduced for Florin's account
-            positions_allowed = int(total_capital / 5) if total_capital >= 10 else 1
-            capital_per_position = min(5.0, total_capital / max(1, positions_allowed))
+            from position_sizing_config import PositionSizingConfig
+            positions_allowed = int(total_capital / PositionSizingConfig.TOTAL_CAPITAL) if total_capital >= 10 else 1
+            capital_per_position = min(PositionSizingConfig.TOTAL_CAPITAL, total_capital / max(1, positions_allowed))
             
             # 70% for averaging calculations, 30% safety margin
             averaging_capital = capital_per_position * 0.70
@@ -1324,10 +1324,9 @@ class AIXYZContinuousProfit:
             balance = self.exchange.fetch_balance()
             account_balance = balance['USDT']['free'] + balance['USDT']['used']
             
-            # Use 70% of capital allocation for position + averaging
-            # With $0.7 initial margin, total capital needed = $0.7 + averaging steps
-            max_capital_per_position = 5.0  # $0.7 initial + $2.8 for averaging steps (3 steps max)
-            capital_allocation_percent = 0.70  # 70% for trading, 30% reserve
+            # Use configured capital allocation for position + averaging
+            max_capital_per_position = PositionSizingConfig.TOTAL_CAPITAL
+            capital_allocation_percent = PositionSizingConfig.TRADING_CAPITAL_PERCENT
             
             # Use lesser of actual balance or max capital
             effective_capital = min(account_balance, max_capital_per_position)
@@ -1588,8 +1587,8 @@ class AIXYZContinuousProfit:
             # This is needed for the position opening logic later
             balance = self.exchange.fetch_balance()
             account_balance = balance['USDT']['free'] + balance['USDT']['used']
-            max_capital_per_position = 5.0  # Reduced for Florin's account
-            capital_allocation_percent = 0.70
+            max_capital_per_position = PositionSizingConfig.TOTAL_CAPITAL  # Use config value
+            capital_allocation_percent = PositionSizingConfig.TRADING_CAPITAL_PERCENT
             effective_capital = min(account_balance, max_capital_per_position)
             available_margin = effective_capital * capital_allocation_percent
             
@@ -2541,8 +2540,8 @@ class AIXYZContinuousProfit:
         
         # Get base allocations for timeframe mapping
         allocator = TimeframeCapitalAllocator(
-            total_capital=min(5.0, self.exchange.fetch_balance()['USDT']['total']),  # Reduced for Florin's account
-            allocation_percent=0.70
+            total_capital=min(PositionSizingConfig.TOTAL_CAPITAL, self.exchange.fetch_balance()['USDT']['total']),
+            allocation_percent=PositionSizingConfig.TRADING_CAPITAL_PERCENT
         )
         base_allocations = allocator.calculate_timeframe_allocations(
             current_delta=fib_config.get('delta', 0.05),
@@ -2866,9 +2865,9 @@ class AIXYZContinuousProfit:
                         # Get current balance to calculate safety margin
                         balance = self.exchange.fetch_balance()
                         total_capital = balance['USDT']['total'] if 'USDT' in balance else 0
-                        positions_allowed = int(total_capital / 5) if total_capital >= 10 else 1
-                        capital_per_position = min(5.0, total_capital / max(1, positions_allowed))
-                        safety_margin = capital_per_position * 0.30
+                        positions_allowed = int(total_capital / PositionSizingConfig.TOTAL_CAPITAL) if total_capital >= 10 else 1
+                        capital_per_position = min(PositionSizingConfig.TOTAL_CAPITAL, total_capital / max(1, positions_allowed))
+                        safety_margin = capital_per_position * PositionSizingConfig.SAFETY_MARGIN_PERCENT
 
                         # Add safety margin to the last averaging step
                         safety_multiplier = safety_margin / original_margin
