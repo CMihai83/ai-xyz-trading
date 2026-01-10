@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 """
 FIFO Margin Allocation System
-Allocates additional capital to positions using First-In-First-Out priority.
+Allocates additional capital to positions that NEED it first.
 When total capital per position is increased (e.g., $25 → $40),
-the oldest positions get the extra capital first.
+the first position that needs the capital gets it.
+
+"Needs capital" = position has exhausted averaging capital and requires more
+to continue averaging or for liquidation protection.
 """
 
 from datetime import datetime
@@ -24,6 +27,7 @@ class PositionMarginState:
     allocated_capital: float  # Total capital allocated to this position
     averaging_steps: int  # Number of averaging steps completed
     needs_additional: bool = False  # Flag if position needs more capital
+    needed_since: datetime = None  # When position started needing capital (for FIFO priority)
 
     def margin_available(self) -> float:
         """Calculate remaining margin available for averaging"""
@@ -32,6 +36,15 @@ class PositionMarginState:
     def can_add_margin(self, amount: float) -> bool:
         """Check if additional margin can be added"""
         return self.current_margin + amount <= self.allocated_capital
+
+    def set_needs_capital(self, needs: bool):
+        """Set whether position needs additional capital"""
+        if needs and not self.needs_additional:
+            # First time needing capital - record timestamp for FIFO
+            self.needed_since = datetime.now()
+        elif not needs:
+            self.needed_since = None
+        self.needs_additional = needs
 
 
 @dataclass
@@ -131,14 +144,17 @@ class FIFOMarginAllocator:
         state.averaging_steps = averaging_step
 
         # Check if position needs additional capital
-        state.needs_additional = state.margin_available() < PositionSizingConfig.BASE_MARGIN_SIZE
+        # Needs capital if remaining margin is less than one averaging step
+        needs_more = state.margin_available() < PositionSizingConfig.BASE_MARGIN_SIZE
+        state.set_needs_capital(needs_more)
 
         logger.debug(
             "Margin updated",
             symbol=symbol,
             margin_used=margin_used,
             remaining=state.margin_available(),
-            needs_additional=state.needs_additional
+            needs_additional=state.needs_additional,
+            needed_since=state.needed_since.isoformat() if state.needed_since else None
         )
 
         return state
@@ -153,15 +169,23 @@ class FIFOMarginAllocator:
 
     def get_positions_by_priority(self) -> List[PositionMarginState]:
         """
-        Get all positions sorted by FIFO priority (oldest first).
+        Get all positions sorted by FIFO priority.
+        Priority: Positions that need capital first, sorted by when they started needing it.
 
         Returns:
-            List of positions sorted by open_time ascending
+            List of positions - those needing capital first (by needed_since), then others
         """
-        return sorted(
-            self.positions.values(),
-            key=lambda p: p.open_time
-        )
+        # Separate positions that need capital from those that don't
+        needs_capital = [p for p in self.positions.values() if p.needs_additional]
+        has_enough = [p for p in self.positions.values() if not p.needs_additional]
+
+        # Sort positions needing capital by when they started needing it (FIFO)
+        needs_capital.sort(key=lambda p: p.needed_since or datetime.max)
+
+        # Others sorted by open time (in case they need capital later)
+        has_enough.sort(key=lambda p: p.open_time)
+
+        return needs_capital + has_enough
 
     def allocate_additional_capital(
         self,
@@ -170,8 +194,8 @@ class FIFOMarginAllocator:
         """
         Allocate additional capital using FIFO priority.
 
-        When total capital per position increases, oldest positions
-        get the extra capital first.
+        First position that NEEDS capital gets it first.
+        "Needs" = position has exhausted its allocated capital for averaging.
 
         Args:
             new_total_capital: New total capital per position (e.g., $40)
@@ -195,41 +219,42 @@ class FIFOMarginAllocator:
             )
             new_total_capital = self.max_capital
 
-        additional_per_position = new_total_capital - self.base_capital
         results: List[AllocationResult] = []
 
-        # Get positions in FIFO order
+        # Get positions in FIFO order (those needing capital first)
         sorted_positions = self.get_positions_by_priority()
 
         for rank, position in enumerate(sorted_positions, 1):
-            # Check if position needs additional capital
-            if position.needs_additional or position.margin_available() < additional_per_position:
-                previous_capital = position.allocated_capital
+            # Only allocate to positions that NEED capital
+            if not position.needs_additional:
+                continue
 
-                # Allocate additional capital
-                new_capital = min(new_total_capital, self.max_capital)
-                additional_margin = new_capital - previous_capital
+            previous_capital = position.allocated_capital
 
-                position.allocated_capital = new_capital
-                position.needs_additional = False
+            # Allocate additional capital
+            new_capital = min(new_total_capital, self.max_capital)
+            additional_margin = new_capital - previous_capital
 
-                result = AllocationResult(
-                    symbol=position.symbol,
-                    previous_capital=previous_capital,
-                    new_capital=new_capital,
-                    additional_margin=additional_margin,
-                    priority_rank=rank
-                )
-                results.append(result)
+            position.allocated_capital = new_capital
+            position.set_needs_capital(False)  # Reset need flag
 
-                logger.info(
-                    "FIFO capital allocated",
-                    symbol=position.symbol,
-                    rank=rank,
-                    previous=previous_capital,
-                    new=new_capital,
-                    additional=additional_margin
-                )
+            result = AllocationResult(
+                symbol=position.symbol,
+                previous_capital=previous_capital,
+                new_capital=new_capital,
+                additional_margin=additional_margin,
+                priority_rank=rank
+            )
+            results.append(result)
+
+            logger.info(
+                "FIFO capital allocated (position needed it)",
+                symbol=position.symbol,
+                rank=rank,
+                previous=previous_capital,
+                new=new_capital,
+                additional=additional_margin
+            )
 
         # Update the base capital for new positions
         self.base_capital = new_total_capital
@@ -294,9 +319,11 @@ def get_fifo_allocator() -> FIFOMarginAllocator:
 # Example usage
 if __name__ == "__main__":
     from datetime import timedelta
+    import time
 
     print("=" * 60)
     print("FIFO MARGIN ALLOCATION SYSTEM")
+    print("First position that NEEDS capital gets it first")
     print("=" * 60)
 
     allocator = FIFOMarginAllocator()
@@ -325,30 +352,49 @@ if __name__ == "__main__":
         initial_margin=5.0
     )
 
-    # Simulate averaging steps
-    allocator.update_margin_used("BTCUSDT", 12.0, 2)  # Used $12 of $25
-    allocator.update_margin_used("ETHUSDT", 8.0, 1)   # Used $8 of $25
-    allocator.update_margin_used("SOLUSDT", 5.0, 0)   # Initial only
+    # Simulate averaging steps - ETH exhausts capital first (needs it first)
+    print("\nSimulating margin usage...")
+
+    # ETH uses most of its capital first → needs capital first
+    allocator.update_margin_used("ETHUSDT", 22.0, 4)  # Used $22 of $25 - needs more!
+    time.sleep(0.1)  # Small delay to show FIFO ordering
+
+    # BTC uses capital next → needs capital second
+    allocator.update_margin_used("BTCUSDT", 23.0, 4)  # Used $23 of $25 - needs more!
+
+    # SOL still has plenty
+    allocator.update_margin_used("SOLUSDT", 10.0, 2)   # Used $10 of $25 - OK
 
     print("\nBefore capital increase:")
     status = allocator.get_status_report()
     for p in status['positions']:
+        needed = p.get('needed_since', 'N/A')
         print(f"  {p['symbol']}: ${p['current_margin']:.2f} used, "
               f"${p['margin_available']:.2f} available, "
               f"needs_additional={p['needs_additional']}")
 
+    # Show priority order
+    print("\nPriority order (first to need capital → first to receive):")
+    for i, p in enumerate(allocator.get_positions_by_priority(), 1):
+        status = "NEEDS CAPITAL" if p.needs_additional else "OK"
+        print(f"  {i}. {p.symbol}: {status}")
+
     # Increase capital from $25 to $40
     print("\n" + "-" * 60)
     print("Increasing capital from $25 to $40...")
+    print("Only positions that NEED capital will receive it")
     print("-" * 60)
 
     results = allocator.allocate_additional_capital(40.0)
 
-    print(f"\nAllocation Results ({len(results)} positions updated):")
+    print(f"\nAllocation Results ({len(results)} positions received capital):")
     for r in results:
         print(f"  Rank {r.priority_rank}: {r.symbol} - "
               f"${r.previous_capital:.2f} → ${r.new_capital:.2f} "
               f"(+${r.additional_margin:.2f})")
+
+    if not results:
+        print("  No positions needed additional capital")
 
     print("\nAfter capital increase:")
     status = allocator.get_status_report()
