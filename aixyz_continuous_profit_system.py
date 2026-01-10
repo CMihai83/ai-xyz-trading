@@ -129,9 +129,9 @@ class AIXYZContinuousProfit:
         # Initialize timeframe speed tracker for dynamic threshold adjustment
         self.speed_tracker = TimeframeSpeedTracker()
         
-        # Initialize adaptive Fibonacci averaging system (capital available for averaging after $0.7 initial margin)
-        # With $5 total capital, 70% trading ($3.50), minus $0.7 initial = $2.80 for averaging
-        self.adaptive_fibonacci = AdaptiveFibonacciAveraging(total_capital=2.80)
+        # Initialize adaptive Fibonacci averaging system with configured capital
+        from position_sizing_config import PositionSizingConfig
+        self.adaptive_fibonacci = AdaptiveFibonacciAveraging(total_capital=PositionSizingConfig.AVERAGING_CAPITAL)
         print("🧮 Adaptive Fibonacci Averaging System initialized - preserving core concepts with dynamic adaptation")
 
         # Initialize margin-aware position sizer
@@ -1358,7 +1358,7 @@ class AIXYZContinuousProfit:
             
             # Use TimeframeCapitalAllocator for full capital distribution
             allocator = TimeframeCapitalAllocator(
-                total_capital=effective_capital,  # Use actual balance or $5 max
+                total_capital=effective_capital,  # Use actual balance or config max ($25)
                 allocation_percent=capital_allocation_percent  # 70% for trading
             )
             
