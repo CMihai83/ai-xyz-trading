@@ -81,10 +81,14 @@ class VolatilityTracker:
 
 class SmartCapitalAllocator:
     """Allocates capital using golden ratio tiers"""
-    
+
     GOLDEN_RATIO_TIERS = [0.382, 0.236, 0.236, 0.146]  # Sum = 1.0
-    
-    def __init__(self, total_capital: float = 3.50):
+
+    def __init__(self, total_capital: float = None):
+        # Use PositionSizingConfig if not provided
+        if total_capital is None:
+            from position_sizing_config import PositionSizingConfig
+            total_capital = PositionSizingConfig.AVERAGING_CAPITAL  # $12.50
         self.total_capital = total_capital
         self.tier_capitals = [total_capital * tier for tier in self.GOLDEN_RATIO_TIERS]
         self.used_capital = 0.0
@@ -228,12 +232,19 @@ class AdaptiveFibonacciAveraging:
     """
     
     # Fibonacci sequence for thresholds (reverse order)
-    FIBONACCI_THRESHOLDS = [34, 21, 13, 8, 5, 3, 2]
-    
-    # Fibonacci sequence for multipliers (natural order)  
-    FIBONACCI_MULTIPLIERS = [1, 1, 2, 3, 5, 8, 13]
-    
-    def __init__(self, total_capital: float = 3.50):
+    # Larger numbers = wider spacing for early steps, smaller = tighter spacing near liquidation
+    FIBONACCI_THRESHOLDS = [21, 13, 8, 5, 3]  # 5 steps
+
+    # Fibonacci sequence for multipliers (NATURAL ORDER - larger at end for liquidation protection)
+    # Last steps are LARGEST to bring average entry down significantly when near liquidation
+    # [1, 1, 2, 3, 5] = 12 units total
+    FIBONACCI_MULTIPLIERS = [1, 1, 2, 3, 5]  # 5 steps - larger amounts near liquidation
+
+    def __init__(self, total_capital: float = None):
+        # Use PositionSizingConfig if not provided
+        if total_capital is None:
+            from position_sizing_config import PositionSizingConfig
+            total_capital = PositionSizingConfig.AVERAGING_CAPITAL  # $12.50
         self.volatility_tracker = VolatilityTracker()
         self.capital_allocator = SmartCapitalAllocator(total_capital)
         self.efficiency_tracker = EfficiencyTracker()
