@@ -121,17 +121,43 @@ class BitgetFuturesClient:
         return self._request('GET', '/api/mix/v1/market/candles', params=params)
     
     # Trading Operations - Futures
-    def place_futures_order(self, symbol: str, margin_coin: str, size: str, side: str, 
+    def place_futures_order(self, symbol: str, margin_coin: str, size: str, side: str,
                           order_type: str, price: str = None, client_order_id: str = None,
                           reduce_only: bool = False, time_in_force: str = None,
                           stop_loss_price: str = None, take_profit_price: str = None,
                           margin_mode: str = 'isolated') -> Dict:
-        """Place a futures order with isolated margin mode by default."""
+        """Place a futures order with isolated margin mode by default.
+        For hedge mode (double_hold), converts V1 format to V2 format:
+        - open_long -> side='buy', tradeSide='open'
+        - open_short -> side='sell', tradeSide='open'
+        - close_long -> side='sell', tradeSide=''
+        - close_short -> side='buy', tradeSide=''
+        """
+        # Convert V1 format to V2 hedge mode format
+        side_lower = side.lower()
+        if side_lower == 'open_long':
+            api_side = 'buy'
+            trade_side = 'open'
+        elif side_lower == 'open_short':
+            api_side = 'sell'
+            trade_side = 'open'
+        elif side_lower == 'close_long':
+            api_side = 'sell'
+            trade_side = ''
+        elif side_lower == 'close_short':
+            api_side = 'buy'
+            trade_side = ''
+        else:
+            # Fallback for direct V2 format
+            api_side = side_lower
+            trade_side = 'open'
+
         data = {
             'symbol': symbol,
             'marginCoin': margin_coin,
             'size': size,
-            'side': side.lower(),  # open_long, open_short, close_long, close_short
+            'side': api_side,
+            'tradeSide': trade_side,  # Required for hedge mode
             'orderType': order_type.lower(),  # limit, market
             'marginMode': margin_mode,  # 'isolated' or 'crossed' - default to isolated
         }

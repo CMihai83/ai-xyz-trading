@@ -1,54 +1,265 @@
 version: '3.8'
 
 services:
+  # ==========================================================================
+  # MAIN TRADING SYSTEM
+  # ==========================================================================
   ai_xyz_trading:
-    build: .
-    container_name: ai_xyz_system
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ai_xyz_trading_system
     restart: unless-stopped
     environment:
       - BITGET_API_KEY=${BITGET_API_KEY}
-      - BITGET_SECRET=${BITGET_SECRET}
-      - BITGET_PASSPHRASE=${BITGET_PASSPHRASE}
-      - REDIS_URL=redis://redis:6379
-      - DATABASE_URL=postgresql://user:password@postgres:5432/ai_xyz
+      - BITGET_SECRET=${BITGET_API_SECRET}
+      - BITGET_PASSPHRASE=${BITGET_API_PASSPHRASE}
+      - REDIS_URL=redis://redis:6379/0
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - DATABASE_URL=postgresql://${DB_USER:-ai_xyz_user}:${DB_PASSWORD:-ai_xyz_pass}@postgres:5432/${DB_NAME:-ai_xyz}
+      - PYTHONUNBUFFERED=1
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - INITIAL_BALANCE=${INITIAL_BALANCE:-65.70}
+      - MAX_POSITIONS=${MAX_POSITIONS:-10}
+      - DEFAULT_LEVERAGE=${DEFAULT_LEVERAGE:-5}
+      - POSITION_SIZE_USD=${POSITION_SIZE_USD:-10}
     volumes:
       - ./logs:/app/logs
       - ./data:/app/data
       - ./position_state.json:/app/position_state.json
       - ./averaging_state.json:/app/averaging_state.json
       - ./continuous_trading_state.json:/app/continuous_trading_state.json
+      - ./performance_history.json:/app/performance_history.json
+    networks:
+      - ai_xyz_network
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import sys; sys.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # ==========================================================================
+  # BALANCE MANAGER SERVICE
+  # ==========================================================================
+  balance_manager:
+    build:
+      context: ./services
+      dockerfile: Dockerfile.balance_manager
+    container_name: ai_xyz_balance_manager
+    restart: unless-stopped
+    environment:
+      - BITGET_API_KEY=${BITGET_API_KEY}
+      - BITGET_SECRET=${BITGET_API_SECRET}
+      - BITGET_PASSPHRASE=${BITGET_API_PASSPHRASE}
+      - MARGIN_THRESHOLD=400
+      - TRANSFER_INCREMENT=15
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - ai_xyz_network
+    depends_on:
+      - ai_xyz_trading
+
+  # ==========================================================================
+  # MICROSERVICES
+  # ==========================================================================
+  risk-engine:
+    build:
+      context: ./services/risk-engine
+      dockerfile: Dockerfile
+    container_name: ai_xyz_risk_engine
+    restart: unless-stopped
+    ports:
+      - "8001:8000"
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+    networks:
+      - ai_xyz_network
+    depends_on:
+      - redis
+
+  position-management:
+    build:
+      context: ./services/position-management
+      dockerfile: Dockerfile
+    container_name: ai_xyz_position_management
+    restart: unless-stopped
+    ports:
+      - "8002:8000"
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - BITGET_API_KEY=${BITGET_API_KEY}
+      - BITGET_SECRET=${BITGET_API_SECRET}
+      - BITGET_PASSPHRASE=${BITGET_API_PASSPHRASE}
+    networks:
+      - ai_xyz_network
+    depends_on:
+      - redis
+
+  market-scanner:
+    build:
+      context: ./services/market-scanner
+      dockerfile: Dockerfile
+    container_name: ai_xyz_market_scanner
+    restart: unless-stopped
+    ports:
+      - "8003:8000"
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - BITGET_API_KEY=${BITGET_API_KEY}
+      - BITGET_SECRET=${BITGET_API_SECRET}
+      - BITGET_PASSPHRASE=${BITGET_API_PASSPHRASE}
+    networks:
+      - ai_xyz_network
+    depends_on:
+      - redis
+
+  data-pipeline:
+    build:
+      context: ./services/data-pipeline
+      dockerfile: Dockerfile
+    container_name: ai_xyz_data_pipeline
+    restart: unless-stopped
+    ports:
+      - "8004:8000"
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - DATABASE_URL=postgresql://${DB_USER:-ai_xyz_user}:${DB_PASSWORD:-ai_xyz_pass}@postgres:5432/${DB_NAME:-ai_xyz}
     networks:
       - ai_xyz_network
     depends_on:
       - redis
       - postgres
 
+  ml-framework:
+    build:
+      context: ./services/ml-framework
+      dockerfile: Dockerfile
+    container_name: ai_xyz_ml_framework
+    restart: unless-stopped
+    ports:
+      - "8005:8000"
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+    networks:
+      - ai_xyz_network
+    depends_on:
+      - redis
+
+  monitoring-service:
+    build:
+      context: ./services/monitoring-service
+      dockerfile: Dockerfile
+    container_name: ai_xyz_monitoring
+    restart: unless-stopped
+    ports:
+      - "8006:8000"
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+    networks:
+      - ai_xyz_network
+    depends_on:
+      - redis
+
+  notification-service:
+    build:
+      context: ./services/notification-service
+      dockerfile: Dockerfile
+    container_name: ai_xyz_notification
+    restart: unless-stopped
+    ports:
+      - "8007:8000"
+    environment:
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID}
+    networks:
+      - ai_xyz_network
+
+  # ==========================================================================
+  # INFRASTRUCTURE SERVICES
+  # ==========================================================================
   redis:
     image: redis:7-alpine
     container_name: ai_xyz_redis
     restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
     volumes:
       - redis_data:/data
     networks:
       - ai_xyz_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
 
   postgres:
     image: timescale/timescaledb:latest-pg15
     container_name: ai_xyz_postgres
     restart: unless-stopped
     environment:
-      - POSTGRES_USER=user
-      - POSTGRES_PASSWORD=password
-      - POSTGRES_DB=ai_xyz
+      - POSTGRES_USER=${DB_USER:-ai_xyz_user}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-ai_xyz_pass}
+      - POSTGRES_DB=${DB_NAME:-ai_xyz}
+      - PGDATA=/var/lib/postgresql/data/pgdata
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - ai_xyz_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-ai_xyz_user} -d ${DB_NAME:-ai_xyz}"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  # ==========================================================================
+  # ADDITIONAL SERVICES
+  # ==========================================================================
+  telegram-bot:
+    build:
+      context: .
+      dockerfile: Dockerfile.telegram
+    container_name: ai_xyz_telegram_bot
+    restart: unless-stopped
+    environment:
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID}
+      - REDIS_URL=redis://redis:6379/0
+    networks:
+      - ai_xyz_network
+    depends_on:
+      - redis
+
+  backtest:
+    build:
+      context: .
+      dockerfile: Dockerfile.backtest
+    container_name: ai_xyz_backtest
+    restart: unless-stopped
+    ports:
+      - "8008:8000"
+    environment:
+      - DATABASE_URL=postgresql://${DB_USER:-ai_xyz_user}:${DB_PASSWORD:-ai_xyz_pass}@postgres:5432/${DB_NAME:-ai_xyz}
+    networks:
+      - ai_xyz_network
+    depends_on:
+      - postgres
 
 volumes:
   redis_data:
+    driver: local
   postgres_data:
+    driver: local
 
 networks:
   ai_xyz_network:
     driver: bridge
+    name: ai_xyz_trading_network

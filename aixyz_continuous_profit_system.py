@@ -358,17 +358,34 @@ class AIXYZContinuousProfit:
             print("✅ Enhanced Position Sync initialized\n")
 
             # For any position without original size tracked, set it
+            # CRITICAL: Never overwrite a smaller original_size with current size
+            print(f"  🔍 Checking {len(self.active_positions)} positions for surplus detection fix...")
             for symbol, pos in self.active_positions.items():
-                if symbol not in self.original_sizes:
-                    # If no averaging steps, current size is original
-                    # Otherwise estimate based on averaging steps
-                    if self.averaging_steps.get(symbol, 0) == 0:
-                        self.original_sizes[symbol] = pos['amount']
-                    else:
-                        # Estimate original as current/(1 + steps)
-                        estimated_original = pos['amount'] / (1 + self.averaging_steps.get(symbol, 0))
+                current_size = pos['amount']
+                existing_original = self.original_sizes.get(symbol, 0)
+                print(f"    {symbol}: current={current_size:.0f}, original={existing_original:.0f}")
+
+                if symbol not in self.original_sizes or existing_original == 0:
+                    # No original size tracked yet
+                    if self.averaging_steps.get(symbol, 0) > 0:
+                        # Has averaging steps - estimate original
+                        estimated_original = current_size / (1 + self.averaging_steps.get(symbol, 0))
                         self.original_sizes[symbol] = estimated_original
                         print(f"  ⚠️ Estimated original size for {symbol}: {estimated_original:.4f}")
+                    else:
+                        # No averaging steps - set current as original
+                        self.original_sizes[symbol] = current_size
+                elif existing_original > 0 and current_size > existing_original * 1.1:
+                    # PROTECT: Original exists and is smaller - position was averaged/pyramided
+                    # Do NOT overwrite with current size!
+                    print(f"  🛡️ Protecting original_size for {symbol}: {existing_original:.2f} (current: {current_size:.2f})")
+                    # Also ensure averaging_steps reflects this
+                    if self.averaging_steps.get(symbol, 0) == 0:
+                        # Estimate averaging steps from size ratio
+                        size_ratio = current_size / existing_original
+                        estimated_steps = max(1, int(size_ratio) - 1)
+                        self.averaging_steps[symbol] = estimated_steps
+                        print(f"  🔧 Set averaging_steps[{symbol}] = {estimated_steps} (from size ratio {size_ratio:.1f}x)")
             
             # Initialize position_multipliers for loaded positions
             if not hasattr(self, 'position_multipliers'):
@@ -434,8 +451,8 @@ class AIXYZContinuousProfit:
             self.position_multipliers = {}  # Track position-specific averaging multipliers
         
         # V1.2.0: Optimized configuration for faster capital recycling and more opportunities
-        self.max_positions = 8  # Increased from 5 - +60% capital utilization, +40% profit opportunities
-        self.max_positions_allowed = 8  # Aligned with max_positions
+        self.max_positions = 12  # Increased to allow more opportunities
+        self.max_positions_allowed = 12  # Aligned with max_positions
         self.max_averaging_steps = 13  # Default, will be recalculated dynamically
         # Averaging multipliers based on initial $1 margin
         # Step 1: 1x initial margin, Step 2: 2x, Step 3: 3x, Step 4: 5x, Step 5: 8x
@@ -471,6 +488,11 @@ class AIXYZContinuousProfit:
             'profit_taking': 0.05,  # Enter surplus dump at +5% UPNL (was +50%)
             'stop_loss': -0.90  # -90% (safe for 15x leverage, triggers before liquidation)
         }
+
+        # NEUTRAL ZONE UPPER BOUNDARY (dollar value)
+        # Positions stay NEUTRAL until UPNL reaches this threshold
+        # Surplus dump, take profit, and pyramid start executing from this level upwards
+        self.neutral_zone_upper_usd = 0.15  # $0.15 minimum UPNL to exit neutral zone
         
         # Volatility cache for adaptive averaging
         self.volatility_cache = {}
@@ -2589,6 +2611,16 @@ class AIXYZContinuousProfit:
                 # Short: price rises by threshold% = negative UPNL
                 upnl_threshold_pct = -abs(price_threshold_pct * leverage)
 
+            # FIX: LIQUIDATION SAFETY CAP - Prevent thresholds beyond liquidation point
+            # Liquidation occurs at -100% UPNL, so cap all thresholds at -85% for safety
+            # This overrides any dynamic calculation that would exceed liquidation
+            LIQUIDATION_SAFETY_CAP = -0.85  # -85% UPNL maximum threshold
+            if upnl_threshold_pct < LIQUIDATION_SAFETY_CAP:
+                original_threshold = upnl_threshold_pct
+                upnl_threshold_pct = LIQUIDATION_SAFETY_CAP
+                print(f"     ⚠️ SAFETY: Capped UPNL threshold at -85% (was {original_threshold*100:.1f}%)")
+                print(f"     Reason: Original would exceed liquidation point (-100%)")
+
             # HARD CAP: For steps 5+, cap at progressively lower UPNL thresholds
             # This ensures averaging triggers at reasonable loss levels
             # Note: thresholds are in decimal format (0.60 = 60%)
@@ -3727,7 +3759,7 @@ class AIXYZContinuousProfit:
             # NOTE: Exchange automatically calculates new weighted average entry price
             # We'll sync it on next position fetch - don't manually calculate
 
-            # Increment pyramid count
+            # Increment pyramid count AND averaging_steps (both track position additions)
             # CRITICAL: Always update self.active_positions directly
             if symbol in self.active_positions:
                 pyramid_count = self.active_positions[symbol].get('pyramid_count', 0) + 1
@@ -3735,6 +3767,11 @@ class AIXYZContinuousProfit:
             else:
                 pyramid_count = position.get('pyramid_count', 0) + 1
                 position['pyramid_count'] = pyramid_count
+
+            # CRITICAL FIX: Also increment averaging_steps so surplus detection works
+            # Pyramid is essentially averaging UP - it increases position size
+            self.averaging_steps[symbol] = self.averaging_steps.get(symbol, 0) + 1
+            print(f"  📊 Updated averaging_steps[{symbol}] = {self.averaging_steps[symbol]}")
 
             print(f"  📊 Pyramid #{pyramid_count} executed for {symbol}")
             print(f"     Pyramids remaining: {max(0, 2 - pyramid_count)}/2")
@@ -4078,7 +4115,15 @@ class AIXYZContinuousProfit:
                     self.peak_upnl[symbol] = 0  # Start fresh, don't use current UPNL
                     self.peak_upnl_timestamps[symbol] = None  # No peak timestamp yet
                     self.surplus_dump_stage[symbol] = 0  # No surplus dump stage
-                    self.original_sizes[symbol] = ex_pos['contracts']  # Track original size
+
+                    # CRITICAL: Only set original_size if not already tracked with smaller value
+                    current_contracts = ex_pos['contracts']
+                    existing_original = self.original_sizes.get(symbol, 0)
+                    if existing_original > 0 and existing_original < current_contracts * 0.9:
+                        # Existing original is smaller - preserve it, position was averaged
+                        print(f"  🛡️ Preserving original_size={existing_original:.2f} for {symbol} (current: {current_contracts:.2f})")
+                    else:
+                        self.original_sizes[symbol] = current_contracts
                     added_count += 1
             
             # Remove positions that no longer exist on exchange
@@ -4197,9 +4242,13 @@ class AIXYZContinuousProfit:
         # Always reconcile with exchange to pick up manual positions
         # V1.3.0: Use enhanced sync integration
         self.sync_integration.reconcile_with_exchange()
-        
+
         # Update Fibonacci configs regularly (every monitor cycle)
-        self.update_fibonacci_configs()
+        # OPTIMIZATION: Only update on first cycle, not every time
+        if not hasattr(self, '_fibonacci_configs_loaded'):
+            print("\n🔧 Loading Fibonacci configs for existing positions...")
+            self.update_fibonacci_configs()
+            self._fibonacci_configs_loaded = True
 
         # CRITICAL: On first monitoring cycle after startup, check for positions at max averaging step
         # Place protection orders for positions that reached their final step before restart
@@ -4454,8 +4503,14 @@ class AIXYZContinuousProfit:
                             price_move_pct = ((entry_price - current_price) / entry_price) * 100
 
                         # Simplified zone assignment
-                        if pct > 1.5:  # +1.5% (lowered from 5%)
-                            if self.averaging_steps[symbol] > 0:
+                        # NEUTRAL ZONE UPPER BOUNDARY: positions stay neutral until UPNL >= threshold
+                        if pct > 1.5 and upnl >= self.neutral_zone_upper_usd:  # +1.5% AND minimum UPNL
+                            # Check for surplus: averaging_steps > 0 OR size increased > 10%
+                            current_size = local_pos.get('amount', 0)
+                            original_size = self.original_sizes.get(symbol, current_size)
+                            has_surplus = self.averaging_steps[symbol] > 0 or (original_size > 0 and current_size > original_size * 1.1)
+
+                            if has_surplus:
                                 # Entering SURPLUS_DUMP zone - initialize peak if not set
                                 if self.position_zones[symbol] != 'SURPLUS_DUMP':
                                     self.peak_upnl[symbol] = upnl
@@ -4468,23 +4523,33 @@ class AIXYZContinuousProfit:
                             self.position_zones[symbol] = 'AVERAGING'
                             print(f"  ⚠️ {symbol} in AVERAGING zone: P&L {pct:.2f}% <= {self.zone_thresholds['averaging']*100:.0f}%")
                         else:
-                            # Check for averaged positions in profit (any profit UPNL > $0)
-                            if self.averaging_steps.get(symbol, 0) > 0 and upnl > 0:
+                            # Check for averaged positions in profit (UPNL >= neutral zone boundary)
+                            # Also check for surplus via size increase
+                            current_size = local_pos.get('amount', 0)
+                            original_size = self.original_sizes.get(symbol, current_size)
+                            has_surplus = self.averaging_steps.get(symbol, 0) > 0 or (original_size > 0 and current_size > original_size * 1.1)
+
+                            if has_surplus and upnl >= self.neutral_zone_upper_usd:
                                 if self.position_zones[symbol] != 'SURPLUS_DUMP':
                                     if symbol not in self.peak_upnl or self.peak_upnl[symbol] == 0:
                                         self.peak_upnl[symbol] = upnl
                                         self.peak_upnl_timestamps[symbol] = datetime.now().isoformat()
-                                    print(f"  🔧 FIX: Moving {symbol} to SURPLUS_DUMP (steps={self.averaging_steps[symbol]}, UPNL=${upnl:.2f})")
+                                    print(f"  🔧 FIX: Moving {symbol} to SURPLUS_DUMP (steps={self.averaging_steps.get(symbol,0)}, size={current_size:.0f}/{original_size:.0f}, UPNL=${upnl:.2f})")
                                 self.position_zones[symbol] = 'SURPLUS_DUMP'
                             else:
                                 self.position_zones[symbol] = 'NEUTRAL'
                     else:
                         # Fallback to P&L%-based detection
                         # FIX: Use P&L percentage, not dollar amount!
+                        # Detect surplus via averaging_steps OR size increase
+                        current_size = local_pos.get('amount', 0)
+                        original_size = self.original_sizes.get(symbol, current_size)
+                        has_surplus = self.averaging_steps.get(symbol, 0) > 0 or (original_size > 0 and current_size > original_size * 1.1)
+
                         if pct <= (self.zone_thresholds['averaging'] * 100):  # -25%
                             self.position_zones[symbol] = 'AVERAGING'
-                        elif pct > 1.5:  # +1.5% (lowered from 5%)
-                            if self.averaging_steps[symbol] > 0:
+                        elif pct > 1.5 and upnl >= self.neutral_zone_upper_usd:  # +1.5% AND minimum UPNL
+                            if has_surplus:
                                 # Entering SURPLUS_DUMP zone - initialize peak if not set
                                 if self.position_zones[symbol] != 'SURPLUS_DUMP':
                                     self.peak_upnl[symbol] = upnl
@@ -4494,20 +4559,20 @@ class AIXYZContinuousProfit:
                             else:
                                 self.position_zones[symbol] = 'PROFIT_TAKING'
                         else:
-                            # CRITICAL FIX: Check for averaged positions that should be in SURPLUS_DUMP
-                            # If position has averaging steps and has any profit peak, it should be in SURPLUS_DUMP
-                            if self.averaging_steps.get(symbol, 0) > 0 and self.peak_upnl.get(symbol, 0) > 0:
+                            # CRITICAL FIX: Check for positions with surplus that should be in SURPLUS_DUMP
+                            # If position has surplus and has any profit peak, it should be in SURPLUS_DUMP
+                            if has_surplus and self.peak_upnl.get(symbol, 0) > 0:
                                 if self.position_zones[symbol] != 'SURPLUS_DUMP':
                                     print(f"  🔧 SURPLUS RECOVERY: {symbol} has peak ${self.peak_upnl[symbol]:.2f}, entering SURPLUS_DUMP")
                                 self.position_zones[symbol] = 'SURPLUS_DUMP'
-                            # Original check for currently profitable averaged positions (any profit UPNL > $0)
-                            elif self.averaging_steps.get(symbol, 0) > 0 and upnl > 0:
+                            # Check for positions with surplus currently profitable (UPNL >= neutral zone boundary)
+                            elif has_surplus and upnl >= self.neutral_zone_upper_usd:
                                 if self.position_zones[symbol] != 'SURPLUS_DUMP':
                                     # Initialize peak if not set
                                     if symbol not in self.peak_upnl or self.peak_upnl[symbol] == 0:
                                         self.peak_upnl[symbol] = upnl
                                         self.peak_upnl_timestamps[symbol] = datetime.now().isoformat()
-                                    print(f"  🔧 FIX: Moving {symbol} to SURPLUS_DUMP (steps={self.averaging_steps[symbol]}, UPNL=${upnl:.2f})")
+                                    print(f"  🔧 FIX: Moving {symbol} to SURPLUS_DUMP (size={current_size:.0f}/{original_size:.0f}, UPNL=${upnl:.2f})")
                                 self.position_zones[symbol] = 'SURPLUS_DUMP'
                             else:
                                 self.position_zones[symbol] = 'NEUTRAL'

@@ -172,6 +172,12 @@ class PositionPersistenceManager:
             averaging_steps = saved_state.get('averaging_steps', {})
             peak_upnl = saved_state.get('peak_upnl', {})
             surplus_dump_stage = saved_state.get('surplus_dump_stage', {})
+            original_sizes = saved_state.get('original_sizes', {})
+            peak_upnl_timestamps = saved_state.get('peak_upnl_timestamps', {})
+            position_multipliers = saved_state.get('position_multipliers', {})
+
+            # DEBUG: Log averaging_steps from saved state
+            logger.info(f"🔍 Reconcile: averaging_steps from saved state: {averaging_steps}")
             
             # Remove positions that no longer exist on exchange
             symbols_to_remove = []
@@ -186,6 +192,9 @@ class PositionPersistenceManager:
                 averaging_steps.pop(symbol, None)
                 peak_upnl.pop(symbol, None)
                 surplus_dump_stage.pop(symbol, None)
+                original_sizes.pop(symbol, None)
+                peak_upnl_timestamps.pop(symbol, None)
+                position_multipliers.pop(symbol, None)
             
             # Add new positions from exchange that aren't in saved state
             for symbol, ex_pos in active_exchange.items():
@@ -206,18 +215,26 @@ class PositionPersistenceManager:
                     averaging_steps[symbol] = 0
                     peak_upnl[symbol] = 0
                     surplus_dump_stage[symbol] = 0
+                    # CRITICAL: Only set original_size if not already tracked
+                    if symbol not in original_sizes:
+                        original_sizes[symbol] = ex_pos['contracts']
                 else:
-                    # Update amount if changed
+                    # Update amount if changed BUT preserve all tracking data
                     active_positions[symbol]['amount'] = ex_pos['contracts']
+                    # CRITICAL: Don't reset averaging_steps, peak_upnl, etc for existing positions
+                    # These should already be in the dictionaries from saved state
             
             logger.info(f"Reconciliation complete: {len(active_positions)} active positions")
-            
+
             return {
                 'active_positions': active_positions,
                 'position_zones': position_zones,
                 'averaging_steps': averaging_steps,
                 'peak_upnl': peak_upnl,
-                'surplus_dump_stage': surplus_dump_stage
+                'surplus_dump_stage': surplus_dump_stage,
+                'original_sizes': original_sizes,
+                'peak_upnl_timestamps': peak_upnl_timestamps,
+                'position_multipliers': position_multipliers
             }
             
         except Exception as e:

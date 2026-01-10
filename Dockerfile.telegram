@@ -1,0 +1,26 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements and install
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy telegram bot
+COPY telegram_bot.py .
+COPY *.py .
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONPATH=/app
+
+# Expose websocket port
+EXPOSE 8765
+
+# Run telegram bot
+CMD ["python3", "telegram_bot.py"]

@@ -288,12 +288,16 @@ class TimeframeSpeedTracker:
             speed_ratio = current_speed / average_speed
             # If price moving faster, reduce threshold (average sooner)
             # If price moving slower, increase threshold (wait longer)
-            adjusted_delta = base_delta / max(speed_ratio, 0.1)  # Prevent division by very small numbers
+            # FIX: Changed from 0.1 to 0.5 to prevent 10x explosion on new positions
+            # When current_speed=0, this now creates 2x max instead of 10x
+            adjusted_delta = base_delta / max(speed_ratio, 0.5)  # Prevent division by very small numbers
         else:
             adjusted_delta = base_delta
 
         # Ensure reasonable bounds
-        adjusted_delta = max(0.001, min(adjusted_delta, base_delta * 5))
+        # FIX: Reduced cap from base_delta * 5 to base_delta * 2 for safer thresholds
+        # This prevents thresholds from exceeding liquidation point when multiplied by leverage
+        adjusted_delta = max(0.001, min(adjusted_delta, base_delta * 2))
         
         # Apply step multiplier for progressive thresholds
         if step == 0:

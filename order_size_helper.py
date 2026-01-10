@@ -39,23 +39,29 @@ class OrderSizeHelper:
         print(f"DEBUG: lot_size type={type(lot_size)}, value={lot_size}")
 
         # Round to lot size first
+        # CRITICAL: Convert to float to prevent integer overflow on large amounts (e.g., SHIB)
         if lot_size > 0:
+            amount = float(amount)
+            lot_size = float(lot_size)
             if round_up:
-                amount = math.ceil(amount / lot_size) * lot_size
+                amount = float(math.ceil(amount / lot_size)) * lot_size
             else:
-                amount = round(amount / lot_size) * lot_size
+                amount = float(round(amount / lot_size)) * lot_size
         
         # Then apply precision
         if precision == 0:
             # No decimals allowed
-            amount = math.ceil(amount) if round_up else round(amount)
+            amount = float(math.ceil(amount)) if round_up else float(round(amount))
         else:
             # Round to specified decimal places
-            multiplier = 10 ** precision
+            # CRITICAL: Use Python's round() which handles large numbers safely
+            # Avoid math.ceil(amount * multiplier) which causes overflow on large amounts
             if round_up:
-                amount = math.ceil(amount * multiplier) / multiplier
+                # Round up to precision decimals
+                amount = float(math.ceil(amount * (10 ** precision))) / (10 ** precision)
             else:
-                amount = round(amount * multiplier) / multiplier
+                # Normal rounding to precision decimals
+                amount = float(round(amount, precision))
         
         # Ensure minimum
         if amount < min_amount:

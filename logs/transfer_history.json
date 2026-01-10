@@ -145,5 +145,68 @@
       "status": null
     },
     "success": true
+  },
+  {
+    "timestamp": "2026-01-07T20:17:46.032297",
+    "amount": 134.13,
+    "direction": "futures_to_spot",
+    "result": {
+      "info": {
+        "transferId": "1392876119061254144",
+        "clientOid": null,
+        "ts": 1767813465836
+      },
+      "id": "1392876119061254144",
+      "timestamp": 1767813465836,
+      "datetime": "2026-01-07T19:17:45.836Z",
+      "currency": "USDT",
+      "amount": null,
+      "fromAccount": null,
+      "toAccount": null,
+      "status": null
+    },
+    "success": true
+  },
+  {
+    "timestamp": "2026-01-09T22:30:54.000980",
+    "amount": 90.0,
+    "direction": "futures_to_spot",
+    "result": {
+      "info": {
+        "transferId": "1393634398658584576",
+        "clientOid": null,
+        "ts": 1767994253780
+      },
+      "id": "1393634398658584576",
+      "timestamp": 1767994253780,
+      "datetime": "2026-01-09T21:30:53.780Z",
+      "currency": "USDT",
+      "amount": null,
+      "fromAccount": null,
+      "toAccount": null,
+      "status": null
+    },
+    "success": true
+  },
+  {
+    "timestamp": "2026-01-10T05:30:59.372266",
+    "amount": 15.0,
+    "direction": "futures_to_spot",
+    "result": {
+      "info": {
+        "transferId": "1393740117725421568",
+        "clientOid": null,
+        "ts": 1768019459177
+      },
+      "id": "1393740117725421568",
+      "timestamp": 1768019459177,
+      "datetime": "2026-01-10T04:30:59.177Z",
+      "currency": "USDT",
+      "amount": null,
+      "fromAccount": null,
+      "toAccount": null,
+      "status": null
+    },
+    "success": true
   }
 ]
