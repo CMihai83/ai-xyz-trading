@@ -18,23 +18,25 @@ class TimeframeCapitalAllocator:
     """
     
     # Timeframe hierarchy with relative capital weights
+    # FLORIN'S ACCOUNT: 100% weight on single timeframe
     TIMEFRAME_WEIGHTS = {
-        '1m': 0.05,   # 5% weight - very small positions for initial volatility
-        '5m': 0.10,   # 10% weight - small positions for short-term moves
-        '15m': 0.15,  # 15% weight - moderate positions
-        '1h': 0.20,   # 20% weight - larger positions for hourly moves
-        '4h': 0.25,   # 25% weight - significant positions for 4-hour trends
-        '1d': 0.25,   # 25% weight - maximum positions for daily moves
+        '1m': 1.00,   # 100% weight - all capital in initial position
+        '5m': 0.00,   # Disabled
+        '15m': 0.00,  # Disabled
+        '1h': 0.00,   # Disabled
+        '4h': 0.00,   # Disabled
+        '1d': 0.00,   # Disabled
     }
     
     # Steps per timeframe (how many averaging steps in each timeframe)
+    # FLORIN'S ACCOUNT: 4 steps total (initial + 3 averaging) in single timeframe
     STEPS_PER_TIMEFRAME = {
-        '1m': 2,   # 2 quick averaging steps
-        '5m': 2,   # 2 short-term steps
-        '15m': 1,  # 1 medium-term step
-        '1h': 1,   # 1 hourly step
-        '4h': 1,   # 1 4-hour step
-        '1d': 0,   # Optional daily step if needed
+        '1m': 4,   # 4 steps: Initial ($0.70) + 3 averaging steps
+        '5m': 0,   # Disabled
+        '15m': 0,  # Disabled
+        '1h': 0,   # Disabled
+        '4h': 0,   # Disabled
+        '1d': 0,   # Disabled
     }
     
     def __init__(self, total_capital: float = 80.0, allocation_percent: float = 0.70, min_initial_position: float = 40.0):
@@ -63,7 +65,7 @@ class TimeframeCapitalAllocator:
         self,
         current_delta: float,
         leverage: int = 10,
-        min_notional: float = 40.0
+        min_notional: float = 7.0  # FLORIN'S ACCOUNT: $0.70 × 10x = $7 notional
     ) -> Dict[str, Dict]:
         """
         Calculate capital allocation for each timeframe
@@ -71,7 +73,7 @@ class TimeframeCapitalAllocator:
         Args:
             current_delta: Current price delta percentage
             leverage: Trading leverage
-            min_notional: Minimum notional position size after leverage (default $40)
+            min_notional: Minimum notional position size after leverage (default $7 for Florin's account)
 
         Returns:
             Dictionary with allocations per timeframe
@@ -83,8 +85,8 @@ class TimeframeCapitalAllocator:
         active_timeframes = self._get_active_timeframes(current_delta)
 
         # Calculate minimum margin needed for initial position
-        # User requested: increase initial position margin to $5 before leverage
-        min_initial_margin = 5.0  # $5.00 initial margin before leverage (increased from $4.00)
+        # FLORIN'S ACCOUNT: $0.70 initial margin before leverage
+        min_initial_margin = 0.70  # $0.70 initial margin before leverage (reduced for $5 total capital)
 
         # Ensure first timeframe gets enough capital for min_initial_position
         # Reserve capital for initial position first

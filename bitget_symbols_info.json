@@ -1,5 +1,5 @@
 {
-  "last_full_update": "2025-09-24T15:48:58.892528",
+  "last_full_update": "2026-01-03T22:10:03.135245",
   "symbols": {
     "BTC/USDT:USDT": {
       "symbol": "BTC/USDT:USDT",
@@ -16,8 +16,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "125",
-      "last_updated": "2025-09-24T15:48:58.869040",
+      "max_leverage": "150",
+      "last_updated": "2026-01-03T22:10:03.094964",
       "requires_whole_contracts": false
     },
     "ETH/USDT:USDT": {
@@ -35,8 +35,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "100",
-      "last_updated": "2025-09-24T15:48:58.869104",
+      "max_leverage": "150",
+      "last_updated": "2026-01-03T22:10:03.095092",
       "requires_whole_contracts": false
     },
     "XRP/USDT:USDT": {
@@ -55,7 +55,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "125",
-      "last_updated": "2025-09-24T15:48:58.869154",
+      "last_updated": "2026-01-03T22:10:03.095178",
       "requires_whole_contracts": false
     },
     "BCH/USDT:USDT": {
@@ -74,7 +74,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.869200",
+      "last_updated": "2026-01-03T22:10:03.095261",
       "requires_whole_contracts": false
     },
     "LTC/USDT:USDT": {
@@ -93,7 +93,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.869245",
+      "last_updated": "2026-01-03T22:10:03.095342",
       "requires_whole_contracts": false
     },
     "ADA/USDT:USDT": {
@@ -112,7 +112,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.869289",
+      "last_updated": "2026-01-03T22:10:03.095424",
       "requires_whole_contracts": false
     },
     "ETC/USDT:USDT": {
@@ -131,7 +131,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.869336",
+      "last_updated": "2026-01-03T22:10:03.095501",
       "requires_whole_contracts": false
     },
     "LINK/USDT:USDT": {
@@ -150,7 +150,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.869381",
+      "last_updated": "2026-01-03T22:10:03.095577",
       "requires_whole_contracts": false
     },
     "TRX/USDT:USDT": {
@@ -169,7 +169,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.869425",
+      "last_updated": "2026-01-03T22:10:03.095653",
       "requires_whole_contracts": false
     },
     "DOT/USDT:USDT": {
@@ -188,7 +188,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.869468",
+      "last_updated": "2026-01-03T22:10:03.095737",
       "requires_whole_contracts": false
     },
     "DOGE/USDT:USDT": {
@@ -207,7 +207,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.869512",
+      "last_updated": "2026-01-03T22:10:03.095814",
       "requires_whole_contracts": false
     },
     "SOL/USDT:USDT": {
@@ -226,7 +226,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "100",
-      "last_updated": "2025-09-24T15:48:58.869555",
+      "last_updated": "2026-01-03T22:10:03.095891",
       "requires_whole_contracts": false
     },
     "BNB/USDT:USDT": {
@@ -245,7 +245,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.869598",
+      "last_updated": "2026-01-03T22:10:03.095966",
       "requires_whole_contracts": false
     },
     "UNI/USDT:USDT": {
@@ -264,7 +264,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.869641",
+      "last_updated": "2026-01-03T22:10:03.096048",
       "requires_whole_contracts": false
     },
     "ICP/USDT:USDT": {
@@ -282,8 +282,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.869686",
+      "max_leverage": "50",
+      "last_updated": "2026-01-03T22:10:03.096124",
       "requires_whole_contracts": false
     },
     "AAVE/USDT:USDT": {
@@ -302,7 +302,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.869729",
+      "last_updated": "2026-01-03T22:10:03.096199",
       "requires_whole_contracts": false
     },
     "FIL/USDT:USDT": {
@@ -321,7 +321,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.869772",
+      "last_updated": "2026-01-03T22:10:03.096273",
       "requires_whole_contracts": false
     },
     "XLM/USDT:USDT": {
@@ -340,7 +340,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.869813",
+      "last_updated": "2026-01-03T22:10:03.096348",
       "requires_whole_contracts": false
     },
     "ATOM/USDT:USDT": {
@@ -359,7 +359,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.869855",
+      "last_updated": "2026-01-03T22:10:03.096426",
       "requires_whole_contracts": false
     },
     "XTZ/USDT:USDT": {
@@ -378,7 +378,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.869897",
+      "last_updated": "2026-01-03T22:10:03.096506",
       "requires_whole_contracts": false
     },
     "SUSHI/USDT:USDT": {
@@ -397,7 +397,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.869945",
+      "last_updated": "2026-01-03T22:10:03.096583",
       "requires_whole_contracts": false
     },
     "AXS/USDT:USDT": {
@@ -416,7 +416,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.869990",
+      "last_updated": "2026-01-03T22:10:03.096660",
       "requires_whole_contracts": false
     },
     "THETA/USDT:USDT": {
@@ -435,7 +435,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.870034",
+      "last_updated": "2026-01-03T22:10:03.096737",
       "requires_whole_contracts": false
     },
     "AVAX/USDT:USDT": {
@@ -454,7 +454,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.870078",
+      "last_updated": "2026-01-03T22:10:03.096811",
       "requires_whole_contracts": false
     },
     "SHIB/USDT:USDT": {
@@ -473,7 +473,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.870127",
+      "last_updated": "2026-01-03T22:10:03.096963",
       "requires_whole_contracts": false
     },
     "MANA/USDT:USDT": {
@@ -492,7 +492,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "25",
-      "last_updated": "2025-09-24T15:48:58.870172",
+      "last_updated": "2026-01-03T22:10:03.097051",
       "requires_whole_contracts": false
     },
     "GALA/USDT:USDT": {
@@ -511,7 +511,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.870215",
+      "last_updated": "2026-01-03T22:10:03.097128",
       "requires_whole_contracts": false
     },
     "SAND/USDT:USDT": {
@@ -530,7 +530,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.870258",
+      "last_updated": "2026-01-03T22:10:03.097202",
       "requires_whole_contracts": false
     },
     "DYDX/USDT:USDT": {
@@ -548,8 +548,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.870300",
+      "max_leverage": "50",
+      "last_updated": "2026-01-03T22:10:03.097276",
       "requires_whole_contracts": false
     },
     "CRV/USDT:USDT": {
@@ -568,7 +568,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.870343",
+      "last_updated": "2026-01-03T22:10:03.097349",
       "requires_whole_contracts": false
     },
     "NEAR/USDT:USDT": {
@@ -587,7 +587,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.870387",
+      "last_updated": "2026-01-03T22:10:03.097424",
       "requires_whole_contracts": false
     },
     "EGLD/USDT:USDT": {
@@ -606,7 +606,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.870430",
+      "last_updated": "2026-01-03T22:10:03.097498",
       "requires_whole_contracts": false
     },
     "KSM/USDT:USDT": {
@@ -625,7 +625,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.870473",
+      "last_updated": "2026-01-03T22:10:03.097572",
       "requires_whole_contracts": false
     },
     "AR/USDT:USDT": {
@@ -644,7 +644,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.870515",
+      "last_updated": "2026-01-03T22:10:03.097650",
       "requires_whole_contracts": false
     },
     "PEOPLE/USDT:USDT": {
@@ -663,7 +663,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.870557",
+      "last_updated": "2026-01-03T22:10:03.097723",
       "requires_whole_contracts": false
     },
     "LRC/USDT:USDT": {
@@ -682,7 +682,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.870599",
+      "last_updated": "2026-01-03T22:10:03.097798",
       "requires_whole_contracts": false
     },
     "NEO/USDT:USDT": {
@@ -701,7 +701,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.870641",
+      "last_updated": "2026-01-03T22:10:03.097872",
       "requires_whole_contracts": false
     },
     "ALICE/USDT:USDT": {
@@ -720,7 +720,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.870684",
+      "last_updated": "2026-01-03T22:10:03.097948",
       "requires_whole_contracts": false
     },
     "WAVES/USDT:USDT": {
@@ -739,7 +739,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "25",
-      "last_updated": "2025-09-24T15:48:58.870728",
+      "last_updated": "2026-01-03T22:10:03.098024",
       "requires_whole_contracts": false
     },
     "ALGO/USDT:USDT": {
@@ -758,7 +758,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.870770",
+      "last_updated": "2026-01-03T22:10:03.098107",
       "requires_whole_contracts": false
     },
     "IOTA/USDT:USDT": {
@@ -776,8 +776,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.870813",
+      "max_leverage": "75",
+      "last_updated": "2026-01-03T22:10:03.098182",
       "requires_whole_contracts": false
     },
     "ENJ/USDT:USDT": {
@@ -795,8 +795,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "25",
-      "last_updated": "2025-09-24T15:48:58.870855",
+      "max_leverage": "50",
+      "last_updated": "2026-01-03T22:10:03.098260",
       "requires_whole_contracts": false
     },
     "GMT/USDT:USDT": {
@@ -815,7 +815,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.870898",
+      "last_updated": "2026-01-03T22:10:03.098335",
       "requires_whole_contracts": false
     },
     "ZIL/USDT:USDT": {
@@ -834,7 +834,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.870940",
+      "last_updated": "2026-01-03T22:10:03.098408",
       "requires_whole_contracts": false
     },
     "IOST/USDT:USDT": {
@@ -852,8 +852,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.870981",
+      "max_leverage": "25",
+      "last_updated": "2026-01-03T22:10:03.098481",
       "requires_whole_contracts": false
     },
     "APE/USDT:USDT": {
@@ -871,8 +871,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "10",
-      "last_updated": "2025-09-24T15:48:58.871026",
+      "max_leverage": "25",
+      "last_updated": "2026-01-03T22:10:03.098555",
       "requires_whole_contracts": false
     },
     "RUNE/USDT:USDT": {
@@ -880,7 +880,7 @@
       "base": "RUNE",
       "quote": "USDT",
       "contract_size": 1,
-      "min_amount": 0.5,
+      "min_amount": 0.1,
       "max_amount": null,
       "min_cost": 5.0,
       "amount_precision": 0,
@@ -890,8 +890,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.871067",
+      "max_leverage": "75",
+      "last_updated": "2026-01-03T22:10:03.098629",
       "requires_whole_contracts": false
     },
     "KNC/USDT:USDT": {
@@ -910,7 +910,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.871110",
+      "last_updated": "2026-01-03T22:10:03.098703",
       "requires_whole_contracts": false
     },
     "APT/USDT:USDT": {
@@ -929,7 +929,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.871151",
+      "last_updated": "2026-01-03T22:10:03.098777",
       "requires_whole_contracts": false
     },
     "CHZ/USDT:USDT": {
@@ -948,7 +948,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.871192",
+      "last_updated": "2026-01-03T22:10:03.098855",
       "requires_whole_contracts": false
     },
     "ROSE/USDT:USDT": {
@@ -967,7 +967,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.871233",
+      "last_updated": "2026-01-03T22:10:03.099003",
       "requires_whole_contracts": false
     },
     "ZRX/USDT:USDT": {
@@ -986,7 +986,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.871274",
+      "last_updated": "2026-01-03T22:10:03.099084",
       "requires_whole_contracts": false
     },
     "KAVA/USDT:USDT": {
@@ -1005,7 +1005,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "25",
-      "last_updated": "2025-09-24T15:48:58.871315",
+      "last_updated": "2026-01-03T22:10:03.099160",
       "requires_whole_contracts": false
     },
     "ENS/USDT:USDT": {
@@ -1023,8 +1023,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.871356",
+      "max_leverage": "75",
+      "last_updated": "2026-01-03T22:10:03.099235",
       "requires_whole_contracts": false
     },
     "MTL/USDT:USDT": {
@@ -1043,7 +1043,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.871398",
+      "last_updated": "2026-01-03T22:10:03.099308",
       "requires_whole_contracts": false
     },
     "AUDIO/USDT:USDT": {
@@ -1100,7 +1100,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.871522",
+      "last_updated": "2026-01-03T22:10:03.099383",
       "requires_whole_contracts": false
     },
     "OP/USDT:USDT": {
@@ -1119,7 +1119,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.871564",
+      "last_updated": "2026-01-03T22:10:03.099460",
       "requires_whole_contracts": false
     },
     "RSR/USDT:USDT": {
@@ -1137,8 +1137,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.871605",
+      "max_leverage": "50",
+      "last_updated": "2026-01-03T22:10:03.099541",
       "requires_whole_contracts": false
     },
     "SNX/USDT:USDT": {
@@ -1156,8 +1156,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.871647",
+      "max_leverage": "50",
+      "last_updated": "2026-01-03T22:10:03.099618",
       "requires_whole_contracts": false
     },
     "STORJ/USDT:USDT": {
@@ -1175,8 +1175,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "20",
-      "last_updated": "2025-09-24T15:48:58.871688",
+      "max_leverage": "50",
+      "last_updated": "2026-01-03T22:10:03.099694",
       "requires_whole_contracts": false
     },
     "1INCH/USDT:USDT": {
@@ -1195,7 +1195,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.871729",
+      "last_updated": "2026-01-03T22:10:03.099770",
       "requires_whole_contracts": false
     },
     "COMP/USDT:USDT": {
@@ -1214,7 +1214,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.871770",
+      "last_updated": "2026-01-03T22:10:03.099847",
       "requires_whole_contracts": false
     },
     "IMX/USDT:USDT": {
@@ -1233,7 +1233,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.871811",
+      "last_updated": "2026-01-03T22:10:03.099922",
       "requires_whole_contracts": false
     },
     "LUNA/USDT:USDT": {
@@ -1252,7 +1252,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.871853",
+      "last_updated": "2026-01-03T22:10:03.099996",
       "requires_whole_contracts": false
     },
     "FLOW/USDT:USDT": {
@@ -1270,8 +1270,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.871896",
+      "max_leverage": "10",
+      "last_updated": "2026-01-03T22:10:03.100076",
       "requires_whole_contracts": false
     },
     "TRB/USDT:USDT": {
@@ -1290,7 +1290,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.871939",
+      "last_updated": "2026-01-03T22:10:03.100156",
       "requires_whole_contracts": false
     },
     "QTUM/USDT:USDT": {
@@ -1309,7 +1309,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.871982",
+      "last_updated": "2026-01-03T22:10:03.100231",
       "requires_whole_contracts": false
     },
     "API3/USDT:USDT": {
@@ -1328,7 +1328,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.872028",
+      "last_updated": "2026-01-03T22:10:03.100306",
       "requires_whole_contracts": false
     },
     "MASK/USDT:USDT": {
@@ -1347,7 +1347,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.872071",
+      "last_updated": "2026-01-03T22:10:03.100380",
       "requires_whole_contracts": false
     },
     "WOO/USDT:USDT": {
@@ -1366,7 +1366,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.872114",
+      "last_updated": "2026-01-03T22:10:03.100456",
       "requires_whole_contracts": false
     },
     "GRT/USDT:USDT": {
@@ -1385,7 +1385,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.872157",
+      "last_updated": "2026-01-03T22:10:03.100531",
       "requires_whole_contracts": false
     },
     "BAND/USDT:USDT": {
@@ -1404,7 +1404,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.872200",
+      "last_updated": "2026-01-03T22:10:03.100605",
       "requires_whole_contracts": false
     },
     "STG/USDT:USDT": {
@@ -1423,7 +1423,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.872242",
+      "last_updated": "2026-01-03T22:10:03.100678",
       "requires_whole_contracts": false
     },
     "LUNC/USDT:USDT": {
@@ -1442,7 +1442,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "25",
-      "last_updated": "2025-09-24T15:48:58.872286",
+      "last_updated": "2026-01-03T22:10:03.100757",
       "requires_whole_contracts": false
     },
     "ONE/USDT:USDT": {
@@ -1461,7 +1461,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.872328",
+      "last_updated": "2026-01-03T22:10:03.100832",
       "requires_whole_contracts": false
     },
     "JASMY/USDT:USDT": {
@@ -1479,8 +1479,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.872371",
+      "max_leverage": "75",
+      "last_updated": "2026-01-03T22:10:03.100905",
       "requires_whole_contracts": false
     },
     "BAT/USDT:USDT": {
@@ -1499,7 +1499,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.872413",
+      "last_updated": "2026-01-03T22:10:03.100979",
       "requires_whole_contracts": false
     },
     "MAGIC/USDT:USDT": {
@@ -1518,7 +1518,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "25",
-      "last_updated": "2025-09-24T15:48:58.872456",
+      "last_updated": "2026-01-03T22:10:03.101061",
       "requires_whole_contracts": false
     },
     "ALPHA/USDT:USDT": {
@@ -1556,7 +1556,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.872540",
+      "last_updated": "2026-01-03T22:10:03.101139",
       "requires_whole_contracts": false
     },
     "CELO/USDT:USDT": {
@@ -1575,7 +1575,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.872585",
+      "last_updated": "2026-01-03T22:10:03.101214",
       "requires_whole_contracts": false
     },
     "BLUR/USDT:USDT": {
@@ -1594,7 +1594,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.872628",
+      "last_updated": "2026-01-03T22:10:03.101290",
       "requires_whole_contracts": false
     },
     "MINA/USDT:USDT": {
@@ -1613,7 +1613,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.872669",
+      "last_updated": "2026-01-03T22:10:03.101375",
       "requires_whole_contracts": false
     },
     "CORE/USDT:USDT": {
@@ -1632,7 +1632,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "25",
-      "last_updated": "2025-09-24T15:48:58.872711",
+      "last_updated": "2026-01-03T22:10:03.101452",
       "requires_whole_contracts": false
     },
     "CFX/USDT:USDT": {
@@ -1651,7 +1651,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.872752",
+      "last_updated": "2026-01-03T22:10:03.101527",
       "requires_whole_contracts": false
     },
     "ASTR/USDT:USDT": {
@@ -1670,7 +1670,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.872794",
+      "last_updated": "2026-01-03T22:10:03.101601",
       "requires_whole_contracts": false
     },
     "GMX/USDT:USDT": {
@@ -1689,7 +1689,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.872836",
+      "last_updated": "2026-01-03T22:10:03.101675",
       "requires_whole_contracts": false
     },
     "ANKR/USDT:USDT": {
@@ -1708,7 +1708,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.872877",
+      "last_updated": "2026-01-03T22:10:03.101749",
       "requires_whole_contracts": false
     },
     "ACH/USDT:USDT": {
@@ -1726,8 +1726,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "25",
-      "last_updated": "2025-09-24T15:48:58.872920",
+      "max_leverage": "75",
+      "last_updated": "2026-01-03T22:10:03.101823",
       "requires_whole_contracts": false
     },
     "FET/USDT:USDT": {
@@ -1746,7 +1746,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.872963",
+      "last_updated": "2026-01-03T22:10:03.101896",
       "requires_whole_contracts": false
     },
     "FXS/USDT:USDT": {
@@ -1803,7 +1803,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.873094",
+      "last_updated": "2026-01-03T22:10:03.101974",
       "requires_whole_contracts": false
     },
     "USDC/USDT:USDT": {
@@ -1822,7 +1822,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.873136",
+      "last_updated": "2026-01-03T22:10:03.102055",
       "requires_whole_contracts": false
     },
     "LQTY/USDT:USDT": {
@@ -1841,7 +1841,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.873177",
+      "last_updated": "2026-01-03T22:10:03.102130",
       "requires_whole_contracts": false
     },
     "STX/USDT:USDT": {
@@ -1860,7 +1860,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.873219",
+      "last_updated": "2026-01-03T22:10:03.102204",
       "requires_whole_contracts": false
     },
     "TRU/USDT:USDT": {
@@ -1879,7 +1879,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.873261",
+      "last_updated": "2026-01-03T22:10:03.102278",
       "requires_whole_contracts": false
     },
     "HBAR/USDT:USDT": {
@@ -1898,7 +1898,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.873302",
+      "last_updated": "2026-01-03T22:10:03.102352",
       "requires_whole_contracts": false
     },
     "INJ/USDT:USDT": {
@@ -1917,7 +1917,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.873346",
+      "last_updated": "2026-01-03T22:10:03.102428",
       "requires_whole_contracts": false
     },
     "BEL/USDT:USDT": {
@@ -1935,8 +1935,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.873388",
+      "max_leverage": "10",
+      "last_updated": "2026-01-03T22:10:03.102503",
       "requires_whole_contracts": false
     },
     "COTI/USDT:USDT": {
@@ -1955,7 +1955,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.873429",
+      "last_updated": "2026-01-03T22:10:03.102580",
       "requires_whole_contracts": false
     },
     "VET/USDT:USDT": {
@@ -1974,7 +1974,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.873469",
+      "last_updated": "2026-01-03T22:10:03.102654",
       "requires_whole_contracts": false
     },
     "ARB/USDT:USDT": {
@@ -1993,7 +1993,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.873510",
+      "last_updated": "2026-01-03T22:10:03.102727",
       "requires_whole_contracts": false
     },
     "LOOKS/USDT:USDT": {
@@ -2031,7 +2031,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.873593",
+      "last_updated": "2026-01-03T22:10:03.102801",
       "requires_whole_contracts": false
     },
     "FLM/USDT:USDT": {
@@ -2068,8 +2068,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.873676",
+      "max_leverage": "50",
+      "last_updated": "2026-01-03T22:10:03.102875",
       "requires_whole_contracts": false
     },
     "ID/USDT:USDT": {
@@ -2088,7 +2088,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.873720",
+      "last_updated": "2026-01-03T22:10:03.102948",
       "requires_whole_contracts": false
     },
     "JOE/USDT:USDT": {
@@ -2106,8 +2106,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.873761",
+      "max_leverage": "10",
+      "last_updated": "2026-01-03T22:10:03.103022",
       "requires_whole_contracts": false
     },
     "TLM/USDT:USDT": {
@@ -2125,8 +2125,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.873803",
+      "max_leverage": "25",
+      "last_updated": "2026-01-03T22:10:03.103102",
       "requires_whole_contracts": false
     },
     "HOT/USDT:USDT": {
@@ -2145,7 +2145,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.873845",
+      "last_updated": "2026-01-03T22:10:03.103193",
       "requires_whole_contracts": false
     },
     "CHR/USDT:USDT": {
@@ -2164,7 +2164,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.873886",
+      "last_updated": "2026-01-03T22:10:03.103273",
       "requires_whole_contracts": false
     },
     "RDNT/USDT:USDT": {
@@ -2182,8 +2182,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.873927",
+      "max_leverage": "20",
+      "last_updated": "2026-01-03T22:10:03.103348",
       "requires_whole_contracts": false
     },
     "ICX/USDT:USDT": {
@@ -2202,7 +2202,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.873967",
+      "last_updated": "2026-01-03T22:10:03.103422",
       "requires_whole_contracts": false
     },
     "HFT/USDT:USDT": {
@@ -2221,7 +2221,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "25",
-      "last_updated": "2025-09-24T15:48:58.874008",
+      "last_updated": "2026-01-03T22:10:03.103497",
       "requires_whole_contracts": false
     },
     "ONT/USDT:USDT": {
@@ -2239,8 +2239,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "20",
-      "last_updated": "2025-09-24T15:48:58.874050",
+      "max_leverage": "75",
+      "last_updated": "2026-01-03T22:10:03.103571",
       "requires_whole_contracts": false
     },
     "NKN/USDT:USDT": {
@@ -2278,7 +2278,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.874140",
+      "last_updated": "2026-01-03T22:10:03.103722",
       "requires_whole_contracts": false
     },
     "SFP/USDT:USDT": {
@@ -2296,8 +2296,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.874182",
+      "max_leverage": "75",
+      "last_updated": "2026-01-03T22:10:03.103797",
       "requires_whole_contracts": false
     },
     "CTSI/USDT:USDT": {
@@ -2316,7 +2316,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.874223",
+      "last_updated": "2026-01-03T22:10:03.103880",
       "requires_whole_contracts": false
     },
     "SKL/USDT:USDT": {
@@ -2334,8 +2334,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.874263",
+      "max_leverage": "25",
+      "last_updated": "2026-01-03T22:10:03.103958",
       "requires_whole_contracts": false
     },
     "RVN/USDT:USDT": {
@@ -2353,8 +2353,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.874305",
+      "max_leverage": "50",
+      "last_updated": "2026-01-03T22:10:03.104076",
       "requires_whole_contracts": false
     },
     "CELR/USDT:USDT": {
@@ -2373,7 +2373,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.874345",
+      "last_updated": "2026-01-03T22:10:03.104164",
       "requires_whole_contracts": false
     },
     "FLOKI/USDT:USDT": {
@@ -2392,7 +2392,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.874386",
+      "last_updated": "2026-01-03T22:10:03.104242",
       "requires_whole_contracts": false
     },
     "SPELL/USDT:USDT": {
@@ -2410,8 +2410,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "25",
-      "last_updated": "2025-09-24T15:48:58.874427",
+      "max_leverage": "50",
+      "last_updated": "2026-01-03T22:10:03.104320",
       "requires_whole_contracts": false
     },
     "SUI/USDT:USDT": {
@@ -2430,7 +2430,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.874469",
+      "last_updated": "2026-01-03T22:10:03.104395",
       "requires_whole_contracts": false
     },
     "PEPE/USDT:USDT": {
@@ -2449,7 +2449,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.874510",
+      "last_updated": "2026-01-03T22:10:03.104474",
       "requires_whole_contracts": false
     },
     "IOTX/USDT:USDT": {
@@ -2468,7 +2468,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.874550",
+      "last_updated": "2026-01-03T22:10:03.104555",
       "requires_whole_contracts": false
     },
     "CTK/USDT:USDT": {
@@ -2486,8 +2486,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.874591",
+      "max_leverage": "50",
+      "last_updated": "2026-01-03T22:10:03.104633",
       "requires_whole_contracts": false
     },
     "UMA/USDT:USDT": {
@@ -2506,7 +2506,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.874631",
+      "last_updated": "2026-01-03T22:10:03.104712",
       "requires_whole_contracts": false
     },
     "TURBO/USDT:USDT": {
@@ -2524,8 +2524,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.874672",
+      "max_leverage": "25",
+      "last_updated": "2026-01-03T22:10:03.104789",
       "requires_whole_contracts": false
     },
     "BSV/USDT:USDT": {
@@ -2543,8 +2543,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.874713",
+      "max_leverage": "75",
+      "last_updated": "2026-01-03T22:10:03.104866",
       "requires_whole_contracts": false
     },
     "TON/USDT:USDT": {
@@ -2563,7 +2563,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.874756",
+      "last_updated": "2026-01-03T22:10:03.104941",
       "requires_whole_contracts": false
     },
     "GTC/USDT:USDT": {
@@ -2582,7 +2582,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "25",
-      "last_updated": "2025-09-24T15:48:58.874797",
+      "last_updated": "2026-01-03T22:10:03.105017",
       "requires_whole_contracts": false
     },
     "DENT/USDT:USDT": {
@@ -2601,7 +2601,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.874837",
+      "last_updated": "2026-01-03T22:10:03.105100",
       "requires_whole_contracts": false
     },
     "ZEN/USDT:USDT": {
@@ -2620,7 +2620,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.874878",
+      "last_updated": "2026-01-03T22:10:03.105180",
       "requires_whole_contracts": false
     },
     "PHB/USDT:USDT": {
@@ -2638,8 +2638,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.874918",
+      "max_leverage": "20",
+      "last_updated": "2026-01-03T22:10:03.105256",
       "requires_whole_contracts": false
     },
     "ORDI/USDT:USDT": {
@@ -2658,7 +2658,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.874959",
+      "last_updated": "2026-01-03T22:10:03.105331",
       "requires_whole_contracts": false
     },
     "SLP/USDT:USDT": {
@@ -2677,7 +2677,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "25",
-      "last_updated": "2025-09-24T15:48:58.874999",
+      "last_updated": "2026-01-03T22:10:03.105406",
       "requires_whole_contracts": false
     },
     "1000BONK/USDT:USDT": {
@@ -2696,7 +2696,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.875039",
+      "last_updated": "2026-01-03T22:10:03.105482",
       "requires_whole_contracts": false
     },
     "USTC/USDT:USDT": {
@@ -2715,7 +2715,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.875080",
+      "last_updated": "2026-01-03T22:10:03.105560",
       "requires_whole_contracts": false
     },
     "RAD/USDT:USDT": {
@@ -2753,7 +2753,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.875167",
+      "last_updated": "2026-01-03T22:10:03.105636",
       "requires_whole_contracts": false
     },
     "MAV/USDT:USDT": {
@@ -2772,7 +2772,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.875208",
+      "last_updated": "2026-01-03T22:10:03.105713",
       "requires_whole_contracts": false
     },
     "MDT/USDT:USDT": {
@@ -2810,7 +2810,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "20",
-      "last_updated": "2025-09-24T15:48:58.875290",
+      "last_updated": "2026-01-03T22:10:03.105793",
       "requires_whole_contracts": false
     },
     "1000XEC/USDT:USDT": {
@@ -2829,7 +2829,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.875332",
+      "last_updated": "2026-01-03T22:10:03.105871",
       "requires_whole_contracts": false
     },
     "AGLD/USDT:USDT": {
@@ -2848,7 +2848,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.875373",
+      "last_updated": "2026-01-03T22:10:03.105948",
       "requires_whole_contracts": false
     },
     "WLD/USDT:USDT": {
@@ -2867,7 +2867,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.875414",
+      "last_updated": "2026-01-03T22:10:03.106025",
       "requires_whole_contracts": false
     },
     "PENDLE/USDT:USDT": {
@@ -2886,7 +2886,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.875457",
+      "last_updated": "2026-01-03T22:10:03.106109",
       "requires_whole_contracts": false
     },
     "ARKM/USDT:USDT": {
@@ -2905,7 +2905,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.875499",
+      "last_updated": "2026-01-03T22:10:03.106185",
       "requires_whole_contracts": false
     },
     "CVX/USDT:USDT": {
@@ -2924,7 +2924,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "25",
-      "last_updated": "2025-09-24T15:48:58.875543",
+      "last_updated": "2026-01-03T22:10:03.106262",
       "requires_whole_contracts": false
     },
     "YGG/USDT:USDT": {
@@ -2943,7 +2943,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.875585",
+      "last_updated": "2026-01-03T22:10:03.106337",
       "requires_whole_contracts": false
     },
     "OGN/USDT:USDT": {
@@ -2962,7 +2962,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.875627",
+      "last_updated": "2026-01-03T22:10:03.106412",
       "requires_whole_contracts": false
     },
     "LPT/USDT:USDT": {
@@ -2981,7 +2981,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.875670",
+      "last_updated": "2026-01-03T22:10:03.106491",
       "requires_whole_contracts": false
     },
     "BNT/USDT:USDT": {
@@ -3000,7 +3000,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.875712",
+      "last_updated": "2026-01-03T22:10:03.106566",
       "requires_whole_contracts": false
     },
     "SEI/USDT:USDT": {
@@ -3019,7 +3019,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.875754",
+      "last_updated": "2026-01-03T22:10:03.106641",
       "requires_whole_contracts": false
     },
     "CYBER/USDT:USDT": {
@@ -3038,7 +3038,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.875795",
+      "last_updated": "2026-01-03T22:10:03.106717",
       "requires_whole_contracts": false
     },
     "BIGTIME/USDT:USDT": {
@@ -3057,7 +3057,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.875837",
+      "last_updated": "2026-01-03T22:10:03.106793",
       "requires_whole_contracts": false
     },
     "WAXP/USDT:USDT": {
@@ -3076,7 +3076,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.875881",
+      "last_updated": "2026-01-03T22:10:03.106870",
       "requires_whole_contracts": false
     },
     "POLYX/USDT:USDT": {
@@ -3095,7 +3095,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.875923",
+      "last_updated": "2026-01-03T22:10:03.106946",
       "requires_whole_contracts": false
     },
     "TIA/USDT:USDT": {
@@ -3114,7 +3114,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.875964",
+      "last_updated": "2026-01-03T22:10:03.107022",
       "requires_whole_contracts": false
     },
     "MEME/USDT:USDT": {
@@ -3133,7 +3133,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "25",
-      "last_updated": "2025-09-24T15:48:58.876007",
+      "last_updated": "2026-01-03T22:10:03.107121",
       "requires_whole_contracts": false
     },
     "PYTH/USDT:USDT": {
@@ -3152,7 +3152,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.876048",
+      "last_updated": "2026-01-03T22:10:03.107196",
       "requires_whole_contracts": false
     },
     "JTO/USDT:USDT": {
@@ -3170,8 +3170,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.876090",
+      "max_leverage": "50",
+      "last_updated": "2026-01-03T22:10:03.107269",
       "requires_whole_contracts": false
     },
     "1000SATS/USDT:USDT": {
@@ -3189,8 +3189,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.876134",
+      "max_leverage": "25",
+      "last_updated": "2026-01-03T22:10:03.107342",
       "requires_whole_contracts": false
     },
     "1000RATS/USDT:USDT": {
@@ -3209,7 +3209,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "25",
-      "last_updated": "2025-09-24T15:48:58.876177",
+      "last_updated": "2026-01-03T22:10:03.107415",
       "requires_whole_contracts": false
     },
     "ACE/USDT:USDT": {
@@ -3227,8 +3227,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.876220",
+      "max_leverage": "25",
+      "last_updated": "2026-01-03T22:10:03.107488",
       "requires_whole_contracts": false
     },
     "XAI/USDT:USDT": {
@@ -3246,8 +3246,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.876263",
+      "max_leverage": "50",
+      "last_updated": "2026-01-03T22:10:03.107562",
       "requires_whole_contracts": false
     },
     "MANTA/USDT:USDT": {
@@ -3266,7 +3266,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.876306",
+      "last_updated": "2026-01-03T22:10:03.107635",
       "requires_whole_contracts": false
     },
     "ALT/USDT:USDT": {
@@ -3285,7 +3285,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.876348",
+      "last_updated": "2026-01-03T22:10:03.107711",
       "requires_whole_contracts": false
     },
     "JUP/USDT:USDT": {
@@ -3304,7 +3304,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.876391",
+      "last_updated": "2026-01-03T22:10:03.107784",
       "requires_whole_contracts": false
     },
     "ZETA/USDT:USDT": {
@@ -3323,7 +3323,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.876433",
+      "last_updated": "2026-01-03T22:10:03.107856",
       "requires_whole_contracts": false
     },
     "STRK/USDT:USDT": {
@@ -3342,7 +3342,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.876474",
+      "last_updated": "2026-01-03T22:10:03.107930",
       "requires_whole_contracts": false
     },
     "PIXEL/USDT:USDT": {
@@ -3361,7 +3361,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.876517",
+      "last_updated": "2026-01-03T22:10:03.108003",
       "requires_whole_contracts": false
     },
     "DYM/USDT:USDT": {
@@ -3380,7 +3380,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.876560",
+      "last_updated": "2026-01-03T22:10:03.108083",
       "requires_whole_contracts": false
     },
     "WIF/USDT:USDT": {
@@ -3399,7 +3399,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.876603",
+      "last_updated": "2026-01-03T22:10:03.108157",
       "requires_whole_contracts": false
     },
     "AXL/USDT:USDT": {
@@ -3418,7 +3418,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.876645",
+      "last_updated": "2026-01-03T22:10:03.108230",
       "requires_whole_contracts": false
     },
     "BEAM/USDT:USDT": {
@@ -3436,8 +3436,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.876687",
+      "max_leverage": "50",
+      "last_updated": "2026-01-03T22:10:03.108307",
       "requires_whole_contracts": false
     },
     "BOME/USDT:USDT": {
@@ -3456,7 +3456,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.876729",
+      "last_updated": "2026-01-03T22:10:03.108385",
       "requires_whole_contracts": false
     },
     "METIS/USDT:USDT": {
@@ -3475,7 +3475,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.876771",
+      "last_updated": "2026-01-03T22:10:03.108463",
       "requires_whole_contracts": false
     },
     "NFP/USDT:USDT": {
@@ -3493,8 +3493,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.876813",
+      "max_leverage": "25",
+      "last_updated": "2026-01-03T22:10:03.108540",
       "requires_whole_contracts": false
     },
     "VANRY/USDT:USDT": {
@@ -3513,7 +3513,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.876855",
+      "last_updated": "2026-01-03T22:10:03.108615",
       "requires_whole_contracts": false
     },
     "AEVO/USDT:USDT": {
@@ -3532,7 +3532,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.876896",
+      "last_updated": "2026-01-03T22:10:03.108690",
       "requires_whole_contracts": false
     },
     "ETHFI/USDT:USDT": {
@@ -3551,7 +3551,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.876942",
+      "last_updated": "2026-01-03T22:10:03.108767",
       "requires_whole_contracts": false
     },
     "OM/USDT:USDT": {
@@ -3569,8 +3569,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "10",
-      "last_updated": "2025-09-24T15:48:58.876985",
+      "max_leverage": "25",
+      "last_updated": "2026-01-03T22:10:03.108841",
       "requires_whole_contracts": false
     },
     "ONDO/USDT:USDT": {
@@ -3589,7 +3589,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.877026",
+      "last_updated": "2026-01-03T22:10:03.108918",
       "requires_whole_contracts": false
     },
     "CAKE/USDT:USDT": {
@@ -3608,7 +3608,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.877067",
+      "last_updated": "2026-01-03T22:10:03.108992",
       "requires_whole_contracts": false
     },
     "PORTAL/USDT:USDT": {
@@ -3626,8 +3626,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "25",
-      "last_updated": "2025-09-24T15:48:58.877108",
+      "max_leverage": "10",
+      "last_updated": "2026-01-03T22:10:03.109074",
       "requires_whole_contracts": false
     },
     "NTRN/USDT:USDT": {
@@ -3646,7 +3646,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.877150",
+      "last_updated": "2026-01-03T22:10:03.109150",
       "requires_whole_contracts": false
     },
     "KAS/USDT:USDT": {
@@ -3665,7 +3665,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.877194",
+      "last_updated": "2026-01-03T22:10:03.109226",
       "requires_whole_contracts": false
     },
     "AI/USDT:USDT": {
@@ -3683,8 +3683,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.877236",
+      "max_leverage": "10",
+      "last_updated": "2026-01-03T22:10:03.109299",
       "requires_whole_contracts": false
     },
     "ENA/USDT:USDT": {
@@ -3703,7 +3703,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.877277",
+      "last_updated": "2026-01-03T22:10:03.109372",
       "requires_whole_contracts": false
     },
     "W/USDT:USDT": {
@@ -3722,7 +3722,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.877319",
+      "last_updated": "2026-01-03T22:10:03.109445",
       "requires_whole_contracts": false
     },
     "CVC/USDT:USDT": {
@@ -3740,8 +3740,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.877360",
+      "max_leverage": "50",
+      "last_updated": "2026-01-03T22:10:03.109524",
       "requires_whole_contracts": false
     },
     "TNSR/USDT:USDT": {
@@ -3760,7 +3760,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.877400",
+      "last_updated": "2026-01-03T22:10:03.109599",
       "requires_whole_contracts": false
     },
     "SAGA/USDT:USDT": {
@@ -3778,8 +3778,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.877441",
+      "max_leverage": "50",
+      "last_updated": "2026-01-03T22:10:03.109673",
       "requires_whole_contracts": false
     },
     "TAO/USDT:USDT": {
@@ -3798,7 +3798,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.877483",
+      "last_updated": "2026-01-03T22:10:03.109746",
       "requires_whole_contracts": false
     },
     "RAY/USDT:USDT": {
@@ -3817,7 +3817,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.877524",
+      "last_updated": "2026-01-03T22:10:03.109820",
       "requires_whole_contracts": false
     },
     "ATA/USDT:USDT": {
@@ -3836,7 +3836,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.877566",
+      "last_updated": "2026-01-03T22:10:03.109895",
       "requires_whole_contracts": false
     },
     "SUPER/USDT:USDT": {
@@ -3854,8 +3854,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.877608",
+      "max_leverage": "25",
+      "last_updated": "2026-01-03T22:10:03.109971",
       "requires_whole_contracts": false
     },
     "ONG/USDT:USDT": {
@@ -3874,7 +3874,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.877649",
+      "last_updated": "2026-01-03T22:10:03.110054",
       "requires_whole_contracts": false
     },
     "LSK/USDT:USDT": {
@@ -3893,7 +3893,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.877690",
+      "last_updated": "2026-01-03T22:10:03.110133",
       "requires_whole_contracts": false
     },
     "GLM/USDT:USDT": {
@@ -3912,7 +3912,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "25",
-      "last_updated": "2025-09-24T15:48:58.877730",
+      "last_updated": "2026-01-03T22:10:03.110208",
       "requires_whole_contracts": false
     },
     "REZ/USDT:USDT": {
@@ -3931,7 +3931,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.877770",
+      "last_updated": "2026-01-03T22:10:03.110283",
       "requires_whole_contracts": false
     },
     "XVS/USDT:USDT": {
@@ -3950,7 +3950,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.877812",
+      "last_updated": "2026-01-03T22:10:03.110356",
       "requires_whole_contracts": false
     },
     "MOVR/USDT:USDT": {
@@ -3969,7 +3969,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.877853",
+      "last_updated": "2026-01-03T22:10:03.110430",
       "requires_whole_contracts": false
     },
     "BB/USDT:USDT": {
@@ -3988,7 +3988,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.877894",
+      "last_updated": "2026-01-03T22:10:03.110504",
       "requires_whole_contracts": false
     },
     "NOT/USDT:USDT": {
@@ -4007,7 +4007,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.877935",
+      "last_updated": "2026-01-03T22:10:03.110577",
       "requires_whole_contracts": false
     },
     "BICO/USDT:USDT": {
@@ -4026,7 +4026,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.877977",
+      "last_updated": "2026-01-03T22:10:03.110650",
       "requires_whole_contracts": false
     },
     "IO/USDT:USDT": {
@@ -4045,7 +4045,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.878018",
+      "last_updated": "2026-01-03T22:10:03.110723",
       "requires_whole_contracts": false
     },
     "TAIKO/USDT:USDT": {
@@ -4064,7 +4064,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "25",
-      "last_updated": "2025-09-24T15:48:58.878059",
+      "last_updated": "2026-01-03T22:10:03.110799",
       "requires_whole_contracts": false
     },
     "BRETT/USDT:USDT": {
@@ -4082,8 +4082,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.878099",
+      "max_leverage": "75",
+      "last_updated": "2026-01-03T22:10:03.110872",
       "requires_whole_contracts": false
     },
     "ATH/USDT:USDT": {
@@ -4102,7 +4102,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "25",
-      "last_updated": "2025-09-24T15:48:58.878148",
+      "last_updated": "2026-01-03T22:10:03.110945",
       "requires_whole_contracts": false
     },
     "ZK/USDT:USDT": {
@@ -4121,7 +4121,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.878193",
+      "last_updated": "2026-01-03T22:10:03.111017",
       "requires_whole_contracts": false
     },
     "MEW/USDT:USDT": {
@@ -4140,7 +4140,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.878235",
+      "last_updated": "2026-01-03T22:10:03.111096",
       "requires_whole_contracts": false
     },
     "LISTA/USDT:USDT": {
@@ -4159,7 +4159,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.878276",
+      "last_updated": "2026-01-03T22:10:03.111170",
       "requires_whole_contracts": false
     },
     "ZRO/USDT:USDT": {
@@ -4178,7 +4178,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.878317",
+      "last_updated": "2026-01-03T22:10:03.111245",
       "requires_whole_contracts": false
     },
     "BLAST/USDT:USDT": {
@@ -4197,7 +4197,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "25",
-      "last_updated": "2025-09-24T15:48:58.878357",
+      "last_updated": "2026-01-03T22:10:03.111320",
       "requires_whole_contracts": false
     },
     "DOG/USDT:USDT": {
@@ -4235,7 +4235,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.878442",
+      "last_updated": "2026-01-03T22:10:03.111400",
       "requires_whole_contracts": false
     },
     "ZKJ/USDT:USDT": {
@@ -4254,7 +4254,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "20",
-      "last_updated": "2025-09-24T15:48:58.878484",
+      "last_updated": "2026-01-03T22:10:03.111475",
       "requires_whole_contracts": false
     },
     "BGB/USDT:USDT": {
@@ -4273,7 +4273,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.878525",
+      "last_updated": "2026-01-03T22:10:03.111548",
       "requires_whole_contracts": false
     },
     "MOCA/USDT:USDT": {
@@ -4291,8 +4291,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.878567",
+      "max_leverage": "75",
+      "last_updated": "2026-01-03T22:10:03.111621",
       "requires_whole_contracts": false
     },
     "GAS/USDT:USDT": {
@@ -4311,7 +4311,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.878608",
+      "last_updated": "2026-01-03T22:10:03.111696",
       "requires_whole_contracts": false
     },
     "UXLINK/USDT:USDT": {
@@ -4349,7 +4349,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.878691",
+      "last_updated": "2026-01-03T22:10:03.111769",
       "requires_whole_contracts": false
     },
     "MYRO/USDT:USDT": {
@@ -4387,7 +4387,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.878774",
+      "last_updated": "2026-01-03T22:10:03.111842",
       "requires_whole_contracts": false
     },
     "PRCL/USDT:USDT": {
@@ -4444,7 +4444,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.878898",
+      "last_updated": "2026-01-03T22:10:03.111915",
       "requires_whole_contracts": false
     },
     "RARE/USDT:USDT": {
@@ -4463,7 +4463,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.878939",
+      "last_updated": "2026-01-03T22:10:03.111991",
       "requires_whole_contracts": false
     },
     "PONKE/USDT:USDT": {
@@ -4501,7 +4501,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.879021",
+      "last_updated": "2026-01-03T22:10:03.112072",
       "requires_whole_contracts": false
     },
     "1000000MOG/USDT:USDT": {
@@ -4519,8 +4519,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.879062",
+      "max_leverage": "75",
+      "last_updated": "2026-01-03T22:10:03.112146",
       "requires_whole_contracts": false
     },
     "G/USDT:USDT": {
@@ -4539,7 +4539,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.879107",
+      "last_updated": "2026-01-03T22:10:03.112221",
       "requires_whole_contracts": false
     },
     "SYN/USDT:USDT": {
@@ -4557,8 +4557,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.879151",
+      "max_leverage": "10",
+      "last_updated": "2026-01-03T22:10:03.112295",
       "requires_whole_contracts": false
     },
     "SYS/USDT:USDT": {
@@ -4577,7 +4577,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.879194",
+      "last_updated": "2026-01-03T22:10:03.112370",
       "requires_whole_contracts": false
     },
     "VOXEL/USDT:USDT": {
@@ -4615,7 +4615,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.879283",
+      "last_updated": "2026-01-03T22:10:03.112445",
       "requires_whole_contracts": false
     },
     "DOGS/USDT:USDT": {
@@ -4633,8 +4633,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.879325",
+      "max_leverage": "50",
+      "last_updated": "2026-01-03T22:10:03.112519",
       "requires_whole_contracts": false
     },
     "ORDER/USDT:USDT": {
@@ -4653,7 +4653,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "20",
-      "last_updated": "2025-09-24T15:48:58.879367",
+      "last_updated": "2026-01-03T22:10:03.112596",
       "requires_whole_contracts": false
     },
     "SUNDOG/USDT:USDT": {
@@ -4691,7 +4691,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.879452",
+      "last_updated": "2026-01-03T22:10:03.112670",
       "requires_whole_contracts": false
     },
     "MBOX/USDT:USDT": {
@@ -4710,7 +4710,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.879495",
+      "last_updated": "2026-01-03T22:10:03.112746",
       "requires_whole_contracts": false
     },
     "HNT/USDT:USDT": {
@@ -4729,7 +4729,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "25",
-      "last_updated": "2025-09-24T15:48:58.879538",
+      "last_updated": "2026-01-03T22:10:03.112822",
       "requires_whole_contracts": false
     },
     "CHESS/USDT:USDT": {
@@ -4767,7 +4767,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.879622",
+      "last_updated": "2026-01-03T22:10:03.112898",
       "requires_whole_contracts": false
     },
     "POL/USDT:USDT": {
@@ -4785,8 +4785,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.879665",
+      "max_leverage": "50",
+      "last_updated": "2026-01-03T22:10:03.112974",
       "requires_whole_contracts": false
     },
     "NEIROETH/USDT:USDT": {
@@ -4824,7 +4824,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.879750",
+      "last_updated": "2026-01-03T22:10:03.113057",
       "requires_whole_contracts": false
     },
     "QUICK/USDT:USDT": {
@@ -4861,8 +4861,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "20",
-      "last_updated": "2025-09-24T15:48:58.879836",
+      "max_leverage": "50",
+      "last_updated": "2026-01-03T22:10:03.113134",
       "requires_whole_contracts": false
     },
     "1MBABYDOGE/USDT:USDT": {
@@ -4881,7 +4881,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.879880",
+      "last_updated": "2026-01-03T22:10:03.113211",
       "requires_whole_contracts": false
     },
     "1000CAT/USDT:USDT": {
@@ -4899,8 +4899,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.879922",
+      "max_leverage": "50",
+      "last_updated": "2026-01-03T22:10:03.113285",
       "requires_whole_contracts": false
     },
     "KDA/USDT:USDT": {
@@ -4937,8 +4937,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.880006",
+      "max_leverage": "50",
+      "last_updated": "2026-01-03T22:10:03.113358",
       "requires_whole_contracts": false
     },
     "CATI/USDT:USDT": {
@@ -4957,7 +4957,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.880048",
+      "last_updated": "2026-01-03T22:10:03.113434",
       "requires_whole_contracts": false
     },
     "FIO/USDT:USDT": {
@@ -4995,7 +4995,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "25",
-      "last_updated": "2025-09-24T15:48:58.880131",
+      "last_updated": "2026-01-03T22:10:03.113508",
       "requires_whole_contracts": false
     },
     "GHST/USDT:USDT": {
@@ -5033,7 +5033,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "25",
-      "last_updated": "2025-09-24T15:48:58.880216",
+      "last_updated": "2026-01-03T22:10:03.113583",
       "requires_whole_contracts": false
     },
     "HMSTR/USDT:USDT": {
@@ -5051,8 +5051,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.880261",
+      "max_leverage": "25",
+      "last_updated": "2026-01-03T22:10:03.113657",
       "requires_whole_contracts": false
     },
     "AGI/USDT:USDT": {
@@ -5071,7 +5071,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "25",
-      "last_updated": "2025-09-24T15:48:58.880304",
+      "last_updated": "2026-01-03T22:10:03.113732",
       "requires_whole_contracts": false
     },
     "REI/USDT:USDT": {
@@ -5128,7 +5128,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.880432",
+      "last_updated": "2026-01-03T22:10:03.113809",
       "requires_whole_contracts": false
     },
     "MOODENG/USDT:USDT": {
@@ -5147,7 +5147,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.880474",
+      "last_updated": "2026-01-03T22:10:03.113883",
       "requires_whole_contracts": false
     },
     "DIA/USDT:USDT": {
@@ -5166,7 +5166,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.880516",
+      "last_updated": "2026-01-03T22:10:03.113958",
       "requires_whole_contracts": false
     },
     "OG/USDT:USDT": {
@@ -5185,7 +5185,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "20",
-      "last_updated": "2025-09-24T15:48:58.880561",
+      "last_updated": "2026-01-03T22:10:03.114038",
       "requires_whole_contracts": false
     },
     "NEIROCTO/USDT:USDT": {
@@ -5204,7 +5204,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "25",
-      "last_updated": "2025-09-24T15:48:58.880602",
+      "last_updated": "2026-01-03T22:10:03.114117",
       "requires_whole_contracts": false
     },
     "ETHW/USDT:USDT": {
@@ -5223,7 +5223,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.880644",
+      "last_updated": "2026-01-03T22:10:03.114192",
       "requires_whole_contracts": false
     },
     "DegenReborn/USDT:USDT": {
@@ -5242,7 +5242,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.880686",
+      "last_updated": "2026-01-03T22:10:03.114266",
       "requires_whole_contracts": false
     },
     "KMNO/USDT:USDT": {
@@ -5261,7 +5261,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.880728",
+      "last_updated": "2026-01-03T22:10:03.114342",
       "requires_whole_contracts": false
     },
     "POWR/USDT:USDT": {
@@ -5280,7 +5280,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.880769",
+      "last_updated": "2026-01-03T22:10:03.114422",
       "requires_whole_contracts": false
     },
     "PYR/USDT:USDT": {
@@ -5299,7 +5299,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "25",
-      "last_updated": "2025-09-24T15:48:58.880810",
+      "last_updated": "2026-01-03T22:10:03.114497",
       "requires_whole_contracts": false
     },
     "CARV/USDT:USDT": {
@@ -5318,7 +5318,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "25",
-      "last_updated": "2025-09-24T15:48:58.880851",
+      "last_updated": "2026-01-03T22:10:03.114572",
       "requires_whole_contracts": false
     },
     "SLERF/USDT:USDT": {
@@ -5356,7 +5356,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "25",
-      "last_updated": "2025-09-24T15:48:58.880933",
+      "last_updated": "2026-01-03T22:10:03.114647",
       "requires_whole_contracts": false
     },
     "DEEP/USDT:USDT": {
@@ -5375,7 +5375,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.880974",
+      "last_updated": "2026-01-03T22:10:03.114722",
       "requires_whole_contracts": false
     },
     "DBR/USDT:USDT": {
@@ -5413,7 +5413,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.881055",
+      "last_updated": "2026-01-03T22:10:03.114796",
       "requires_whole_contracts": false
     },
     "SCR/USDT:USDT": {
@@ -5432,7 +5432,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.881096",
+      "last_updated": "2026-01-03T22:10:03.114870",
       "requires_whole_contracts": false
     },
     "GOAT/USDT:USDT": {
@@ -5450,8 +5450,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.881137",
+      "max_leverage": "75",
+      "last_updated": "2026-01-03T22:10:03.114943",
       "requires_whole_contracts": false
     },
     "X/USDT:USDT": {
@@ -5489,7 +5489,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.881220",
+      "last_updated": "2026-01-03T22:10:03.115020",
       "requires_whole_contracts": false
     },
     "GRASS/USDT:USDT": {
@@ -5507,8 +5507,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.881263",
+      "max_leverage": "75",
+      "last_updated": "2026-01-03T22:10:03.115100",
       "requires_whole_contracts": false
     },
     "SWEAT/USDT:USDT": {
@@ -5546,7 +5546,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.881345",
+      "last_updated": "2026-01-03T22:10:03.115174",
       "requires_whole_contracts": false
     },
     "SPX/USDT:USDT": {
@@ -5565,7 +5565,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.881386",
+      "last_updated": "2026-01-03T22:10:03.115246",
       "requires_whole_contracts": false
     },
     "VIRTUAL/USDT:USDT": {
@@ -5584,7 +5584,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "25",
-      "last_updated": "2025-09-24T15:48:58.881427",
+      "last_updated": "2026-01-03T22:10:03.115319",
       "requires_whole_contracts": false
     },
     "AERO/USDT:USDT": {
@@ -5602,8 +5602,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.881468",
+      "max_leverage": "75",
+      "last_updated": "2026-01-03T22:10:03.115392",
       "requires_whole_contracts": false
     },
     "CETUS/USDT:USDT": {
@@ -5622,7 +5622,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "25",
-      "last_updated": "2025-09-24T15:48:58.881509",
+      "last_updated": "2026-01-03T22:10:03.115466",
       "requires_whole_contracts": false
     },
     "COW/USDT:USDT": {
@@ -5640,8 +5640,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.881552",
+      "max_leverage": "50",
+      "last_updated": "2026-01-03T22:10:03.115539",
       "requires_whole_contracts": false
     },
     "SWELL/USDT:USDT": {
@@ -5679,7 +5679,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.881635",
+      "last_updated": "2026-01-03T22:10:03.115618",
       "requires_whole_contracts": false
     },
     "PNUT/USDT:USDT": {
@@ -5698,7 +5698,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.881675",
+      "last_updated": "2026-01-03T22:10:03.115693",
       "requires_whole_contracts": false
     },
     "ACT/USDT:USDT": {
@@ -5716,8 +5716,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "25",
-      "last_updated": "2025-09-24T15:48:58.881716",
+      "max_leverage": "10",
+      "last_updated": "2026-01-03T22:10:03.115769",
       "requires_whole_contracts": false
     },
     "CRO/USDT:USDT": {
@@ -5736,7 +5736,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "25",
-      "last_updated": "2025-09-24T15:48:58.881758",
+      "last_updated": "2026-01-03T22:10:03.115843",
       "requires_whole_contracts": false
     },
     "PEAQ/USDT:USDT": {
@@ -5755,7 +5755,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "25",
-      "last_updated": "2025-09-24T15:48:58.881799",
+      "last_updated": "2026-01-03T22:10:03.115916",
       "requires_whole_contracts": false
     },
     "FWOG/USDT:USDT": {
@@ -5792,8 +5792,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.881880",
+      "max_leverage": "10",
+      "last_updated": "2026-01-03T22:10:03.115989",
       "requires_whole_contracts": false
     },
     "SNT/USDT:USDT": {
@@ -5812,7 +5812,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "25",
-      "last_updated": "2025-09-24T15:48:58.881920",
+      "last_updated": "2026-01-03T22:10:03.116069",
       "requires_whole_contracts": false
     },
     "MERL/USDT:USDT": {
@@ -5831,7 +5831,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "25",
-      "last_updated": "2025-09-24T15:48:58.881962",
+      "last_updated": "2026-01-03T22:10:03.116142",
       "requires_whole_contracts": false
     },
     "STEEM/USDT:USDT": {
@@ -5849,8 +5849,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "20",
-      "last_updated": "2025-09-24T15:48:58.882003",
+      "max_leverage": "50",
+      "last_updated": "2026-01-03T22:10:03.116215",
       "requires_whole_contracts": false
     },
     "BAN/USDT:USDT": {
@@ -5868,8 +5868,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "25",
-      "last_updated": "2025-09-24T15:48:58.882044",
+      "max_leverage": "50",
+      "last_updated": "2026-01-03T22:10:03.116295",
       "requires_whole_contracts": false
     },
     "OL/USDT:USDT": {
@@ -5888,7 +5888,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "25",
-      "last_updated": "2025-09-24T15:48:58.882085",
+      "last_updated": "2026-01-03T22:10:03.116369",
       "requires_whole_contracts": false
     },
     "MORPHO/USDT:USDT": {
@@ -5906,8 +5906,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.882133",
+      "max_leverage": "75",
+      "last_updated": "2026-01-03T22:10:03.116443",
       "requires_whole_contracts": false
     },
     "SCRT/USDT:USDT": {
@@ -5926,7 +5926,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "25",
-      "last_updated": "2025-09-24T15:48:58.882175",
+      "last_updated": "2026-01-03T22:10:03.116517",
       "requires_whole_contracts": false
     },
     "CHILLGUY/USDT:USDT": {
@@ -5944,8 +5944,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "25",
-      "last_updated": "2025-09-24T15:48:58.882217",
+      "max_leverage": "10",
+      "last_updated": "2026-01-03T22:10:03.116591",
       "requires_whole_contracts": false
     },
     "1MCHEEMS/USDT:USDT": {
@@ -5964,7 +5964,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "25",
-      "last_updated": "2025-09-24T15:48:58.882261",
+      "last_updated": "2026-01-03T22:10:03.116664",
       "requires_whole_contracts": false
     },
     "OXT/USDT:USDT": {
@@ -5983,7 +5983,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.882303",
+      "last_updated": "2026-01-03T22:10:03.116738",
       "requires_whole_contracts": false
     },
     "ZRC/USDT:USDT": {
@@ -6021,7 +6021,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.882388",
+      "last_updated": "2026-01-03T22:10:03.116811",
       "requires_whole_contracts": false
     },
     "MAJOR/USDT:USDT": {
@@ -6059,7 +6059,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "25",
-      "last_updated": "2025-09-24T15:48:58.882470",
+      "last_updated": "2026-01-03T22:10:03.116903",
       "requires_whole_contracts": false
     },
     "XDC/USDT:USDT": {
@@ -6078,7 +6078,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.882511",
+      "last_updated": "2026-01-03T22:10:03.116978",
       "requires_whole_contracts": false
     },
     "XION/USDT:USDT": {
@@ -6115,8 +6115,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.882610",
+      "max_leverage": "25",
+      "last_updated": "2026-01-03T22:10:03.117062",
       "requires_whole_contracts": false
     },
     "ACX/USDT:USDT": {
@@ -6135,7 +6135,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.882665",
+      "last_updated": "2026-01-03T22:10:03.117140",
       "requires_whole_contracts": false
     },
     "NS/USDT:USDT": {
@@ -6173,7 +6173,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.882748",
+      "last_updated": "2026-01-03T22:10:03.117230",
       "requires_whole_contracts": false
     },
     "KOMA/USDT:USDT": {
@@ -6211,7 +6211,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.882834",
+      "last_updated": "2026-01-03T22:10:03.117306",
       "requires_whole_contracts": false
     },
     "VELODROME/USDT:USDT": {
@@ -6230,7 +6230,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "20",
-      "last_updated": "2025-09-24T15:48:58.882875",
+      "last_updated": "2026-01-03T22:10:03.117381",
       "requires_whole_contracts": false
     },
     "AVA/USDT:USDT": {
@@ -6249,7 +6249,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.882917",
+      "last_updated": "2026-01-03T22:10:03.117458",
       "requires_whole_contracts": false
     },
     "VANA/USDT:USDT": {
@@ -6268,7 +6268,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.882960",
+      "last_updated": "2026-01-03T22:10:03.117541",
       "requires_whole_contracts": false
     },
     "HYPE/USDT:USDT": {
@@ -6287,7 +6287,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.883002",
+      "last_updated": "2026-01-03T22:10:03.117614",
       "requires_whole_contracts": false
     },
     "PENGU/USDT:USDT": {
@@ -6306,7 +6306,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.883045",
+      "last_updated": "2026-01-03T22:10:03.117688",
       "requires_whole_contracts": false
     },
     "USUAL/USDT:USDT": {
@@ -6324,8 +6324,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.883088",
+      "max_leverage": "50",
+      "last_updated": "2026-01-03T22:10:03.117760",
       "requires_whole_contracts": false
     },
     "FUEL/USDT:USDT": {
@@ -6363,7 +6363,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.883174",
+      "last_updated": "2026-01-03T22:10:03.117835",
       "requires_whole_contracts": false
     },
     "AIXBT/USDT:USDT": {
@@ -6382,7 +6382,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.883216",
+      "last_updated": "2026-01-03T22:10:03.117911",
       "requires_whole_contracts": false
     },
     "FARTCOIN/USDT:USDT": {
@@ -6401,7 +6401,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.883260",
+      "last_updated": "2026-01-03T22:10:03.117987",
       "requires_whole_contracts": false
     },
     "HIVE/USDT:USDT": {
@@ -6420,7 +6420,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.883303",
+      "last_updated": "2026-01-03T22:10:03.118096",
       "requires_whole_contracts": false
     },
     "DEXE/USDT:USDT": {
@@ -6439,7 +6439,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "25",
-      "last_updated": "2025-09-24T15:48:58.883350",
+      "last_updated": "2026-01-03T22:10:03.118175",
       "requires_whole_contracts": false
     },
     "GIGA/USDT:USDT": {
@@ -6458,7 +6458,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "20",
-      "last_updated": "2025-09-24T15:48:58.883394",
+      "last_updated": "2026-01-03T22:10:03.118249",
       "requires_whole_contracts": false
     },
     "PHA/USDT:USDT": {
@@ -6477,7 +6477,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.883437",
+      "last_updated": "2026-01-03T22:10:03.118322",
       "requires_whole_contracts": false
     },
     "DF/USDT:USDT": {
@@ -6495,8 +6495,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.883482",
+      "max_leverage": "25",
+      "last_updated": "2026-01-03T22:10:03.118396",
       "requires_whole_contracts": false
     },
     "AI16Z/USDT:USDT": {
@@ -6534,7 +6534,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "25",
-      "last_updated": "2025-09-24T15:48:58.883568",
+      "last_updated": "2026-01-03T22:10:03.118469",
       "requires_whole_contracts": false
     },
     "ZEREBRO/USDT:USDT": {
@@ -6553,7 +6553,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.883611",
+      "last_updated": "2026-01-03T22:10:03.118543",
       "requires_whole_contracts": false
     },
     "BIO/USDT:USDT": {
@@ -6571,8 +6571,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.883653",
+      "max_leverage": "75",
+      "last_updated": "2026-01-03T22:10:03.118617",
       "requires_whole_contracts": false
     },
     "SWARMS/USDT:USDT": {
@@ -6610,7 +6610,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.883739",
+      "last_updated": "2026-01-03T22:10:03.118692",
       "requires_whole_contracts": false
     },
     "COOKIE/USDT:USDT": {
@@ -6629,7 +6629,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.883782",
+      "last_updated": "2026-01-03T22:10:03.118771",
       "requires_whole_contracts": false
     },
     "SONIC/USDT:USDT": {
@@ -6647,8 +6647,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.883824",
+      "max_leverage": "10",
+      "last_updated": "2026-01-03T22:10:03.118848",
       "requires_whole_contracts": false
     },
     "AVAAI/USDT:USDT": {
@@ -6686,7 +6686,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "20",
-      "last_updated": "2025-09-24T15:48:58.883911",
+      "last_updated": "2026-01-03T22:10:03.118922",
       "requires_whole_contracts": false
     },
     "S/USDT:USDT": {
@@ -6705,7 +6705,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.883953",
+      "last_updated": "2026-01-03T22:10:03.118998",
       "requires_whole_contracts": false
     },
     "PROM/USDT:USDT": {
@@ -6724,7 +6724,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.883994",
+      "last_updated": "2026-01-03T22:10:03.119080",
       "requires_whole_contracts": false
     },
     "DUCK/USDT:USDT": {
@@ -6762,7 +6762,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "10",
-      "last_updated": "2025-09-24T15:48:58.884077",
+      "last_updated": "2026-01-03T22:10:03.119156",
       "requires_whole_contracts": false
     },
     "SOLV/USDT:USDT": {
@@ -6780,8 +6780,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.884118",
+      "max_leverage": "50",
+      "last_updated": "2026-01-03T22:10:03.119229",
       "requires_whole_contracts": false
     },
     "ARC/USDT:USDT": {
@@ -6800,7 +6800,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.884159",
+      "last_updated": "2026-01-03T22:10:03.119303",
       "requires_whole_contracts": false
     },
     "PIPPIN/USDT:USDT": {
@@ -6818,8 +6818,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "20",
-      "last_updated": "2025-09-24T15:48:58.884202",
+      "max_leverage": "10",
+      "last_updated": "2026-01-03T22:10:03.119380",
       "requires_whole_contracts": false
     },
     "TRUMP/USDT:USDT": {
@@ -6837,8 +6837,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "25",
-      "last_updated": "2025-09-24T15:48:58.884245",
+      "max_leverage": "75",
+      "last_updated": "2026-01-03T22:10:03.119454",
       "requires_whole_contracts": false
     },
     "MELANIA/USDT:USDT": {
@@ -6857,7 +6857,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.884285",
+      "last_updated": "2026-01-03T22:10:03.119527",
       "requires_whole_contracts": false
     },
     "PLUME/USDT:USDT": {
@@ -6875,8 +6875,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.884326",
+      "max_leverage": "25",
+      "last_updated": "2026-01-03T22:10:03.119601",
       "requires_whole_contracts": false
     },
     "VTHO/USDT:USDT": {
@@ -6895,7 +6895,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.884370",
+      "last_updated": "2026-01-03T22:10:03.119675",
       "requires_whole_contracts": false
     },
     "J/USDT:USDT": {
@@ -6933,7 +6933,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "20",
-      "last_updated": "2025-09-24T15:48:58.884452",
+      "last_updated": "2026-01-03T22:10:03.119749",
       "requires_whole_contracts": false
     },
     "ANIME/USDT:USDT": {
@@ -6952,7 +6952,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.884498",
+      "last_updated": "2026-01-03T22:10:03.119821",
       "requires_whole_contracts": false
     },
     "XCN/USDT:USDT": {
@@ -6990,7 +6990,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "20",
-      "last_updated": "2025-09-24T15:48:58.884582",
+      "last_updated": "2026-01-03T22:10:03.119894",
       "requires_whole_contracts": false
     },
     "VVV/USDT:USDT": {
@@ -7009,7 +7009,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "20",
-      "last_updated": "2025-09-24T15:48:58.884623",
+      "last_updated": "2026-01-03T22:10:03.119971",
       "requires_whole_contracts": false
     },
     "FORTH/USDT:USDT": {
@@ -7027,8 +7027,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "15",
-      "last_updated": "2025-09-24T15:48:58.884663",
+      "max_leverage": "50",
+      "last_updated": "2026-01-03T22:10:03.120054",
       "requires_whole_contracts": false
     },
     "BERA/USDT:USDT": {
@@ -7047,7 +7047,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.884703",
+      "last_updated": "2026-01-03T22:10:03.120129",
       "requires_whole_contracts": false
     },
     "TSTBSC/USDT:USDT": {
@@ -7066,7 +7066,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "25",
-      "last_updated": "2025-09-24T15:48:58.884745",
+      "last_updated": "2026-01-03T22:10:03.120207",
       "requires_whole_contracts": false
     },
     "10000ELON/USDT:USDT": {
@@ -7104,7 +7104,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.884828",
+      "last_updated": "2026-01-03T22:10:03.120281",
       "requires_whole_contracts": false
     },
     "B3/USDT:USDT": {
@@ -7123,7 +7123,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.884869",
+      "last_updated": "2026-01-03T22:10:03.120354",
       "requires_whole_contracts": false
     },
     "IP/USDT:USDT": {
@@ -7142,7 +7142,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.884910",
+      "last_updated": "2026-01-03T22:10:03.120427",
       "requires_whole_contracts": false
     },
     "RON/USDT:USDT": {
@@ -7161,7 +7161,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.884951",
+      "last_updated": "2026-01-03T22:10:03.120500",
       "requires_whole_contracts": false
     },
     "HEI/USDT:USDT": {
@@ -7180,7 +7180,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "25",
-      "last_updated": "2025-09-24T15:48:58.884992",
+      "last_updated": "2026-01-03T22:10:03.120577",
       "requires_whole_contracts": false
     },
     "SHELL/USDT:USDT": {
@@ -7199,7 +7199,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "25",
-      "last_updated": "2025-09-24T15:48:58.885033",
+      "last_updated": "2026-01-03T22:10:03.120649",
       "requires_whole_contracts": false
     },
     "BROCCOLI/USDT:USDT": {
@@ -7218,7 +7218,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "20",
-      "last_updated": "2025-09-24T15:48:58.885074",
+      "last_updated": "2026-01-03T22:10:03.120722",
       "requires_whole_contracts": false
     },
     "AUCTION/USDT:USDT": {
@@ -7237,7 +7237,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "25",
-      "last_updated": "2025-09-24T15:48:58.885116",
+      "last_updated": "2026-01-03T22:10:03.120795",
       "requires_whole_contracts": false
     },
     "GPS/USDT:USDT": {
@@ -7256,7 +7256,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "25",
-      "last_updated": "2025-09-24T15:48:58.885157",
+      "last_updated": "2026-01-03T22:10:03.120869",
       "requires_whole_contracts": false
     },
     "GNO/USDT:USDT": {
@@ -7275,7 +7275,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "20",
-      "last_updated": "2025-09-24T15:48:58.885198",
+      "last_updated": "2026-01-03T22:10:03.120943",
       "requires_whole_contracts": false
     },
     "AIOZ/USDT:USDT": {
@@ -7313,7 +7313,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.885280",
+      "last_updated": "2026-01-03T22:10:03.121016",
       "requires_whole_contracts": false
     },
     "AVL/USDT:USDT": {
@@ -7351,7 +7351,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.885364",
+      "last_updated": "2026-01-03T22:10:03.121096",
       "requires_whole_contracts": false
     },
     "GODS/USDT:USDT": {
@@ -7408,7 +7408,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "20",
-      "last_updated": "2025-09-24T15:48:58.885488",
+      "last_updated": "2026-01-03T22:10:03.121174",
       "requires_whole_contracts": false
     },
     "ELX/USDT:USDT": {
@@ -7465,7 +7465,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "20",
-      "last_updated": "2025-09-24T15:48:58.885613",
+      "last_updated": "2026-01-03T22:10:03.121249",
       "requires_whole_contracts": false
     },
     "VIC/USDT:USDT": {
@@ -7483,8 +7483,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.885657",
+      "max_leverage": "25",
+      "last_updated": "2026-01-03T22:10:03.121322",
       "requires_whole_contracts": false
     },
     "EPIC/USDT:USDT": {
@@ -7503,7 +7503,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "25",
-      "last_updated": "2025-09-24T15:48:58.885700",
+      "last_updated": "2026-01-03T22:10:03.121396",
       "requires_whole_contracts": false
     },
     "OBT/USDT:USDT": {
@@ -7541,7 +7541,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "25",
-      "last_updated": "2025-09-24T15:48:58.885783",
+      "last_updated": "2026-01-03T22:10:03.121470",
       "requires_whole_contracts": false
     },
     "NMR/USDT:USDT": {
@@ -7560,7 +7560,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.885825",
+      "last_updated": "2026-01-03T22:10:03.121547",
       "requires_whole_contracts": false
     },
     "TUT/USDT:USDT": {
@@ -7579,7 +7579,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "20",
-      "last_updated": "2025-09-24T15:48:58.885866",
+      "last_updated": "2026-01-03T22:10:03.121623",
       "requires_whole_contracts": false
     },
     "FORM/USDT:USDT": {
@@ -7598,7 +7598,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.885907",
+      "last_updated": "2026-01-03T22:10:03.121699",
       "requires_whole_contracts": false
     },
     "RSS3/USDT:USDT": {
@@ -7655,7 +7655,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.886030",
+      "last_updated": "2026-01-03T22:10:03.121777",
       "requires_whole_contracts": false
     },
     "BANANAS31/USDT:USDT": {
@@ -7673,8 +7673,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "10",
-      "last_updated": "2025-09-24T15:48:58.886071",
+      "max_leverage": "25",
+      "last_updated": "2026-01-03T22:10:03.121853",
       "requires_whole_contracts": false
     },
     "BR/USDT:USDT": {
@@ -7693,7 +7693,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "20",
-      "last_updated": "2025-09-24T15:48:58.886112",
+      "last_updated": "2026-01-03T22:10:03.121930",
       "requires_whole_contracts": false
     },
     "NIL/USDT:USDT": {
@@ -7712,7 +7712,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.886159",
+      "last_updated": "2026-01-03T22:10:03.122003",
       "requires_whole_contracts": false
     },
     "PARTI/USDT:USDT": {
@@ -7731,7 +7731,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.886200",
+      "last_updated": "2026-01-03T22:10:03.122083",
       "requires_whole_contracts": false
     },
     "NAVX/USDT:USDT": {
@@ -7769,7 +7769,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "20",
-      "last_updated": "2025-09-24T15:48:58.886282",
+      "last_updated": "2026-01-03T22:10:03.122158",
       "requires_whole_contracts": false
     },
     "FUN/USDT:USDT": {
@@ -7788,7 +7788,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.886323",
+      "last_updated": "2026-01-03T22:10:03.122232",
       "requires_whole_contracts": false
     },
     "MLN/USDT:USDT": {
@@ -7806,8 +7806,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.886364",
+      "max_leverage": "20",
+      "last_updated": "2026-01-03T22:10:03.122308",
       "requires_whole_contracts": false
     },
     "GUN/USDT:USDT": {
@@ -7826,7 +7826,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.886409",
+      "last_updated": "2026-01-03T22:10:03.122387",
       "requires_whole_contracts": false
     },
     "PUMPBTC/USDT:USDT": {
@@ -7864,7 +7864,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "20",
-      "last_updated": "2025-09-24T15:48:58.886493",
+      "last_updated": "2026-01-03T22:10:03.122461",
       "requires_whole_contracts": false
     },
     "XAUT/USDT:USDT": {
@@ -7883,7 +7883,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.886535",
+      "last_updated": "2026-01-03T22:10:03.122534",
       "requires_whole_contracts": false
     },
     "AMP/USDT:USDT": {
@@ -7921,7 +7921,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.886618",
+      "last_updated": "2026-01-03T22:10:03.122608",
       "requires_whole_contracts": false
     },
     "FHE/USDT:USDT": {
@@ -7978,7 +7978,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.886744",
+      "last_updated": "2026-01-03T22:10:03.122680",
       "requires_whole_contracts": false
     },
     "WCT/USDT:USDT": {
@@ -7996,8 +7996,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.886785",
+      "max_leverage": "50",
+      "last_updated": "2026-01-03T22:10:03.122754",
       "requires_whole_contracts": false
     },
     "10000000AIDOGE/USDT:USDT": {
@@ -8034,8 +8034,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "10",
-      "last_updated": "2025-09-24T15:48:58.886871",
+      "max_leverage": "25",
+      "last_updated": "2026-01-03T22:10:03.122827",
       "requires_whole_contracts": false
     },
     "EPT/USDT:USDT": {
@@ -8072,8 +8072,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.886958",
+      "max_leverage": "50",
+      "last_updated": "2026-01-03T22:10:03.122902",
       "requires_whole_contracts": false
     },
     "ZORA/USDT:USDT": {
@@ -8092,7 +8092,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "25",
-      "last_updated": "2025-09-24T15:48:58.886999",
+      "last_updated": "2026-01-03T22:10:03.122978",
       "requires_whole_contracts": false
     },
     "INIT/USDT:USDT": {
@@ -8110,8 +8110,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.887041",
+      "max_leverage": "50",
+      "last_updated": "2026-01-03T22:10:03.123060",
       "requires_whole_contracts": false
     },
     "DOLO/USDT:USDT": {
@@ -8130,7 +8130,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "20",
-      "last_updated": "2025-09-24T15:48:58.887084",
+      "last_updated": "2026-01-03T22:10:03.123137",
       "requires_whole_contracts": false
     },
     "FIS/USDT:USDT": {
@@ -8168,7 +8168,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "25",
-      "last_updated": "2025-09-24T15:48:58.887167",
+      "last_updated": "2026-01-03T22:10:03.123212",
       "requires_whole_contracts": false
     },
     "TAI/USDT:USDT": {
@@ -8187,7 +8187,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "25",
-      "last_updated": "2025-09-24T15:48:58.887208",
+      "last_updated": "2026-01-03T22:10:03.123287",
       "requires_whole_contracts": false
     },
     "SIGN/USDT:USDT": {
@@ -8206,7 +8206,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.887250",
+      "last_updated": "2026-01-03T22:10:03.123362",
       "requires_whole_contracts": false
     },
     "MILK/USDT:USDT": {
@@ -8244,7 +8244,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "20",
-      "last_updated": "2025-09-24T15:48:58.887333",
+      "last_updated": "2026-01-03T22:10:03.123437",
       "requires_whole_contracts": false
     },
     "PUNDIX/USDT:USDT": {
@@ -8263,7 +8263,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "20",
-      "last_updated": "2025-09-24T15:48:58.887374",
+      "last_updated": "2026-01-03T22:10:03.123513",
       "requires_whole_contracts": false
     },
     "B2/USDT:USDT": {
@@ -8282,7 +8282,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.887423",
+      "last_updated": "2026-01-03T22:10:03.123586",
       "requires_whole_contracts": false
     },
     "GORK/USDT:USDT": {
@@ -8339,7 +8339,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "10",
-      "last_updated": "2025-09-24T15:48:58.887553",
+      "last_updated": "2026-01-03T22:10:03.123664",
       "requires_whole_contracts": false
     },
     "ALPINE/USDT:USDT": {
@@ -8376,8 +8376,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "20",
-      "last_updated": "2025-09-24T15:48:58.887637",
+      "max_leverage": "10",
+      "last_updated": "2026-01-03T22:10:03.123737",
       "requires_whole_contracts": false
     },
     "SYRUP/USDT:USDT": {
@@ -8396,7 +8396,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "20",
-      "last_updated": "2025-09-24T15:48:58.887680",
+      "last_updated": "2026-01-03T22:10:03.123811",
       "requires_whole_contracts": false
     },
     "OBOL/USDT:USDT": {
@@ -8434,7 +8434,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.887764",
+      "last_updated": "2026-01-03T22:10:03.123885",
       "requires_whole_contracts": false
     },
     "DOOD/USDT:USDT": {
@@ -8453,7 +8453,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.887809",
+      "last_updated": "2026-01-03T22:10:03.123959",
       "requires_whole_contracts": false
     },
     "SKYAI/USDT:USDT": {
@@ -8472,7 +8472,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.887852",
+      "last_updated": "2026-01-03T22:10:03.124036",
       "requires_whole_contracts": false
     },
     "LAUNCHCOIN/USDT:USDT": {
@@ -8510,7 +8510,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.887936",
+      "last_updated": "2026-01-03T22:10:03.124116",
       "requires_whole_contracts": false
     },
     "BADGER/USDT:USDT": {
@@ -8547,8 +8547,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "25",
-      "last_updated": "2025-09-24T15:48:58.888021",
+      "max_leverage": "40",
+      "last_updated": "2026-01-03T22:10:03.124192",
       "requires_whole_contracts": false
     },
     "BLUE/USDT:USDT": {
@@ -8586,7 +8586,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.888104",
+      "last_updated": "2026-01-03T22:10:03.124269",
       "requires_whole_contracts": false
     },
     "SOON/USDT:USDT": {
@@ -8605,7 +8605,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "25",
-      "last_updated": "2025-09-24T15:48:58.888146",
+      "last_updated": "2026-01-03T22:10:03.124341",
       "requires_whole_contracts": false
     },
     "ZBCN/USDT:USDT": {
@@ -8624,7 +8624,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "20",
-      "last_updated": "2025-09-24T15:48:58.888187",
+      "last_updated": "2026-01-03T22:10:03.124417",
       "requires_whole_contracts": false
     },
     "HUMA/USDT:USDT": {
@@ -8643,7 +8643,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "20",
-      "last_updated": "2025-09-24T15:48:58.888229",
+      "last_updated": "2026-01-03T22:10:03.124491",
       "requires_whole_contracts": false
     },
     "SOPH/USDT:USDT": {
@@ -8662,7 +8662,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.888270",
+      "last_updated": "2026-01-03T22:10:03.124565",
       "requires_whole_contracts": false
     },
     "A/USDT:USDT": {
@@ -8681,7 +8681,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.888312",
+      "last_updated": "2026-01-03T22:10:03.124638",
       "requires_whole_contracts": false
     },
     "PORT3/USDT:USDT": {
@@ -8719,7 +8719,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.888396",
+      "last_updated": "2026-01-03T22:10:03.124711",
       "requires_whole_contracts": false
     },
     "CUDIS/USDT:USDT": {
@@ -8775,8 +8775,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.888521",
+      "max_leverage": "25",
+      "last_updated": "2026-01-03T22:10:03.124784",
       "requires_whole_contracts": false
     },
     "HOME/USDT:USDT": {
@@ -8795,7 +8795,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.888562",
+      "last_updated": "2026-01-03T22:10:03.124859",
       "requires_whole_contracts": false
     },
     "IDOL/USDT:USDT": {
@@ -8814,7 +8814,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "20",
-      "last_updated": "2025-09-24T15:48:58.888603",
+      "last_updated": "2026-01-03T22:10:03.124933",
       "requires_whole_contracts": false
     },
     "SQD/USDT:USDT": {
@@ -8832,8 +8832,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.888645",
+      "max_leverage": "25",
+      "last_updated": "2026-01-03T22:10:03.125007",
       "requires_whole_contracts": false
     },
     "TAG/USDT:USDT": {
@@ -8852,7 +8852,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.888686",
+      "last_updated": "2026-01-03T22:10:03.125087",
       "requires_whole_contracts": false
     },
     "SPK/USDT:USDT": {
@@ -8871,7 +8871,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.888728",
+      "last_updated": "2026-01-03T22:10:03.125160",
       "requires_whole_contracts": false
     },
     "F/USDT:USDT": {
@@ -8890,7 +8890,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.888770",
+      "last_updated": "2026-01-03T22:10:03.125232",
       "requires_whole_contracts": false
     },
     "NEWT/USDT:USDT": {
@@ -8909,7 +8909,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "20",
-      "last_updated": "2025-09-24T15:48:58.888811",
+      "last_updated": "2026-01-03T22:10:03.125304",
       "requires_whole_contracts": false
     },
     "DMC/USDT:USDT": {
@@ -8947,7 +8947,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.888893",
+      "last_updated": "2026-01-03T22:10:03.125378",
       "requires_whole_contracts": false
     },
     "SAHARA/USDT:USDT": {
@@ -8966,7 +8966,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "25",
-      "last_updated": "2025-09-24T15:48:58.888935",
+      "last_updated": "2026-01-03T22:10:03.125457",
       "requires_whole_contracts": false
     },
     "NODE/USDT:USDT": {
@@ -9004,7 +9004,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.889016",
+      "last_updated": "2026-01-03T22:10:03.125531",
       "requires_whole_contracts": false
     },
     "M/USDT:USDT": {
@@ -9023,7 +9023,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "20",
-      "last_updated": "2025-09-24T15:48:58.889057",
+      "last_updated": "2026-01-03T22:10:03.125604",
       "requires_whole_contracts": false
     },
     "CROSS/USDT:USDT": {
@@ -9042,7 +9042,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "20",
-      "last_updated": "2025-09-24T15:48:58.889097",
+      "last_updated": "2026-01-03T22:10:03.125677",
       "requires_whole_contracts": false
     },
     "TANSSI/USDT:USDT": {
@@ -9080,7 +9080,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "10",
-      "last_updated": "2025-09-24T15:48:58.889180",
+      "last_updated": "2026-01-03T22:10:03.125750",
       "requires_whole_contracts": false
     },
     "USELESS/USDT:USDT": {
@@ -9099,7 +9099,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "20",
-      "last_updated": "2025-09-24T15:48:58.889221",
+      "last_updated": "2026-01-03T22:10:03.125823",
       "requires_whole_contracts": false
     },
     "PUMP/USDT:USDT": {
@@ -9118,7 +9118,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.889262",
+      "last_updated": "2026-01-03T22:10:03.125900",
       "requires_whole_contracts": false
     },
     "C/USDT:USDT": {
@@ -9137,7 +9137,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.889302",
+      "last_updated": "2026-01-03T22:10:03.125976",
       "requires_whole_contracts": false
     },
     "VELVET/USDT:USDT": {
@@ -9156,7 +9156,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "10",
-      "last_updated": "2025-09-24T15:48:58.889343",
+      "last_updated": "2026-01-03T22:10:03.126062",
       "requires_whole_contracts": false
     },
     "TAC/USDT:USDT": {
@@ -9174,8 +9174,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.889384",
+      "max_leverage": "10",
+      "last_updated": "2026-01-03T22:10:03.126138",
       "requires_whole_contracts": false
     },
     "ES/USDT:USDT": {
@@ -9213,7 +9213,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.889470",
+      "last_updated": "2026-01-03T22:10:03.126214",
       "requires_whole_contracts": false
     },
     "TA/USDT:USDT": {
@@ -9270,7 +9270,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "20",
-      "last_updated": "2025-09-24T15:48:58.889593",
+      "last_updated": "2026-01-03T22:10:03.126290",
       "requires_whole_contracts": false
     },
     "IKA/USDT:USDT": {
@@ -9307,8 +9307,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.889675",
+      "max_leverage": "50",
+      "last_updated": "2026-01-03T22:10:03.126364",
       "requires_whole_contracts": false
     },
     "A2Z/USDT:USDT": {
@@ -9327,7 +9327,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "10",
-      "last_updated": "2025-09-24T15:48:58.889716",
+      "last_updated": "2026-01-03T22:10:03.126436",
       "requires_whole_contracts": false
     },
     "NAORIS/USDT:USDT": {
@@ -9346,7 +9346,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.889757",
+      "last_updated": "2026-01-03T22:10:03.126509",
       "requires_whole_contracts": false
     },
     "PROVE/USDT:USDT": {
@@ -9365,7 +9365,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.889798",
+      "last_updated": "2026-01-03T22:10:03.126584",
       "requires_whole_contracts": false
     },
     "TOWNS/USDT:USDT": {
@@ -9383,8 +9383,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.889839",
+      "max_leverage": "50",
+      "last_updated": "2026-01-03T22:10:03.126663",
       "requires_whole_contracts": false
     },
     "ILV/USDT:USDT": {
@@ -9403,7 +9403,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.889880",
+      "last_updated": "2026-01-03T22:10:03.126739",
       "requires_whole_contracts": false
     },
     "IN/USDT:USDT": {
@@ -9422,7 +9422,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.889920",
+      "last_updated": "2026-01-03T22:10:03.126812",
       "requires_whole_contracts": false
     },
     "K/USDT:USDT": {
@@ -9498,7 +9498,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.890091",
+      "last_updated": "2026-01-03T22:10:03.126884",
       "requires_whole_contracts": false
     },
     "CRCL/USDT:USDT": {
@@ -9513,11 +9513,11 @@
       "price_precision": 0,
       "tick_size": 0.0001,
       "lot_size": 0.01,
-      "is_active": true,
+      "is_active": false,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "25",
-      "last_updated": "2025-09-24T15:48:58.890138",
+      "last_updated": "2026-01-03T22:10:03.126956",
       "requires_whole_contracts": false
     },
     "NVDA/USDT:USDT": {
@@ -9532,11 +9532,11 @@
       "price_precision": 0,
       "tick_size": 0.0001,
       "lot_size": 0.01,
-      "is_active": true,
+      "is_active": false,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "25",
-      "last_updated": "2025-09-24T15:48:58.890182",
+      "last_updated": "2026-01-03T22:10:03.127033",
       "requires_whole_contracts": false
     },
     "TSLA/USDT:USDT": {
@@ -9551,11 +9551,11 @@
       "price_precision": 0,
       "tick_size": 0.0001,
       "lot_size": 0.01,
-      "is_active": true,
+      "is_active": false,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "25",
-      "last_updated": "2025-09-24T15:48:58.890224",
+      "last_updated": "2026-01-03T22:10:03.127110",
       "requires_whole_contracts": false
     },
     "SAPIEN/USDT:USDT": {
@@ -9574,7 +9574,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.890265",
+      "last_updated": "2026-01-03T22:10:03.127184",
       "requires_whole_contracts": false
     },
     "YZY/USDT:USDT": {
@@ -9612,7 +9612,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.890350",
+      "last_updated": "2026-01-03T22:10:03.127258",
       "requires_whole_contracts": false
     },
     "XCX/USDT:USDT": {
@@ -9650,7 +9650,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.890435",
+      "last_updated": "2026-01-03T22:10:03.127334",
       "requires_whole_contracts": false
     },
     "AAPL/USDT:USDT": {
@@ -9665,11 +9665,11 @@
       "price_precision": 0,
       "tick_size": 0.0001,
       "lot_size": 0.01,
-      "is_active": true,
+      "is_active": false,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "25",
-      "last_updated": "2025-09-24T15:48:58.890479",
+      "last_updated": "2026-01-03T22:10:03.127408",
       "requires_whole_contracts": false
     },
     "GOOGL/USDT:USDT": {
@@ -9684,11 +9684,11 @@
       "price_precision": 0,
       "tick_size": 0.0001,
       "lot_size": 0.01,
-      "is_active": true,
+      "is_active": false,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "25",
-      "last_updated": "2025-09-24T15:48:58.890522",
+      "last_updated": "2026-01-03T22:10:03.127483",
       "requires_whole_contracts": false
     },
     "AMZN/USDT:USDT": {
@@ -9703,11 +9703,11 @@
       "price_precision": 0,
       "tick_size": 0.0001,
       "lot_size": 0.01,
-      "is_active": true,
+      "is_active": false,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "25",
-      "last_updated": "2025-09-24T15:48:58.890565",
+      "last_updated": "2026-01-03T22:10:03.127557",
       "requires_whole_contracts": false
     },
     "META/USDT:USDT": {
@@ -9722,11 +9722,11 @@
       "price_precision": 0,
       "tick_size": 0.0001,
       "lot_size": 0.01,
-      "is_active": true,
+      "is_active": false,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "25",
-      "last_updated": "2025-09-24T15:48:58.890608",
+      "last_updated": "2026-01-03T22:10:03.127631",
       "requires_whole_contracts": false
     },
     "MCD/USDT:USDT": {
@@ -9741,11 +9741,11 @@
       "price_precision": 0,
       "tick_size": 0.0001,
       "lot_size": 0.01,
-      "is_active": true,
+      "is_active": false,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "10",
-      "last_updated": "2025-09-24T15:48:58.890650",
+      "max_leverage": "20",
+      "last_updated": "2026-01-03T22:10:03.127705",
       "requires_whole_contracts": false
     },
     "SD/USDT:USDT": {
@@ -9783,7 +9783,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "20",
-      "last_updated": "2025-09-24T15:48:58.890733",
+      "last_updated": "2026-01-03T22:10:03.127780",
       "requires_whole_contracts": false
     },
     "XPL/USDT:USDT": {
@@ -9801,8 +9801,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "20",
-      "last_updated": "2025-09-24T15:48:58.890775",
+      "max_leverage": "75",
+      "last_updated": "2026-01-03T22:10:03.127854",
       "requires_whole_contracts": false
     },
     "DFDV/USDT:USDT": {
@@ -9836,11 +9836,11 @@
       "price_precision": 0,
       "tick_size": 0.0001,
       "lot_size": 0.01,
-      "is_active": true,
+      "is_active": false,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "25",
-      "last_updated": "2025-09-24T15:48:58.890859",
+      "last_updated": "2026-01-03T22:10:03.127931",
       "requires_whole_contracts": false
     },
     "COIN/USDT:USDT": {
@@ -9855,11 +9855,11 @@
       "price_precision": 0,
       "tick_size": 0.0001,
       "lot_size": 0.01,
-      "is_active": true,
+      "is_active": false,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "25",
-      "last_updated": "2025-09-24T15:48:58.890901",
+      "last_updated": "2026-01-03T22:10:03.128008",
       "requires_whole_contracts": false
     },
     "MSTR/USDT:USDT": {
@@ -9874,11 +9874,11 @@
       "price_precision": 0,
       "tick_size": 0.0001,
       "lot_size": 0.01,
-      "is_active": true,
+      "is_active": false,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "25",
-      "last_updated": "2025-09-24T15:48:58.890943",
+      "last_updated": "2026-01-03T22:10:03.128090",
       "requires_whole_contracts": false
     },
     "CAMP/USDT:USDT": {
@@ -9897,7 +9897,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "20",
-      "last_updated": "2025-09-24T15:48:58.890984",
+      "last_updated": "2026-01-03T22:10:03.128165",
       "requires_whole_contracts": false
     },
     "BTR/USDT:USDT": {
@@ -9935,7 +9935,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.891068",
+      "last_updated": "2026-01-03T22:10:03.128238",
       "requires_whole_contracts": false
     },
     "HEMI/USDT:USDT": {
@@ -9973,7 +9973,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.891152",
+      "last_updated": "2026-01-03T22:10:03.128312",
       "requires_whole_contracts": false
     },
     "Q/USDT:USDT": {
@@ -9991,8 +9991,8 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.891193",
+      "max_leverage": "25",
+      "last_updated": "2026-01-03T22:10:03.128386",
       "requires_whole_contracts": false
     },
     "PTB/USDT:USDT": {
@@ -10030,7 +10030,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.891276",
+      "last_updated": "2026-01-03T22:10:03.128460",
       "requires_whole_contracts": false
     },
     "U/USDT:USDT": {
@@ -10064,11 +10064,11 @@
       "price_precision": 0,
       "tick_size": 0.0001,
       "lot_size": 0.01,
-      "is_active": true,
+      "is_active": false,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "10",
-      "last_updated": "2025-09-24T15:48:58.891359",
+      "last_updated": "2026-01-03T22:10:03.128611",
       "requires_whole_contracts": false
     },
     "INTC/USDT:USDT": {
@@ -10083,11 +10083,11 @@
       "price_precision": 0,
       "tick_size": 0.0001,
       "lot_size": 0.01,
-      "is_active": true,
+      "is_active": false,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "10",
-      "last_updated": "2025-09-24T15:48:58.891401",
+      "last_updated": "2026-01-03T22:10:03.128685",
       "requires_whole_contracts": false
     },
     "BABA/USDT:USDT": {
@@ -10102,11 +10102,11 @@
       "price_precision": 0,
       "tick_size": 0.0001,
       "lot_size": 0.01,
-      "is_active": true,
+      "is_active": false,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "10",
-      "last_updated": "2025-09-24T15:48:58.891443",
+      "max_leverage": "20",
+      "last_updated": "2026-01-03T22:10:03.128761",
       "requires_whole_contracts": false
     },
     "ASML/USDT:USDT": {
@@ -10121,11 +10121,11 @@
       "price_precision": 0,
       "tick_size": 0.0001,
       "lot_size": 0.01,
-      "is_active": true,
+      "is_active": false,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "10",
-      "last_updated": "2025-09-24T15:48:58.891483",
+      "last_updated": "2026-01-03T22:10:03.128837",
       "requires_whole_contracts": false
     },
     "ARM/USDT:USDT": {
@@ -10140,11 +10140,11 @@
       "price_precision": 0,
       "tick_size": 0.0001,
       "lot_size": 0.01,
-      "is_active": true,
+      "is_active": false,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "10",
-      "last_updated": "2025-09-24T15:48:58.891527",
+      "last_updated": "2026-01-03T22:10:03.128912",
       "requires_whole_contracts": false
     },
     "OPEN/USDT:USDT": {
@@ -10163,7 +10163,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "20",
-      "last_updated": "2025-09-24T15:48:58.891568",
+      "last_updated": "2026-01-03T22:10:03.128986",
       "requires_whole_contracts": false
     },
     "PLTR/USDT:USDT": {
@@ -10178,11 +10178,11 @@
       "price_precision": 0,
       "tick_size": 0.0001,
       "lot_size": 0.01,
-      "is_active": true,
+      "is_active": false,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
-      "max_leverage": "10",
-      "last_updated": "2025-09-24T15:48:58.891608",
+      "max_leverage": "20",
+      "last_updated": "2026-01-03T22:10:03.129067",
       "requires_whole_contracts": false
     },
     "SLV/USDT:USDT": {
@@ -10197,11 +10197,11 @@
       "price_precision": 0,
       "tick_size": 0.0001,
       "lot_size": 0.01,
-      "is_active": true,
+      "is_active": false,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "10",
-      "last_updated": "2025-09-24T15:48:58.891650",
+      "last_updated": "2026-01-03T22:10:03.129146",
       "requires_whole_contracts": false
     },
     "ORCL/USDT:USDT": {
@@ -10216,11 +10216,11 @@
       "price_precision": 0,
       "tick_size": 0.0001,
       "lot_size": 0.01,
-      "is_active": true,
+      "is_active": false,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "10",
-      "last_updated": "2025-09-24T15:48:58.891690",
+      "last_updated": "2026-01-03T22:10:03.129220",
       "requires_whole_contracts": false
     },
     "GE/USDT:USDT": {
@@ -10235,11 +10235,11 @@
       "price_precision": 0,
       "tick_size": 0.0001,
       "lot_size": 0.01,
-      "is_active": true,
+      "is_active": false,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "10",
-      "last_updated": "2025-09-24T15:48:58.891732",
+      "last_updated": "2026-01-03T22:10:03.129293",
       "requires_whole_contracts": false
     },
     "SKY/USDT:USDT": {
@@ -10258,7 +10258,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.891774",
+      "last_updated": "2026-01-03T22:10:03.129365",
       "requires_whole_contracts": false
     },
     "APP/USDT:USDT": {
@@ -10273,11 +10273,11 @@
       "price_precision": 0,
       "tick_size": 0.0001,
       "lot_size": 0.01,
-      "is_active": true,
+      "is_active": false,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "10",
-      "last_updated": "2025-09-24T15:48:58.891816",
+      "last_updated": "2026-01-03T22:10:03.129438",
       "requires_whole_contracts": false
     },
     "AVNT/USDT:USDT": {
@@ -10296,7 +10296,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "20",
-      "last_updated": "2025-09-24T15:48:58.891858",
+      "last_updated": "2026-01-03T22:10:03.129510",
       "requires_whole_contracts": false
     },
     "SWTCH/USDT:USDT": {
@@ -10330,11 +10330,11 @@
       "price_precision": 0,
       "tick_size": 0.0001,
       "lot_size": 0.01,
-      "is_active": true,
+      "is_active": false,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "10",
-      "last_updated": "2025-09-24T15:48:58.891942",
+      "last_updated": "2026-01-03T22:10:03.129584",
       "requires_whole_contracts": false
     },
     "RIOT/USDT:USDT": {
@@ -10368,11 +10368,11 @@
       "price_precision": 0,
       "tick_size": 0.0001,
       "lot_size": 0.01,
-      "is_active": true,
+      "is_active": false,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "10",
-      "last_updated": "2025-09-24T15:48:58.892024",
+      "last_updated": "2026-01-03T22:10:03.129657",
       "requires_whole_contracts": false
     },
     "HOLO/USDT:USDT": {
@@ -10391,7 +10391,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "20",
-      "last_updated": "2025-09-24T15:48:58.892066",
+      "last_updated": "2026-01-03T22:10:03.129733",
       "requires_whole_contracts": false
     },
     "XPIN/USDT:USDT": {
@@ -10410,7 +10410,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.892107",
+      "last_updated": "2026-01-03T22:10:03.129807",
       "requires_whole_contracts": false
     },
     "UB/USDT:USDT": {
@@ -10429,7 +10429,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.892148",
+      "last_updated": "2026-01-03T22:10:03.129879",
       "requires_whole_contracts": false
     },
     "ZKC/USDT:USDT": {
@@ -10448,7 +10448,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.892191",
+      "last_updated": "2026-01-03T22:10:03.129953",
       "requires_whole_contracts": false
     },
     "PORTALS/USDT:USDT": {
@@ -10486,7 +10486,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.892276",
+      "last_updated": "2026-01-03T22:10:03.130025",
       "requires_whole_contracts": false
     },
     "BARD/USDT:USDT": {
@@ -10505,7 +10505,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.892318",
+      "last_updated": "2026-01-03T22:10:03.130105",
       "requires_whole_contracts": false
     },
     "ASTER/USDT:USDT": {
@@ -10524,7 +10524,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.892360",
+      "last_updated": "2026-01-03T22:10:03.130180",
       "requires_whole_contracts": false
     },
     "MSFT/USDT:USDT": {
@@ -10539,11 +10539,11 @@
       "price_precision": 0,
       "tick_size": 0.0001,
       "lot_size": 0.01,
-      "is_active": true,
+      "is_active": false,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "25",
-      "last_updated": "2025-09-24T15:48:58.892402",
+      "last_updated": "2026-01-03T22:10:03.130256",
       "requires_whole_contracts": false
     },
     "FLUID/USDT:USDT": {
@@ -10562,7 +10562,7 @@
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
       "max_leverage": "75",
-      "last_updated": "2025-09-24T15:48:58.892486",
+      "last_updated": "2026-01-03T22:10:03.130411",
       "requires_whole_contracts": false
     },
     "BLESS/USDT:USDT": {
@@ -10580,256 +10580,1864 @@
       "is_active": true,
       "maker_fee": 0.0002,
       "taker_fee": 0.0006,
+      "max_leverage": "10",
+      "last_updated": "2026-01-03T22:10:03.130331",
+      "requires_whole_contracts": false
+    },
+    "DASH/USDT:USDT": {
+      "symbol": "DASH/USDT:USDT",
+      "base": "DASH",
+      "quote": "USDT",
+      "contract_size": 1,
+      "min_amount": 0.01,
+      "max_amount": null,
+      "min_cost": 5.0,
+      "amount_precision": 0,
+      "price_precision": 0,
+      "tick_size": 0.0001,
+      "lot_size": 0.01,
+      "is_active": true,
+      "maker_fee": 0.0002,
+      "taker_fee": 0.0006,
       "max_leverage": "50",
-      "last_updated": "2025-09-24T15:48:58.892444",
+      "last_updated": "2026-01-03T22:10:03.096887",
+      "requires_whole_contracts": false
+    },
+    "XMR/USDT:USDT": {
+      "symbol": "XMR/USDT:USDT",
+      "base": "XMR",
+      "quote": "USDT",
+      "contract_size": 1,
+      "min_amount": 0.01,
+      "max_amount": null,
+      "min_cost": 5.0,
+      "amount_precision": 0,
+      "price_precision": 0,
+      "tick_size": 0.0001,
+      "lot_size": 0.01,
+      "is_active": true,
+      "maker_fee": 0.0002,
+      "taker_fee": 0.0006,
+      "max_leverage": "50",
+      "last_updated": "2026-01-03T22:10:03.098930",
+      "requires_whole_contracts": false
+    },
+    "ZEC/USDT:USDT": {
+      "symbol": "ZEC/USDT:USDT",
+      "base": "ZEC",
+      "quote": "USDT",
+      "contract_size": 1,
+      "min_amount": 0.001,
+      "max_amount": null,
+      "min_cost": 5.0,
+      "amount_precision": 0,
+      "price_precision": 0,
+      "tick_size": 0.0001,
+      "lot_size": 0.001,
+      "is_active": true,
+      "maker_fee": 0.0002,
+      "taker_fee": 0.0006,
+      "max_leverage": "75",
+      "last_updated": "2026-01-03T22:10:03.103646",
+      "requires_whole_contracts": false
+    },
+    "TAKE/USDT:USDT": {
+      "symbol": "TAKE/USDT:USDT",
+      "base": "TAKE",
+      "quote": "USDT",
+      "contract_size": 1,
+      "min_amount": 1.0,
+      "max_amount": null,
+      "min_cost": 5.0,
+      "amount_precision": 1,
+      "price_precision": 0,
+      "tick_size": 0.0001,
+      "lot_size": 1.0,
+      "is_active": true,
+      "maker_fee": 0.0002,
+      "taker_fee": 0.0006,
+      "max_leverage": "20",
+      "last_updated": "2026-01-03T22:10:03.128537",
+      "requires_whole_contracts": false
+    },
+    "COAI/USDT:USDT": {
+      "symbol": "COAI/USDT:USDT",
+      "base": "COAI",
+      "quote": "USDT",
+      "contract_size": 1,
+      "min_amount": 1.0,
+      "max_amount": null,
+      "min_cost": 5.0,
+      "amount_precision": 1,
+      "price_precision": 0,
+      "tick_size": 0.0001,
+      "lot_size": 1.0,
+      "is_active": true,
+      "maker_fee": 0.0002,
+      "taker_fee": 0.0006,
+      "max_leverage": "10",
+      "last_updated": "2026-01-03T22:10:03.130488",
+      "requires_whole_contracts": false
+    },
+    "MIRA/USDT:USDT": {
+      "symbol": "MIRA/USDT:USDT",
+      "base": "MIRA",
+      "quote": "USDT",
+      "contract_size": 1,
+      "min_amount": 1.0,
+      "max_amount": null,
+      "min_cost": 5.0,
+      "amount_precision": 1,
+      "price_precision": 0,
+      "tick_size": 0.0001,
+      "lot_size": 1.0,
+      "is_active": true,
+      "maker_fee": 0.0002,
+      "taker_fee": 0.0006,
+      "max_leverage": "20",
+      "last_updated": "2026-01-03T22:10:03.130564",
+      "requires_whole_contracts": false
+    },
+    "LIGHT/USDT:USDT": {
+      "symbol": "LIGHT/USDT:USDT",
+      "base": "LIGHT",
+      "quote": "USDT",
+      "contract_size": 1,
+      "min_amount": 1.0,
+      "max_amount": null,
+      "min_cost": 5.0,
+      "amount_precision": 1,
+      "price_precision": 0,
+      "tick_size": 0.0001,
+      "lot_size": 1.0,
+      "is_active": true,
+      "maker_fee": 0.0002,
+      "taker_fee": 0.0006,
+      "max_leverage": "10",
+      "last_updated": "2026-01-03T22:10:03.130640",
+      "requires_whole_contracts": false
+    },
+    "STBL/USDT:USDT": {
+      "symbol": "STBL/USDT:USDT",
+      "base": "STBL",
+      "quote": "USDT",
+      "contract_size": 1,
+      "min_amount": 1.0,
+      "max_amount": null,
+      "min_cost": 5.0,
+      "amount_precision": 1,
+      "price_precision": 0,
+      "tick_size": 0.0001,
+      "lot_size": 1.0,
+      "is_active": true,
+      "maker_fee": 0.0002,
+      "taker_fee": 0.0006,
+      "max_leverage": "50",
+      "last_updated": "2026-01-03T22:10:03.130714",
+      "requires_whole_contracts": false
+    },
+    "FF/USDT:USDT": {
+      "symbol": "FF/USDT:USDT",
+      "base": "FF",
+      "quote": "USDT",
+      "contract_size": 1,
+      "min_amount": 1.0,
+      "max_amount": null,
+      "min_cost": 5.0,
+      "amount_precision": 1,
+      "price_precision": 0,
+      "tick_size": 0.0001,
+      "lot_size": 1.0,
+      "is_active": true,
+      "maker_fee": 0.0002,
+      "taker_fee": 0.0006,
+      "max_leverage": "75",
+      "last_updated": "2026-01-03T22:10:03.130787",
+      "requires_whole_contracts": false
+    },
+    "XAN/USDT:USDT": {
+      "symbol": "XAN/USDT:USDT",
+      "base": "XAN",
+      "quote": "USDT",
+      "contract_size": 1,
+      "min_amount": 1.0,
+      "max_amount": null,
+      "min_cost": 5.0,
+      "amount_precision": 1,
+      "price_precision": 0,
+      "tick_size": 0.0001,
+      "lot_size": 1.0,
+      "is_active": true,
+      "maker_fee": 0.0002,
+      "taker_fee": 0.0006,
+      "max_leverage": "50",
+      "last_updated": "2026-01-03T22:10:03.130860",
+      "requires_whole_contracts": false
+    },
+    "EDEN/USDT:USDT": {
+      "symbol": "EDEN/USDT:USDT",
+      "base": "EDEN",
+      "quote": "USDT",
+      "contract_size": 1,
+      "min_amount": 1.0,
+      "max_amount": null,
+      "min_cost": 5.0,
+      "amount_precision": 1,
+      "price_precision": 0,
+      "tick_size": 0.0001,
+      "lot_size": 1.0,
+      "is_active": true,
+      "maker_fee": 0.0002,
+      "taker_fee": 0.0006,
+      "max_leverage": "25",
+      "last_updated": "2026-01-03T22:10:03.130935",
+      "requires_whole_contracts": false
+    },
+    "VFY/USDT:USDT": {
+      "symbol": "VFY/USDT:USDT",
+      "base": "VFY",
+      "quote": "USDT",
+      "contract_size": 1,
+      "min_amount": 1.0,
+      "max_amount": null,
+      "min_cost": 5.0,
+      "amount_precision": 1,
+      "price_precision": 0,
+      "tick_size": 0.0001,
+      "lot_size": 1.0,
+      "is_active": true,
+      "maker_fee": 0.0002,
+      "taker_fee": 0.0006,
+      "max_leverage": "10",
+      "last_updated": "2026-01-03T22:10:03.131014",
+      "requires_whole_contracts": false
+    },
+    "NOM/USDT:USDT": {
+      "symbol": "NOM/USDT:USDT",
+      "base": "NOM",
+      "quote": "USDT",
+      "contract_size": 1,
+      "min_amount": 1.0,
+      "max_amount": null,
+      "min_cost": 5.0,
+      "amount_precision": 1,
+      "price_precision": 0,
+      "tick_size": 0.0001,
+      "lot_size": 1.0,
+      "is_active": true,
+      "maker_fee": 0.0002,
+      "taker_fee": 0.0006,
+      "max_leverage": "75",
+      "last_updated": "2026-01-03T22:10:03.131097",
+      "requires_whole_contracts": false
+    },
+    "2Z/USDT:USDT": {
+      "symbol": "2Z/USDT:USDT",
+      "base": "2Z",
+      "quote": "USDT",
+      "contract_size": 1,
+      "min_amount": 1.0,
+      "max_amount": null,
+      "min_cost": 5.0,
+      "amount_precision": 1,
+      "price_precision": 0,
+      "tick_size": 0.0001,
+      "lot_size": 1.0,
+      "is_active": true,
+      "maker_fee": 0.0002,
+      "taker_fee": 0.0006,
+      "max_leverage": "50",
+      "last_updated": "2026-01-03T22:10:03.131172",
+      "requires_whole_contracts": false
+    },
+    "KGEN/USDT:USDT": {
+      "symbol": "KGEN/USDT:USDT",
+      "base": "KGEN",
+      "quote": "USDT",
+      "contract_size": 1,
+      "min_amount": 1.0,
+      "max_amount": null,
+      "min_cost": 5.0,
+      "amount_precision": 1,
+      "price_precision": 0,
+      "tick_size": 0.0001,
+      "lot_size": 1.0,
+      "is_active": true,
+      "maker_fee": 0.0002,
+      "taker_fee": 0.0006,
+      "max_leverage": "50",
+      "last_updated": "2026-01-03T22:10:03.131300",
+      "requires_whole_contracts": false
+    },
+    "LYN/USDT:USDT": {
+      "symbol": "LYN/USDT:USDT",
+      "base": "LYN",
+      "quote": "USDT",
+      "contract_size": 1,
+      "min_amount": 1.0,
+      "max_amount": null,
+      "min_cost": 5.0,
+      "amount_precision": 1,
+      "price_precision": 0,
+      "tick_size": 0.0001,
+      "lot_size": 1.0,
+      "is_active": true,
+      "maker_fee": 0.0002,
+      "taker_fee": 0.0006,
+      "max_leverage": "25",
+      "last_updated": "2026-01-03T22:10:03.131375",
+      "requires_whole_contracts": false
+    },
+    "4/USDT:USDT": {
+      "symbol": "4/USDT:USDT",
+      "base": "4",
+      "quote": "USDT",
+      "contract_size": 1,
+      "min_amount": 1.0,
+      "max_amount": null,
+      "min_cost": 5.0,
+      "amount_precision": 1,
+      "price_precision": 0,
+      "tick_size": 0.0001,
+      "lot_size": 1.0,
+      "is_active": true,
+      "maker_fee": 0.0002,
+      "taker_fee": 0.0006,
+      "max_leverage": "20",
+      "last_updated": "2026-01-03T22:10:03.131449",
+      "requires_whole_contracts": false
+    },
+    "MON/USDT:USDT": {
+      "symbol": "MON/USDT:USDT",
+      "base": "MON",
+      "quote": "USDT",
+      "contract_size": 1,
+      "min_amount": 1.0,
+      "max_amount": null,
+      "min_cost": 5.0,
+      "amount_precision": 1,
+      "price_precision": 0,
+      "tick_size": 0.0001,
+      "lot_size": 1.0,
+      "is_active": true,
+      "maker_fee": 0.0002,
+      "taker_fee": 0.0006,
+      "max_leverage": "25",
+      "last_updated": "2026-01-03T22:10:03.131522",
+      "requires_whole_contracts": false
+    },
+    "YB/USDT:USDT": {
+      "symbol": "YB/USDT:USDT",
+      "base": "YB",
+      "quote": "USDT",
+      "contract_size": 1,
+      "min_amount": 1.0,
+      "max_amount": null,
+      "min_cost": 5.0,
+      "amount_precision": 1,
+      "price_precision": 0,
+      "tick_size": 0.0001,
+      "lot_size": 1.0,
+      "is_active": true,
+      "maker_fee": 0.0002,
+      "taker_fee": 0.0006,
+      "max_leverage": "75",
+      "last_updated": "2026-01-03T22:10:03.131595",
+      "requires_whole_contracts": false
+    },
+    "MET/USDT:USDT": {
+      "symbol": "MET/USDT:USDT",
+      "base": "MET",
+      "quote": "USDT",
+      "contract_size": 1,
+      "min_amount": 1.0,
+      "max_amount": null,
+      "min_cost": 5.0,
+      "amount_precision": 1,
+      "price_precision": 0,
+      "tick_size": 0.0001,
+      "lot_size": 1.0,
+      "is_active": true,
+      "maker_fee": 0.0002,
+      "taker_fee": 0.0006,
+      "max_leverage": "25",
+      "last_updated": "2026-01-03T22:10:03.131675",
+      "requires_whole_contracts": false
+    },
+    "EUL/USDT:USDT": {
+      "symbol": "EUL/USDT:USDT",
+      "base": "EUL",
+      "quote": "USDT",
+      "contract_size": 1,
+      "min_amount": 0.1,
+      "max_amount": null,
+      "min_cost": 5.0,
+      "amount_precision": 0,
+      "price_precision": 0,
+      "tick_size": 0.0001,
+      "lot_size": 0.1,
+      "is_active": true,
+      "maker_fee": 0.0002,
+      "taker_fee": 0.0006,
+      "max_leverage": "75",
+      "last_updated": "2026-01-03T22:10:03.131749",
+      "requires_whole_contracts": false
+    },
+    "ENSO/USDT:USDT": {
+      "symbol": "ENSO/USDT:USDT",
+      "base": "ENSO",
+      "quote": "USDT",
+      "contract_size": 1,
+      "min_amount": 1.0,
+      "max_amount": null,
+      "min_cost": 5.0,
+      "amount_precision": 1,
+      "price_precision": 0,
+      "tick_size": 0.0001,
+      "lot_size": 1.0,
+      "is_active": true,
+      "maker_fee": 0.0002,
+      "taker_fee": 0.0006,
+      "max_leverage": "50",
+      "last_updated": "2026-01-03T22:10:03.131822",
+      "requires_whole_contracts": false
+    },
+    "RECALL/USDT:USDT": {
+      "symbol": "RECALL/USDT:USDT",
+      "base": "RECALL",
+      "quote": "USDT",
+      "contract_size": 1,
+      "min_amount": 1.0,
+      "max_amount": null,
+      "min_cost": 5.0,
+      "amount_precision": 1,
+      "price_precision": 0,
+      "tick_size": 0.0001,
+      "lot_size": 1.0,
+      "is_active": true,
+      "maker_fee": 0.0002,
+      "taker_fee": 0.0006,
+      "max_leverage": "25",
+      "last_updated": "2026-01-03T22:10:03.131897",
+      "requires_whole_contracts": false
+    },
+    "CLO/USDT:USDT": {
+      "symbol": "CLO/USDT:USDT",
+      "base": "CLO",
+      "quote": "USDT",
+      "contract_size": 1,
+      "min_amount": 1.0,
+      "max_amount": null,
+      "min_cost": 5.0,
+      "amount_precision": 1,
+      "price_precision": 0,
+      "tick_size": 0.0001,
+      "lot_size": 1.0,
+      "is_active": true,
+      "maker_fee": 0.0002,
+      "taker_fee": 0.0006,
+      "max_leverage": "50",
+      "last_updated": "2026-01-03T22:10:03.131975",
+      "requires_whole_contracts": false
+    },
+    "GIGGLE/USDT:USDT": {
+      "symbol": "GIGGLE/USDT:USDT",
+      "base": "GIGGLE",
+      "quote": "USDT",
+      "contract_size": 1,
+      "min_amount": 0.01,
+      "max_amount": null,
+      "min_cost": 5.0,
+      "amount_precision": 0,
+      "price_precision": 0,
+      "tick_size": 0.0001,
+      "lot_size": 0.01,
+      "is_active": true,
+      "maker_fee": 0.0002,
+      "taker_fee": 0.0006,
+      "max_leverage": "25",
+      "last_updated": "2026-01-03T22:10:03.132087",
+      "requires_whole_contracts": false
+    },
+    "ZBT/USDT:USDT": {
+      "symbol": "ZBT/USDT:USDT",
+      "base": "ZBT",
+      "quote": "USDT",
+      "contract_size": 1,
+      "min_amount": 1.0,
+      "max_amount": null,
+      "min_cost": 5.0,
+      "amount_precision": 1,
+      "price_precision": 0,
+      "tick_size": 0.0001,
+      "lot_size": 1.0,
+      "is_active": true,
+      "maker_fee": 0.0002,
+      "taker_fee": 0.0006,
+      "max_leverage": "10",
+      "last_updated": "2026-01-03T22:10:03.132164",
+      "requires_whole_contracts": false
+    },
+    "LAB/USDT:USDT": {
+      "symbol": "LAB/USDT:USDT",
+      "base": "LAB",
+      "quote": "USDT",
+      "contract_size": 1,
+      "min_amount": 1.0,
+      "max_amount": null,
+      "min_cost": 5.0,
+      "amount_precision": 1,
+      "price_precision": 0,
+      "tick_size": 0.0001,
+      "lot_size": 1.0,
+      "is_active": true,
+      "maker_fee": 0.0002,
+      "taker_fee": 0.0006,
+      "max_leverage": "25",
+      "last_updated": "2026-01-03T22:10:03.132239",
+      "requires_whole_contracts": false
+    },
+    "RIVER/USDT:USDT": {
+      "symbol": "RIVER/USDT:USDT",
+      "base": "RIVER",
+      "quote": "USDT",
+      "contract_size": 1,
+      "min_amount": 1.0,
+      "max_amount": null,
+      "min_cost": 5.0,
+      "amount_precision": 1,
+      "price_precision": 0,
+      "tick_size": 0.0001,
+      "lot_size": 1.0,
+      "is_active": true,
+      "maker_fee": 0.0002,
+      "taker_fee": 0.0006,
+      "max_leverage": "25",
+      "last_updated": "2026-01-03T22:10:03.132317",
+      "requires_whole_contracts": false
+    },
+    "APR/USDT:USDT": {
+      "symbol": "APR/USDT:USDT",
+      "base": "APR",
+      "quote": "USDT",
+      "contract_size": 1,
+      "min_amount": 1.0,
+      "max_amount": null,
+      "min_cost": 5.0,
+      "amount_precision": 1,
+      "price_precision": 0,
+      "tick_size": 0.0001,
+      "lot_size": 1.0,
+      "is_active": true,
+      "maker_fee": 0.0002,
+      "taker_fee": 0.0006,
+      "max_leverage": "50",
+      "last_updated": "2026-01-03T22:10:03.132391",
+      "requires_whole_contracts": false
+    },
+    "CLANKER/USDT:USDT": {
+      "symbol": "CLANKER/USDT:USDT",
+      "base": "CLANKER",
+      "quote": "USDT",
+      "contract_size": 1,
+      "min_amount": 0.01,
+      "max_amount": null,
+      "min_cost": 5.0,
+      "amount_precision": 0,
+      "price_precision": 0,
+      "tick_size": 0.0001,
+      "lot_size": 0.01,
+      "is_active": true,
+      "maker_fee": 0.0002,
+      "taker_fee": 0.0006,
+      "max_leverage": "20",
+      "last_updated": "2026-01-03T22:10:03.132464",
+      "requires_whole_contracts": false
+    },
+    "QQQ/USDT:USDT": {
+      "symbol": "QQQ/USDT:USDT",
+      "base": "QQQ",
+      "quote": "USDT",
+      "contract_size": 1,
+      "min_amount": 0.01,
+      "max_amount": null,
+      "min_cost": 5.0,
+      "amount_precision": 0,
+      "price_precision": 0,
+      "tick_size": 0.0001,
+      "lot_size": 0.01,
+      "is_active": false,
+      "maker_fee": 0.0002,
+      "taker_fee": 0.0006,
+      "max_leverage": "20",
+      "last_updated": "2026-01-03T22:10:03.132538",
+      "requires_whole_contracts": false
+    },
+    "RDDT/USDT:USDT": {
+      "symbol": "RDDT/USDT:USDT",
+      "base": "RDDT",
+      "quote": "USDT",
+      "contract_size": 1,
+      "min_amount": 0.01,
+      "max_amount": null,
+      "min_cost": 5.0,
+      "amount_precision": 0,
+      "price_precision": 0,
+      "tick_size": 0.0001,
+      "lot_size": 0.01,
+      "is_active": false,
+      "maker_fee": 0.0002,
+      "taker_fee": 0.0006,
+      "max_leverage": "10",
+      "last_updated": "2026-01-03T22:10:03.132611",
+      "requires_whole_contracts": false
+    },
+    "JD/USDT:USDT": {
+      "symbol": "JD/USDT:USDT",
+      "base": "JD",
+      "quote": "USDT",
+      "contract_size": 1,
+      "min_amount": 0.01,
+      "max_amount": null,
+      "min_cost": 5.0,
+      "amount_precision": 0,
+      "price_precision": 0,
+      "tick_size": 0.0001,
+      "lot_size": 0.01,
+      "is_active": false,
+      "maker_fee": 0.0002,
+      "taker_fee": 0.0006,
+      "max_leverage": "10",
+      "last_updated": "2026-01-03T22:10:03.132685",
+      "requires_whole_contracts": false
+    },
+    "FUTU/USDT:USDT": {
+      "symbol": "FUTU/USDT:USDT",
+      "base": "FUTU",
+      "quote": "USDT",
+      "contract_size": 1,
+      "min_amount": 0.01,
+      "max_amount": null,
+      "min_cost": 5.0,
+      "amount_precision": 0,
+      "price_precision": 0,
+      "tick_size": 0.0001,
+      "lot_size": 0.01,
+      "is_active": false,
+      "maker_fee": 0.0002,
+      "taker_fee": 0.0006,
+      "max_leverage": "10",
+      "last_updated": "2026-01-03T22:10:03.132757",
+      "requires_whole_contracts": false
+    },
+    "AT/USDT:USDT": {
+      "symbol": "AT/USDT:USDT",
+      "base": "AT",
+      "quote": "USDT",
+      "contract_size": 1,
+      "min_amount": 1.0,
+      "max_amount": null,
+      "min_cost": 5.0,
+      "amount_precision": 1,
+      "price_precision": 0,
+      "tick_size": 0.0001,
+      "lot_size": 1.0,
+      "is_active": true,
+      "maker_fee": 0.0002,
+      "taker_fee": 0.0006,
+      "max_leverage": "50",
+      "last_updated": "2026-01-03T22:10:03.132830",
+      "requires_whole_contracts": false
+    },
+    "KITE/USDT:USDT": {
+      "symbol": "KITE/USDT:USDT",
+      "base": "KITE",
+      "quote": "USDT",
+      "contract_size": 1,
+      "min_amount": 1.0,
+      "max_amount": null,
+      "min_cost": 5.0,
+      "amount_precision": 1,
+      "price_precision": 0,
+      "tick_size": 0.0001,
+      "lot_size": 1.0,
+      "is_active": true,
+      "maker_fee": 0.0002,
+      "taker_fee": 0.0006,
+      "max_leverage": "25",
+      "last_updated": "2026-01-03T22:10:03.132907",
+      "requires_whole_contracts": false
+    },
+    "MMT/USDT:USDT": {
+      "symbol": "MMT/USDT:USDT",
+      "base": "MMT",
+      "quote": "USDT",
+      "contract_size": 1,
+      "min_amount": 1.0,
+      "max_amount": null,
+      "min_cost": 5.0,
+      "amount_precision": 1,
+      "price_precision": 0,
+      "tick_size": 0.0001,
+      "lot_size": 1.0,
+      "is_active": true,
+      "maker_fee": 0.0002,
+      "taker_fee": 0.0006,
+      "max_leverage": "50",
+      "last_updated": "2026-01-03T22:10:03.132981",
+      "requires_whole_contracts": false
+    },
+    "TRUST/USDT:USDT": {
+      "symbol": "TRUST/USDT:USDT",
+      "base": "TRUST",
+      "quote": "USDT",
+      "contract_size": 1,
+      "min_amount": 1.0,
+      "max_amount": null,
+      "min_cost": 5.0,
+      "amount_precision": 1,
+      "price_precision": 0,
+      "tick_size": 0.0001,
+      "lot_size": 1.0,
+      "is_active": true,
+      "maker_fee": 0.0002,
+      "taker_fee": 0.0006,
+      "max_leverage": "50",
+      "last_updated": "2026-01-03T22:10:03.133062",
+      "requires_whole_contracts": false
+    },
+    "UAI/USDT:USDT": {
+      "symbol": "UAI/USDT:USDT",
+      "base": "UAI",
+      "quote": "USDT",
+      "contract_size": 1,
+      "min_amount": 1.0,
+      "max_amount": null,
+      "min_cost": 5.0,
+      "amount_precision": 1,
+      "price_precision": 0,
+      "tick_size": 0.0001,
+      "lot_size": 1.0,
+      "is_active": true,
+      "maker_fee": 0.0002,
+      "taker_fee": 0.0006,
+      "max_leverage": "25",
+      "last_updated": "2026-01-03T22:10:03.133136",
+      "requires_whole_contracts": false
+    },
+    "FOLKS/USDT:USDT": {
+      "symbol": "FOLKS/USDT:USDT",
+      "base": "FOLKS",
+      "quote": "USDT",
+      "contract_size": 1,
+      "min_amount": 1.0,
+      "max_amount": null,
+      "min_cost": 5.0,
+      "amount_precision": 1,
+      "price_precision": 0,
+      "tick_size": 0.0001,
+      "lot_size": 1.0,
+      "is_active": true,
+      "maker_fee": 0.0002,
+      "taker_fee": 0.0006,
+      "max_leverage": "50",
+      "last_updated": "2026-01-03T22:10:03.133212",
+      "requires_whole_contracts": false
+    },
+    "STABLE/USDT:USDT": {
+      "symbol": "STABLE/USDT:USDT",
+      "base": "STABLE",
+      "quote": "USDT",
+      "contract_size": 1,
+      "min_amount": 1.0,
+      "max_amount": null,
+      "min_cost": 5.0,
+      "amount_precision": 1,
+      "price_precision": 0,
+      "tick_size": 0.0001,
+      "lot_size": 1.0,
+      "is_active": true,
+      "maker_fee": 0.0002,
+      "taker_fee": 0.0006,
+      "max_leverage": "25",
+      "last_updated": "2026-01-03T22:10:03.133287",
+      "requires_whole_contracts": false
+    },
+    "CSCO/USDT:USDT": {
+      "symbol": "CSCO/USDT:USDT",
+      "base": "CSCO",
+      "quote": "USDT",
+      "contract_size": 1,
+      "min_amount": 0.01,
+      "max_amount": null,
+      "min_cost": 5.0,
+      "amount_precision": 0,
+      "price_precision": 0,
+      "tick_size": 0.0001,
+      "lot_size": 0.01,
+      "is_active": false,
+      "maker_fee": 0.0002,
+      "taker_fee": 0.0006,
+      "max_leverage": "20",
+      "last_updated": "2026-01-03T22:10:03.133362",
+      "requires_whole_contracts": false
+    },
+    "PEP/USDT:USDT": {
+      "symbol": "PEP/USDT:USDT",
+      "base": "PEP",
+      "quote": "USDT",
+      "contract_size": 1,
+      "min_amount": 0.01,
+      "max_amount": null,
+      "min_cost": 5.0,
+      "amount_precision": 0,
+      "price_precision": 0,
+      "tick_size": 0.0001,
+      "lot_size": 0.01,
+      "is_active": false,
+      "maker_fee": 0.0002,
+      "taker_fee": 0.0006,
+      "max_leverage": "20",
+      "last_updated": "2026-01-03T22:10:03.133436",
+      "requires_whole_contracts": false
+    },
+    "ACN/USDT:USDT": {
+      "symbol": "ACN/USDT:USDT",
+      "base": "ACN",
+      "quote": "USDT",
+      "contract_size": 1,
+      "min_amount": 0.01,
+      "max_amount": null,
+      "min_cost": 5.0,
+      "amount_precision": 0,
+      "price_precision": 0,
+      "tick_size": 0.0001,
+      "lot_size": 0.01,
+      "is_active": false,
+      "maker_fee": 0.0002,
+      "taker_fee": 0.0006,
+      "max_leverage": "20",
+      "last_updated": "2026-01-03T22:10:03.133515",
+      "requires_whole_contracts": false
+    },
+    "ALLO/USDT:USDT": {
+      "symbol": "ALLO/USDT:USDT",
+      "base": "ALLO",
+      "quote": "USDT",
+      "contract_size": 1,
+      "min_amount": 1.0,
+      "max_amount": null,
+      "min_cost": 5.0,
+      "amount_precision": 1,
+      "price_precision": 0,
+      "tick_size": 0.0001,
+      "lot_size": 1.0,
+      "is_active": true,
+      "maker_fee": 0.0002,
+      "taker_fee": 0.0006,
+      "max_leverage": "20",
+      "last_updated": "2026-01-03T22:10:03.133588",
+      "requires_whole_contracts": false
+    },
+    "MA/USDT:USDT": {
+      "symbol": "MA/USDT:USDT",
+      "base": "MA",
+      "quote": "USDT",
+      "contract_size": 1,
+      "min_amount": 0.01,
+      "max_amount": null,
+      "min_cost": 5.0,
+      "amount_precision": 0,
+      "price_precision": 0,
+      "tick_size": 0.0001,
+      "lot_size": 0.01,
+      "is_active": false,
+      "maker_fee": 0.0002,
+      "taker_fee": 0.0006,
+      "max_leverage": "20",
+      "last_updated": "2026-01-03T22:10:03.133662",
+      "requires_whole_contracts": false
+    },
+    "UNH/USDT:USDT": {
+      "symbol": "UNH/USDT:USDT",
+      "base": "UNH",
+      "quote": "USDT",
+      "contract_size": 1,
+      "min_amount": 0.01,
+      "max_amount": null,
+      "min_cost": 5.0,
+      "amount_precision": 0,
+      "price_precision": 0,
+      "tick_size": 0.0001,
+      "lot_size": 0.01,
+      "is_active": false,
+      "maker_fee": 0.0002,
+      "taker_fee": 0.0006,
+      "max_leverage": "20",
+      "last_updated": "2026-01-03T22:10:03.133736",
+      "requires_whole_contracts": false
+    },
+    "LLY/USDT:USDT": {
+      "symbol": "LLY/USDT:USDT",
+      "base": "LLY",
+      "quote": "USDT",
+      "contract_size": 1,
+      "min_amount": 0.01,
+      "max_amount": null,
+      "min_cost": 5.0,
+      "amount_precision": 0,
+      "price_precision": 0,
+      "tick_size": 0.0001,
+      "lot_size": 0.01,
+      "is_active": false,
+      "maker_fee": 0.0002,
+      "taker_fee": 0.0006,
+      "max_leverage": "20",
+      "last_updated": "2026-01-03T22:10:03.133809",
+      "requires_whole_contracts": false
+    },
+    "JCT/USDT:USDT": {
+      "symbol": "JCT/USDT:USDT",
+      "base": "JCT",
+      "quote": "USDT",
+      "contract_size": 1,
+      "min_amount": 1.0,
+      "max_amount": null,
+      "min_cost": 5.0,
+      "amount_precision": 1,
+      "price_precision": 0,
+      "tick_size": 0.0001,
+      "lot_size": 1.0,
+      "is_active": true,
+      "maker_fee": 0.0002,
+      "taker_fee": 0.0006,
+      "max_leverage": "25",
+      "last_updated": "2026-01-03T22:10:03.133882",
+      "requires_whole_contracts": false
+    },
+    "BEAT/USDT:USDT": {
+      "symbol": "BEAT/USDT:USDT",
+      "base": "BEAT",
+      "quote": "USDT",
+      "contract_size": 1,
+      "min_amount": 1.0,
+      "max_amount": null,
+      "min_cost": 5.0,
+      "amount_precision": 1,
+      "price_precision": 0,
+      "tick_size": 0.0001,
+      "lot_size": 1.0,
+      "is_active": true,
+      "maker_fee": 0.0002,
+      "taker_fee": 0.0006,
+      "max_leverage": "25",
+      "last_updated": "2026-01-03T22:10:03.133956",
+      "requires_whole_contracts": false
+    },
+    "PIEVERSE/USDT:USDT": {
+      "symbol": "PIEVERSE/USDT:USDT",
+      "base": "PIEVERSE",
+      "quote": "USDT",
+      "contract_size": 1,
+      "min_amount": 1.0,
+      "max_amount": null,
+      "min_cost": 5.0,
+      "amount_precision": 1,
+      "price_precision": 0,
+      "tick_size": 0.0001,
+      "lot_size": 1.0,
+      "is_active": true,
+      "maker_fee": 0.0002,
+      "taker_fee": 0.0006,
+      "max_leverage": "25",
+      "last_updated": "2026-01-03T22:10:03.134033",
+      "requires_whole_contracts": false
+    },
+    "BOB/USDT:USDT": {
+      "symbol": "BOB/USDT:USDT",
+      "base": "BOB",
+      "quote": "USDT",
+      "contract_size": 1,
+      "min_amount": 1.0,
+      "max_amount": null,
+      "min_cost": 5.0,
+      "amount_precision": 1,
+      "price_precision": 0,
+      "tick_size": 0.0001,
+      "lot_size": 1.0,
+      "is_active": true,
+      "maker_fee": 0.0002,
+      "taker_fee": 0.0006,
+      "max_leverage": "20",
+      "last_updated": "2026-01-03T22:10:03.134111",
+      "requires_whole_contracts": false
+    },
+    "IRYS/USDT:USDT": {
+      "symbol": "IRYS/USDT:USDT",
+      "base": "IRYS",
+      "quote": "USDT",
+      "contract_size": 1,
+      "min_amount": 1.0,
+      "max_amount": null,
+      "min_cost": 5.0,
+      "amount_precision": 1,
+      "price_precision": 0,
+      "tick_size": 0.0001,
+      "lot_size": 1.0,
+      "is_active": true,
+      "maker_fee": 0.0002,
+      "taker_fee": 0.0006,
+      "max_leverage": "20",
+      "last_updated": "2026-01-03T22:10:03.134189",
+      "requires_whole_contracts": false
+    },
+    "RLS/USDT:USDT": {
+      "symbol": "RLS/USDT:USDT",
+      "base": "RLS",
+      "quote": "USDT",
+      "contract_size": 1,
+      "min_amount": 1.0,
+      "max_amount": null,
+      "min_cost": 5.0,
+      "amount_precision": 1,
+      "price_precision": 0,
+      "tick_size": 0.0001,
+      "lot_size": 1.0,
+      "is_active": true,
+      "maker_fee": 0.0002,
+      "taker_fee": 0.0006,
+      "max_leverage": "20",
+      "last_updated": "2026-01-03T22:10:03.134264",
+      "requires_whole_contracts": false
+    },
+    "BSU/USDT:USDT": {
+      "symbol": "BSU/USDT:USDT",
+      "base": "BSU",
+      "quote": "USDT",
+      "contract_size": 1,
+      "min_amount": 1.0,
+      "max_amount": null,
+      "min_cost": 5.0,
+      "amount_precision": 1,
+      "price_precision": 0,
+      "tick_size": 0.0001,
+      "lot_size": 1.0,
+      "is_active": true,
+      "maker_fee": 0.0002,
+      "taker_fee": 0.0006,
+      "max_leverage": "10",
+      "last_updated": "2026-01-03T22:10:03.134338",
+      "requires_whole_contracts": false
+    },
+    "POWER/USDT:USDT": {
+      "symbol": "POWER/USDT:USDT",
+      "base": "POWER",
+      "quote": "USDT",
+      "contract_size": 1,
+      "min_amount": 1.0,
+      "max_amount": null,
+      "min_cost": 5.0,
+      "amount_precision": 1,
+      "price_precision": 0,
+      "tick_size": 0.0001,
+      "lot_size": 1.0,
+      "is_active": true,
+      "maker_fee": 0.0002,
+      "taker_fee": 0.0006,
+      "max_leverage": "20",
+      "last_updated": "2026-01-03T22:10:03.134411",
+      "requires_whole_contracts": false
+    },
+    "WET/USDT:USDT": {
+      "symbol": "WET/USDT:USDT",
+      "base": "WET",
+      "quote": "USDT",
+      "contract_size": 1,
+      "min_amount": 1.0,
+      "max_amount": null,
+      "min_cost": 5.0,
+      "amount_precision": 1,
+      "price_precision": 0,
+      "tick_size": 0.0001,
+      "lot_size": 1.0,
+      "is_active": true,
+      "maker_fee": 0.0002,
+      "taker_fee": 0.0006,
+      "max_leverage": "25",
+      "last_updated": "2026-01-03T22:10:03.134485",
+      "requires_whole_contracts": false
+    },
+    "NIGHT/USDT:USDT": {
+      "symbol": "NIGHT/USDT:USDT",
+      "base": "NIGHT",
+      "quote": "USDT",
+      "contract_size": 1,
+      "min_amount": 1.0,
+      "max_amount": null,
+      "min_cost": 5.0,
+      "amount_precision": 1,
+      "price_precision": 0,
+      "tick_size": 0.0001,
+      "lot_size": 1.0,
+      "is_active": true,
+      "maker_fee": 0.0002,
+      "taker_fee": 0.0006,
+      "max_leverage": "25",
+      "last_updated": "2026-01-03T22:10:03.134558",
+      "requires_whole_contracts": false
+    },
+    "US/USDT:USDT": {
+      "symbol": "US/USDT:USDT",
+      "base": "US",
+      "quote": "USDT",
+      "contract_size": 1,
+      "min_amount": 1.0,
+      "max_amount": null,
+      "min_cost": 5.0,
+      "amount_precision": 1,
+      "price_precision": 0,
+      "tick_size": 0.0001,
+      "lot_size": 1.0,
+      "is_active": true,
+      "maker_fee": 0.0002,
+      "taker_fee": 0.0006,
+      "max_leverage": "25",
+      "last_updated": "2026-01-03T22:10:03.134633",
+      "requires_whole_contracts": false
+    },
+    "CYS/USDT:USDT": {
+      "symbol": "CYS/USDT:USDT",
+      "base": "CYS",
+      "quote": "USDT",
+      "contract_size": 1,
+      "min_amount": 1.0,
+      "max_amount": null,
+      "min_cost": 5.0,
+      "amount_precision": 1,
+      "price_precision": 0,
+      "tick_size": 0.0001,
+      "lot_size": 1.0,
+      "is_active": true,
+      "maker_fee": 0.0002,
+      "taker_fee": 0.0006,
+      "max_leverage": "25",
+      "last_updated": "2026-01-03T22:10:03.134709",
+      "requires_whole_contracts": false
+    },
+    "RAVE/USDT:USDT": {
+      "symbol": "RAVE/USDT:USDT",
+      "base": "RAVE",
+      "quote": "USDT",
+      "contract_size": 1,
+      "min_amount": 1.0,
+      "max_amount": null,
+      "min_cost": 5.0,
+      "amount_precision": 1,
+      "price_precision": 0,
+      "tick_size": 0.0001,
+      "lot_size": 1.0,
+      "is_active": true,
+      "maker_fee": 0.0002,
+      "taker_fee": 0.0006,
+      "max_leverage": "20",
+      "last_updated": "2026-01-03T22:10:03.134788",
+      "requires_whole_contracts": false
+    },
+    "XAU/USDT:USDT": {
+      "symbol": "XAU/USDT:USDT",
+      "base": "XAU",
+      "quote": "USDT",
+      "contract_size": 1,
+      "min_amount": 0.01,
+      "max_amount": null,
+      "min_cost": 5.0,
+      "amount_precision": 0,
+      "price_precision": 0,
+      "tick_size": 0.0001,
+      "lot_size": 0.01,
+      "is_active": true,
+      "maker_fee": 0.0002,
+      "taker_fee": 0.0006,
+      "max_leverage": "50",
+      "last_updated": "2026-01-03T22:10:03.134864",
+      "requires_whole_contracts": false
+    },
+    "IR/USDT:USDT": {
+      "symbol": "IR/USDT:USDT",
+      "base": "IR",
+      "quote": "USDT",
+      "contract_size": 1,
+      "min_amount": 1.0,
+      "max_amount": null,
+      "min_cost": 5.0,
+      "amount_precision": 1,
+      "price_precision": 0,
+      "tick_size": 0.0001,
+      "lot_size": 1.0,
+      "is_active": true,
+      "maker_fee": 0.0002,
+      "taker_fee": 0.0006,
+      "max_leverage": "20",
+      "last_updated": "2026-01-03T22:10:03.134940",
+      "requires_whole_contracts": false
+    },
+    "ZKP/USDT:USDT": {
+      "symbol": "ZKP/USDT:USDT",
+      "base": "ZKP",
+      "quote": "USDT",
+      "contract_size": 1,
+      "min_amount": 1.0,
+      "max_amount": null,
+      "min_cost": 5.0,
+      "amount_precision": 1,
+      "price_precision": 0,
+      "tick_size": 0.0001,
+      "lot_size": 1.0,
+      "is_active": true,
+      "maker_fee": 0.0002,
+      "taker_fee": 0.0006,
+      "max_leverage": "20",
+      "last_updated": "2026-01-03T22:10:03.135015",
+      "requires_whole_contracts": false
+    },
+    "LIT/USDT:USDT": {
+      "symbol": "LIT/USDT:USDT",
+      "base": "LIT",
+      "quote": "USDT",
+      "contract_size": 1,
+      "min_amount": 1.0,
+      "max_amount": null,
+      "min_cost": 5.0,
+      "amount_precision": 1,
+      "price_precision": 0,
+      "tick_size": 0.0001,
+      "lot_size": 1.0,
+      "is_active": true,
+      "maker_fee": 0.0002,
+      "taker_fee": 0.0006,
+      "max_leverage": "20",
+      "last_updated": "2026-01-03T22:10:03.135099",
+      "requires_whole_contracts": false
+    },
+    "MAGMA/USDT:USDT": {
+      "symbol": "MAGMA/USDT:USDT",
+      "base": "MAGMA",
+      "quote": "USDT",
+      "contract_size": 1,
+      "min_amount": 1.0,
+      "max_amount": null,
+      "min_cost": 5.0,
+      "amount_precision": 1,
+      "price_precision": 0,
+      "tick_size": 0.0001,
+      "lot_size": 1.0,
+      "is_active": true,
+      "maker_fee": 0.0002,
+      "taker_fee": 0.0006,
+      "max_leverage": "20",
+      "last_updated": "2026-01-03T22:10:03.135175",
       "requires_whole_contracts": false
     }
   },
   "update_history": [
     {
-      "timestamp": "2025-09-24T05:47:39.057321",
-      "total_symbols": 555,
-      "updated": 0,
-      "new": 555
-    },
-    {
-      "timestamp": "2025-09-24T05:47:42.319192",
-      "total_symbols": 555,
-      "updated": 555,
+      "timestamp": "2026-01-03T11:29:53.179246",
+      "total_symbols": 623,
+      "updated": 529,
       "new": 0
     },
     {
-      "timestamp": "2025-09-24T06:47:45.598010",
-      "total_symbols": 555,
-      "updated": 555,
+      "timestamp": "2026-01-03T11:30:11.949215",
+      "total_symbols": 623,
+      "updated": 529,
       "new": 0
     },
     {
-      "timestamp": "2025-09-24T07:47:48.864505",
-      "total_symbols": 555,
-      "updated": 555,
+      "timestamp": "2026-01-03T11:30:29.041676",
+      "total_symbols": 623,
+      "updated": 529,
       "new": 0
     },
     {
-      "timestamp": "2025-09-24T08:47:52.135418",
-      "total_symbols": 555,
-      "updated": 555,
+      "timestamp": "2026-01-03T11:30:46.766778",
+      "total_symbols": 623,
+      "updated": 529,
       "new": 0
     },
     {
-      "timestamp": "2025-09-24T09:47:55.433764",
-      "total_symbols": 555,
-      "updated": 555,
+      "timestamp": "2026-01-03T11:31:03.488015",
+      "total_symbols": 623,
+      "updated": 529,
       "new": 0
     },
     {
-      "timestamp": "2025-09-24T10:47:59.148773",
-      "total_symbols": 555,
-      "updated": 555,
+      "timestamp": "2026-01-03T11:31:48.096914",
+      "total_symbols": 623,
+      "updated": 529,
       "new": 0
     },
     {
-      "timestamp": "2025-09-24T11:17:10.047246",
-      "total_symbols": 555,
-      "updated": 555,
+      "timestamp": "2026-01-03T11:32:06.275838",
+      "total_symbols": 623,
+      "updated": 529,
       "new": 0
     },
     {
-      "timestamp": "2025-09-24T11:17:16.928505",
-      "total_symbols": 555,
-      "updated": 555,
+      "timestamp": "2026-01-03T11:32:22.570007",
+      "total_symbols": 623,
+      "updated": 529,
       "new": 0
     },
     {
-      "timestamp": "2025-09-24T11:17:22.986730",
-      "total_symbols": 555,
-      "updated": 555,
+      "timestamp": "2026-01-03T11:32:39.815863",
+      "total_symbols": 623,
+      "updated": 529,
       "new": 0
     },
     {
-      "timestamp": "2025-09-24T11:17:29.760872",
-      "total_symbols": 555,
-      "updated": 555,
+      "timestamp": "2026-01-03T11:32:56.629759",
+      "total_symbols": 623,
+      "updated": 529,
       "new": 0
     },
     {
-      "timestamp": "2025-09-24T11:17:35.667448",
-      "total_symbols": 555,
-      "updated": 555,
+      "timestamp": "2026-01-03T11:33:28.292565",
+      "total_symbols": 623,
+      "updated": 529,
       "new": 0
     },
     {
-      "timestamp": "2025-09-24T11:17:42.460337",
-      "total_symbols": 555,
-      "updated": 555,
+      "timestamp": "2026-01-03T11:33:44.517356",
+      "total_symbols": 623,
+      "updated": 529,
       "new": 0
     },
     {
-      "timestamp": "2025-09-24T11:17:49.213442",
-      "total_symbols": 555,
-      "updated": 555,
+      "timestamp": "2026-01-03T11:34:00.433125",
+      "total_symbols": 623,
+      "updated": 529,
       "new": 0
     },
     {
-      "timestamp": "2025-09-24T11:17:55.098005",
-      "total_symbols": 555,
-      "updated": 555,
+      "timestamp": "2026-01-03T11:34:16.259938",
+      "total_symbols": 623,
+      "updated": 529,
       "new": 0
     },
     {
-      "timestamp": "2025-09-24T11:18:01.176823",
-      "total_symbols": 555,
-      "updated": 555,
+      "timestamp": "2026-01-03T11:34:31.511558",
+      "total_symbols": 623,
+      "updated": 529,
       "new": 0
     },
     {
-      "timestamp": "2025-09-24T11:18:07.417334",
-      "total_symbols": 555,
-      "updated": 555,
+      "timestamp": "2026-01-03T11:35:16.811442",
+      "total_symbols": 623,
+      "updated": 529,
       "new": 0
     },
     {
-      "timestamp": "2025-09-24T11:18:14.024600",
-      "total_symbols": 555,
-      "updated": 555,
+      "timestamp": "2026-01-03T11:35:32.599106",
+      "total_symbols": 623,
+      "updated": 529,
       "new": 0
     },
     {
-      "timestamp": "2025-09-24T11:18:20.705300",
-      "total_symbols": 555,
-      "updated": 555,
+      "timestamp": "2026-01-03T11:35:48.682930",
+      "total_symbols": 623,
+      "updated": 529,
       "new": 0
     },
     {
-      "timestamp": "2025-09-24T11:18:26.834100",
-      "total_symbols": 555,
-      "updated": 555,
+      "timestamp": "2026-01-03T11:36:04.714304",
+      "total_symbols": 623,
+      "updated": 529,
       "new": 0
     },
     {
-      "timestamp": "2025-09-24T11:18:32.929387",
-      "total_symbols": 555,
-      "updated": 555,
+      "timestamp": "2026-01-03T11:50:04.661641",
+      "total_symbols": 623,
+      "updated": 529,
       "new": 0
     },
     {
-      "timestamp": "2025-09-24T11:18:50.535367",
-      "total_symbols": 555,
-      "updated": 555,
+      "timestamp": "2026-01-03T11:50:23.603739",
+      "total_symbols": 623,
+      "updated": 529,
       "new": 0
     },
     {
-      "timestamp": "2025-09-24T11:18:56.386695",
-      "total_symbols": 555,
-      "updated": 555,
+      "timestamp": "2026-01-03T11:50:40.306417",
+      "total_symbols": 623,
+      "updated": 529,
       "new": 0
     },
     {
-      "timestamp": "2025-09-24T11:19:02.920378",
-      "total_symbols": 555,
-      "updated": 555,
+      "timestamp": "2026-01-03T11:50:57.563074",
+      "total_symbols": 623,
+      "updated": 529,
       "new": 0
     },
     {
-      "timestamp": "2025-09-24T11:19:08.776850",
-      "total_symbols": 555,
-      "updated": 555,
+      "timestamp": "2026-01-03T11:51:14.635815",
+      "total_symbols": 623,
+      "updated": 529,
       "new": 0
     },
     {
-      "timestamp": "2025-09-24T11:19:15.097714",
-      "total_symbols": 555,
-      "updated": 555,
+      "timestamp": "2026-01-03T11:51:46.629008",
+      "total_symbols": 623,
+      "updated": 529,
       "new": 0
     },
     {
-      "timestamp": "2025-09-24T11:19:22.136709",
-      "total_symbols": 555,
-      "updated": 555,
+      "timestamp": "2026-01-03T11:52:04.217307",
+      "total_symbols": 623,
+      "updated": 529,
       "new": 0
     },
     {
-      "timestamp": "2025-09-24T11:19:28.352444",
-      "total_symbols": 555,
-      "updated": 555,
+      "timestamp": "2026-01-03T11:52:20.460086",
+      "total_symbols": 623,
+      "updated": 529,
       "new": 0
     },
     {
-      "timestamp": "2025-09-24T11:19:34.733388",
-      "total_symbols": 555,
-      "updated": 555,
+      "timestamp": "2026-01-03T11:53:21.500571",
+      "total_symbols": 623,
+      "updated": 529,
       "new": 0
     },
     {
-      "timestamp": "2025-09-24T11:19:40.608317",
-      "total_symbols": 555,
-      "updated": 555,
+      "timestamp": "2026-01-03T11:53:43.746611",
+      "total_symbols": 623,
+      "updated": 529,
       "new": 0
     },
     {
-      "timestamp": "2025-09-24T11:19:47.580581",
-      "total_symbols": 555,
-      "updated": 555,
+      "timestamp": "2026-01-03T11:54:01.303931",
+      "total_symbols": 623,
+      "updated": 529,
       "new": 0
     },
     {
-      "timestamp": "2025-09-24T11:19:53.937536",
-      "total_symbols": 555,
-      "updated": 555,
+      "timestamp": "2026-01-03T11:54:07.411279",
+      "total_symbols": 623,
+      "updated": 529,
       "new": 0
     },
     {
-      "timestamp": "2025-09-24T11:20:00.029824",
-      "total_symbols": 555,
-      "updated": 555,
+      "timestamp": "2026-01-03T11:54:17.847524",
+      "total_symbols": 623,
+      "updated": 529,
       "new": 0
     },
     {
-      "timestamp": "2025-09-24T11:20:06.296619",
-      "total_symbols": 555,
-      "updated": 555,
+      "timestamp": "2026-01-03T11:54:34.680075",
+      "total_symbols": 623,
+      "updated": 529,
       "new": 0
     },
     {
-      "timestamp": "2025-09-24T11:40:15.175719",
-      "total_symbols": 555,
-      "updated": 555,
+      "timestamp": "2026-01-03T11:54:51.016633",
+      "total_symbols": 623,
+      "updated": 529,
       "new": 0
     },
     {
-      "timestamp": "2025-09-24T12:15:16.025025",
-      "total_symbols": 555,
-      "updated": 555,
+      "timestamp": "2026-01-03T11:55:21.527503",
+      "total_symbols": 623,
+      "updated": 529,
       "new": 0
     },
     {
-      "timestamp": "2025-09-24T12:38:34.025565",
-      "total_symbols": 555,
-      "updated": 555,
+      "timestamp": "2026-01-03T11:55:26.012971",
+      "total_symbols": 623,
+      "updated": 529,
       "new": 0
     },
     {
-      "timestamp": "2025-09-24T13:38:37.191586",
-      "total_symbols": 556,
-      "updated": 555,
-      "new": 1
-    },
-    {
-      "timestamp": "2025-09-24T14:38:40.950009",
-      "total_symbols": 557,
-      "updated": 556,
-      "new": 1
-    },
-    {
-      "timestamp": "2025-09-24T15:38:44.711695",
-      "total_symbols": 557,
-      "updated": 557,
+      "timestamp": "2026-01-03T11:55:38.704699",
+      "total_symbols": 623,
+      "updated": 529,
       "new": 0
     },
     {
-      "timestamp": "2025-09-24T15:48:58.892530",
-      "total_symbols": 557,
-      "updated": 557,
+      "timestamp": "2026-01-03T11:55:43.141609",
+      "total_symbols": 623,
+      "updated": 529,
+      "new": 0
+    },
+    {
+      "timestamp": "2026-01-03T11:55:55.744724",
+      "total_symbols": 623,
+      "updated": 529,
+      "new": 0
+    },
+    {
+      "timestamp": "2026-01-03T11:56:00.056410",
+      "total_symbols": 623,
+      "updated": 529,
+      "new": 0
+    },
+    {
+      "timestamp": "2026-01-03T11:56:18.162613",
+      "total_symbols": 623,
+      "updated": 529,
+      "new": 0
+    },
+    {
+      "timestamp": "2026-01-03T11:56:37.185590",
+      "total_symbols": 623,
+      "updated": 529,
+      "new": 0
+    },
+    {
+      "timestamp": "2026-01-03T11:56:44.597950",
+      "total_symbols": 623,
+      "updated": 529,
+      "new": 0
+    },
+    {
+      "timestamp": "2026-01-03T11:56:53.516349",
+      "total_symbols": 623,
+      "updated": 529,
+      "new": 0
+    },
+    {
+      "timestamp": "2026-01-03T11:57:00.922273",
+      "total_symbols": 623,
+      "updated": 529,
+      "new": 0
+    },
+    {
+      "timestamp": "2026-01-03T11:57:10.101225",
+      "total_symbols": 623,
+      "updated": 529,
+      "new": 0
+    },
+    {
+      "timestamp": "2026-01-03T11:57:56.610089",
+      "total_symbols": 623,
+      "updated": 529,
+      "new": 0
+    },
+    {
+      "timestamp": "2026-01-03T11:58:02.703103",
+      "total_symbols": 623,
+      "updated": 529,
+      "new": 0
+    },
+    {
+      "timestamp": "2026-01-03T11:58:59.972429",
+      "total_symbols": 623,
+      "updated": 529,
+      "new": 0
+    },
+    {
+      "timestamp": "2026-01-03T11:59:09.071434",
+      "total_symbols": 623,
+      "updated": 529,
+      "new": 0
+    },
+    {
+      "timestamp": "2026-01-03T11:59:17.448214",
+      "total_symbols": 623,
+      "updated": 529,
+      "new": 0
+    },
+    {
+      "timestamp": "2026-01-03T12:00:50.209412",
+      "total_symbols": 623,
+      "updated": 529,
+      "new": 0
+    },
+    {
+      "timestamp": "2026-01-03T12:01:08.035078",
+      "total_symbols": 623,
+      "updated": 529,
+      "new": 0
+    },
+    {
+      "timestamp": "2026-01-03T12:01:24.274362",
+      "total_symbols": 623,
+      "updated": 529,
+      "new": 0
+    },
+    {
+      "timestamp": "2026-01-03T12:01:41.029835",
+      "total_symbols": 623,
+      "updated": 529,
+      "new": 0
+    },
+    {
+      "timestamp": "2026-01-03T12:01:58.061494",
+      "total_symbols": 623,
+      "updated": 529,
+      "new": 0
+    },
+    {
+      "timestamp": "2026-01-03T12:02:43.229404",
+      "total_symbols": 623,
+      "updated": 529,
+      "new": 0
+    },
+    {
+      "timestamp": "2026-01-03T12:04:55.221195",
+      "total_symbols": 623,
+      "updated": 529,
+      "new": 0
+    },
+    {
+      "timestamp": "2026-01-03T12:05:11.540132",
+      "total_symbols": 623,
+      "updated": 529,
+      "new": 0
+    },
+    {
+      "timestamp": "2026-01-03T12:05:27.390242",
+      "total_symbols": 623,
+      "updated": 529,
+      "new": 0
+    },
+    {
+      "timestamp": "2026-01-03T12:05:43.188529",
+      "total_symbols": 623,
+      "updated": 529,
+      "new": 0
+    },
+    {
+      "timestamp": "2026-01-03T12:05:59.688445",
+      "total_symbols": 623,
+      "updated": 529,
+      "new": 0
+    },
+    {
+      "timestamp": "2026-01-03T12:06:17.128100",
+      "total_symbols": 623,
+      "updated": 529,
+      "new": 0
+    },
+    {
+      "timestamp": "2026-01-03T12:06:46.800369",
+      "total_symbols": 623,
+      "updated": 529,
+      "new": 0
+    },
+    {
+      "timestamp": "2026-01-03T12:07:16.824233",
+      "total_symbols": 623,
+      "updated": 529,
+      "new": 0
+    },
+    {
+      "timestamp": "2026-01-03T12:08:15.113109",
+      "total_symbols": 623,
+      "updated": 529,
+      "new": 0
+    },
+    {
+      "timestamp": "2026-01-03T12:08:45.386020",
+      "total_symbols": 623,
+      "updated": 529,
+      "new": 0
+    },
+    {
+      "timestamp": "2026-01-03T12:12:44.113509",
+      "total_symbols": 623,
+      "updated": 529,
+      "new": 0
+    },
+    {
+      "timestamp": "2026-01-03T12:13:00.990083",
+      "total_symbols": 623,
+      "updated": 529,
+      "new": 0
+    },
+    {
+      "timestamp": "2026-01-03T12:13:16.023113",
+      "total_symbols": 623,
+      "updated": 529,
+      "new": 0
+    },
+    {
+      "timestamp": "2026-01-03T12:13:32.023124",
+      "total_symbols": 623,
+      "updated": 529,
+      "new": 0
+    },
+    {
+      "timestamp": "2026-01-03T12:13:47.732215",
+      "total_symbols": 623,
+      "updated": 529,
+      "new": 0
+    },
+    {
+      "timestamp": "2026-01-03T12:14:02.857218",
+      "total_symbols": 623,
+      "updated": 529,
+      "new": 0
+    },
+    {
+      "timestamp": "2026-01-03T12:14:18.124015",
+      "total_symbols": 623,
+      "updated": 529,
+      "new": 0
+    },
+    {
+      "timestamp": "2026-01-03T12:14:48.439235",
+      "total_symbols": 623,
+      "updated": 529,
+      "new": 0
+    },
+    {
+      "timestamp": "2026-01-03T12:15:04.107609",
+      "total_symbols": 623,
+      "updated": 529,
+      "new": 0
+    },
+    {
+      "timestamp": "2026-01-03T12:15:33.142348",
+      "total_symbols": 623,
+      "updated": 529,
+      "new": 0
+    },
+    {
+      "timestamp": "2026-01-03T12:15:48.932243",
+      "total_symbols": 623,
+      "updated": 529,
+      "new": 0
+    },
+    {
+      "timestamp": "2026-01-03T12:16:04.741829",
+      "total_symbols": 623,
+      "updated": 529,
+      "new": 0
+    },
+    {
+      "timestamp": "2026-01-03T12:16:19.824674",
+      "total_symbols": 623,
+      "updated": 529,
+      "new": 0
+    },
+    {
+      "timestamp": "2026-01-03T12:17:18.376890",
+      "total_symbols": 623,
+      "updated": 529,
+      "new": 0
+    },
+    {
+      "timestamp": "2026-01-03T12:17:33.986438",
+      "total_symbols": 623,
+      "updated": 529,
+      "new": 0
+    },
+    {
+      "timestamp": "2026-01-03T13:17:37.440168",
+      "total_symbols": 623,
+      "updated": 529,
+      "new": 0
+    },
+    {
+      "timestamp": "2026-01-03T16:15:34.080693",
+      "total_symbols": 623,
+      "updated": 529,
+      "new": 0
+    },
+    {
+      "timestamp": "2026-01-03T17:15:37.302244",
+      "total_symbols": 623,
+      "updated": 529,
+      "new": 0
+    },
+    {
+      "timestamp": "2026-01-03T18:15:40.480565",
+      "total_symbols": 623,
+      "updated": 529,
+      "new": 0
+    },
+    {
+      "timestamp": "2026-01-03T18:20:06.824306",
+      "total_symbols": 623,
+      "updated": 529,
+      "new": 0
+    },
+    {
+      "timestamp": "2026-01-03T18:21:47.035862",
+      "total_symbols": 623,
+      "updated": 529,
+      "new": 0
+    },
+    {
+      "timestamp": "2026-01-03T19:21:50.567929",
+      "total_symbols": 623,
+      "updated": 529,
+      "new": 0
+    },
+    {
+      "timestamp": "2026-01-03T19:32:29.134638",
+      "total_symbols": 623,
+      "updated": 529,
+      "new": 0
+    },
+    {
+      "timestamp": "2026-01-03T19:32:43.164618",
+      "total_symbols": 623,
+      "updated": 529,
+      "new": 0
+    },
+    {
+      "timestamp": "2026-01-03T20:00:17.484447",
+      "total_symbols": 623,
+      "updated": 529,
+      "new": 0
+    },
+    {
+      "timestamp": "2026-01-03T20:00:57.672385",
+      "total_symbols": 623,
+      "updated": 529,
+      "new": 0
+    },
+    {
+      "timestamp": "2026-01-03T20:02:43.033267",
+      "total_symbols": 623,
+      "updated": 529,
+      "new": 0
+    },
+    {
+      "timestamp": "2026-01-03T20:02:57.662776",
+      "total_symbols": 623,
+      "updated": 529,
+      "new": 0
+    },
+    {
+      "timestamp": "2026-01-03T20:03:13.065242",
+      "total_symbols": 623,
+      "updated": 529,
+      "new": 0
+    },
+    {
+      "timestamp": "2026-01-03T20:03:40.186280",
+      "total_symbols": 623,
+      "updated": 529,
+      "new": 0
+    },
+    {
+      "timestamp": "2026-01-03T20:09:56.158471",
+      "total_symbols": 623,
+      "updated": 529,
+      "new": 0
+    },
+    {
+      "timestamp": "2026-01-03T21:09:59.632516",
+      "total_symbols": 623,
+      "updated": 529,
+      "new": 0
+    },
+    {
+      "timestamp": "2026-01-03T22:10:03.135247",
+      "total_symbols": 623,
+      "updated": 529,
       "new": 0
     }
   ]

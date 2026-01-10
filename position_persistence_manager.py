@@ -172,6 +172,9 @@ class PositionPersistenceManager:
             averaging_steps = saved_state.get('averaging_steps', {})
             peak_upnl = saved_state.get('peak_upnl', {})
             surplus_dump_stage = saved_state.get('surplus_dump_stage', {})
+
+            # DEBUG: Log averaging_steps from saved state
+            logger.info(f"🔍 Reconcile: averaging_steps from saved state: {averaging_steps}")
             
             # Remove positions that no longer exist on exchange
             symbols_to_remove = []
@@ -207,8 +210,10 @@ class PositionPersistenceManager:
                     peak_upnl[symbol] = 0
                     surplus_dump_stage[symbol] = 0
                 else:
-                    # Update amount if changed
+                    # Update amount if changed BUT preserve all tracking data
                     active_positions[symbol]['amount'] = ex_pos['contracts']
+                    # CRITICAL: Don't reset averaging_steps, peak_upnl, etc for existing positions
+                    # These should already be in the dictionaries from saved state
             
             logger.info(f"Reconciliation complete: {len(active_positions)} active positions")
             

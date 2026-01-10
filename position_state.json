@@ -1,131 +1,33 @@
 {
-  "timestamp": "2026-01-02T14:23:36.077175",
+  "timestamp": "2026-01-06T22:49:47.368313",
   "active_positions": {
-    "HBAR/USDT:USDT": {
-      "entry_price": 0.12006,
-      "amount": 221.0,
-      "side": "buy",
-      "leverage": 10.0,
-      "opened_at": "2026-01-02T12:58:42.339849+00:00"
-    },
     "USTC/USDT:USDT": {
-      "entry_price": 0.006511944729,
-      "amount": 45950.0,
-      "side": "buy",
+      "entry_price": 0.00758,
+      "amount": 3.0,
+      "side": "sell",
       "leverage": 10.0,
-      "opened_at": "2025-12-31T17:24:58.947583+00:00"
-    },
-    "ONDO/USDT:USDT": {
-      "entry_price": 0.4026,
-      "amount": 65.9,
-      "side": "buy",
-      "leverage": 10.0,
-      "opened_at": "2026-01-02T10:22:48.674343+00:00"
-    },
-    "CELO/USDT:USDT": {
-      "entry_price": 0.118685666753,
-      "amount": 390.7,
-      "side": "buy",
-      "leverage": 10.0,
-      "opened_at": "2026-01-02T10:20:43.468551+00:00"
-    },
-    "RDNT/USDT:USDT": {
-      "entry_price": 0.01136,
-      "amount": 2337.0,
-      "side": "buy",
-      "leverage": 10.0,
-      "opened_at": "2026-01-02T12:57:45.783581+00:00"
-    },
-    "PEPE/USDT:USDT": {
-      "entry_price": 5.72138886e-06,
-      "amount": 28351000.0,
-      "side": "buy",
-      "leverage": 10.0,
-      "opened_at": "2026-01-02T12:39:36.663015+00:00"
-    },
-    "TURBO/USDT:USDT": {
-      "entry_price": 0.001866500001,
-      "amount": 28584.0,
-      "side": "buy",
-      "leverage": 10.0,
-      "opened_at": "2026-01-02T13:03:55.230151+00:00"
-    },
-    "SUSHI/USDT:USDT": {
-      "entry_price": 0.3134,
-      "amount": 84.0,
-      "side": "buy",
-      "leverage": 10.0,
-      "opened_at": "2026-01-02T13:00:46.812893+00:00"
+      "opened_at": "2026-01-06T15:49:00.038375+00:00"
     }
   },
   "position_zones": {
-    "HBAR/USDT:USDT": "NEUTRAL",
-    "USTC/USDT:USDT": "NEUTRAL",
-    "ONDO/USDT:USDT": "NEUTRAL",
-    "CELO/USDT:USDT": "NEUTRAL",
-    "RDNT/USDT:USDT": "NEUTRAL",
-    "PEPE/USDT:USDT": "NEUTRAL",
-    "TURBO/USDT:USDT": "NEUTRAL",
-    "SUSHI/USDT:USDT": "NEUTRAL"
+    "USTC/USDT:USDT": "PROFIT_TAKING"
   },
   "averaging_steps": {
-    "HBAR/USDT:USDT": 0,
-    "USTC/USDT:USDT": 0,
-    "ONDO/USDT:USDT": 0,
-    "CELO/USDT:USDT": 0,
-    "RDNT/USDT:USDT": 0,
-    "PEPE/USDT:USDT": 0,
-    "TURBO/USDT:USDT": 0,
-    "SUSHI/USDT:USDT": 0
+    "USTC/USDT:USDT": 0
   },
   "peak_upnl": {
-    "HBAR/USDT:USDT": 0.00221,
-    "USTC/USDT:USDT": 1.360509737216,
-    "ONDO/USDT:USDT": 0.15816,
-    "CELO/USDT:USDT": 0.150719999836,
-    "RDNT/USDT:USDT": 0.0,
-    "PEPE/USDT:USDT": 1.01529415061,
-    "TURBO/USDT:USDT": 0.171504,
-    "SUSHI/USDT:USDT": 0.0
+    "USTC/USDT:USDT": 0.19584
   },
   "peak_upnl_timestamps": {
-    "HBAR/USDT:USDT": "2026-01-02T13:07:57.624162+00:00",
-    "USTC/USDT:USDT": "2026-01-01T16:08:02.692432+00:00",
-    "ONDO/USDT:USDT": "2026-01-02T10:55:44.464020+00:00",
-    "CELO/USDT:USDT": "2026-01-02T12:36:22.264442+00:00",
-    "RDNT/USDT:USDT": null,
-    "PEPE/USDT:USDT": "2026-01-02T13:15:29.895895+00:00",
-    "TURBO/USDT:USDT": "2026-01-02T13:07:57.628266+00:00",
-    "SUSHI/USDT:USDT": null
+    "USTC/USDT:USDT": null
   },
   "surplus_dump_stage": {
-    "HBAR/USDT:USDT": 0,
-    "USTC/USDT:USDT": 0,
-    "ONDO/USDT:USDT": 0,
-    "CELO/USDT:USDT": 0,
-    "RDNT/USDT:USDT": 0,
-    "PEPE/USDT:USDT": 0,
-    "TURBO/USDT:USDT": 0,
-    "SUSHI/USDT:USDT": 0
+    "USTC/USDT:USDT": 0
   },
   "original_sizes": {
-    "HBAR/USDT:USDT": 221.0,
-    "USTC/USDT:USDT": 3342.0,
-    "ONDO/USDT:USDT": 65.9,
-    "CELO/USDT:USDT": 223.3,
-    "RDNT/USDT:USDT": 2337.0,
-    "PEPE/USDT:USDT": 5401000.0,
-    "TURBO/USDT:USDT": 14292.0,
-    "SUSHI/USDT:USDT": 84.0
+    "USTC/USDT:USDT": 3.0
   },
   "position_multipliers": {
-    "HBAR/USDT:USDT": [],
-    "USTC/USDT:USDT": [],
-    "ONDO/USDT:USDT": [],
-    "CELO/USDT:USDT": [],
-    "RDNT/USDT:USDT": [],
-    "PEPE/USDT:USDT": [],
-    "TURBO/USDT:USDT": [],
-    "SUSHI/USDT:USDT": []
+    "USTC/USDT:USDT": []
   }
 }

@@ -6,23 +6,23 @@ Higher size only when confidence > 0.7
 """
 
 class PositionSizingConfig:
-    # Total capital available for allocation
-    TOTAL_CAPITAL = 25.0  # $25 total capital per position (increased from $20)
-    
-    # Capital allocation strategy
-    SAFETY_MARGIN_PERCENT = 0.30  # 30% reserved as safety margin ($7.50)
-    TRADING_CAPITAL_PERCENT = 0.70  # 70% for initial + averaging ($17.50)
-    
-    # Base position margin - $5.00 initial margin (before leverage)
-    BASE_MARGIN_SIZE = 5.00  # $5.00 initial margin (FIXED)
+    # Total capital available for allocation - FLORIN'S ACCOUNT ($5 per position)
+    TOTAL_CAPITAL = 5.0  # $5 total capital per position
 
-    # Base position value after leverage (assuming ~6.5x average leverage)
-    BASE_POSITION_VALUE = 32.50  # $32.50 position value after leverage ($5 margin * 6.5x leverage)
+    # Capital allocation strategy
+    SAFETY_MARGIN_PERCENT = 0.30  # 30% reserved as safety margin ($1.50)
+    TRADING_CAPITAL_PERCENT = 0.70  # 70% for initial + averaging ($3.50)
+
+    # Base position margin - $0.70 initial margin (before leverage)
+    BASE_MARGIN_SIZE = 0.70  # $0.70 initial margin (FIXED)
+
+    # Base position value after leverage (10x average leverage)
+    BASE_POSITION_VALUE = 7.00  # $7.00 position value after leverage ($0.70 margin * 10x leverage)
     
     # Capital breakdown
-    SAFETY_MARGIN = TOTAL_CAPITAL * SAFETY_MARGIN_PERCENT  # $7.50 safety margin
-    TRADING_CAPITAL = TOTAL_CAPITAL * TRADING_CAPITAL_PERCENT  # $17.50 for initial + averaging
-    AVERAGING_CAPITAL = TRADING_CAPITAL - BASE_MARGIN_SIZE  # $16.50 for averaging steps
+    SAFETY_MARGIN = TOTAL_CAPITAL * SAFETY_MARGIN_PERCENT  # $1.50 safety margin
+    TRADING_CAPITAL = TOTAL_CAPITAL * TRADING_CAPITAL_PERCENT  # $3.50 for initial + averaging
+    AVERAGING_CAPITAL = TRADING_CAPITAL - BASE_MARGIN_SIZE  # $2.80 for averaging steps
     
     # Safety margin usage
     NORMAL_MARGIN_USAGE = 0.70  # Use 70% of averaging capital normally
@@ -88,7 +88,7 @@ class PositionSizingConfig:
         if confidence > PositionSizingConfig.HIGH_CONFIDENCE_THRESHOLD:
             sizing['reason'] = f"High confidence ({confidence:.2f}) - using {sizing['size_multiplier']:.1f}x base size"
         else:
-            sizing['reason'] = f"Standard confidence ({confidence:.2f}) - using base size $6.50"
+            sizing['reason'] = f"Standard confidence ({confidence:.2f}) - using base size $7.00"
         
         return sizing
 

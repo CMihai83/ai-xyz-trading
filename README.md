@@ -1,426 +1,500 @@
-# 🤖 AI-XYZ Trading System v2.0
+# Florin Trading System
 
-## Production-Ready Automated Cryptocurrency Trading Platform
+A completely isolated Docker-based cryptocurrency trading system, cloned from the ai_xyz trading platform. This system operates independently with its own Redis database, PostgreSQL instance, and configuration.
 
-### 🚀 Quick Start
+## Table of Contents
 
-```bash
-# Start the complete system
-./restart_aixyz_system.sh
+- [Overview](#overview)
+- [Key Features](#key-features)
+- [System Architecture](#system-architecture)
+- [Prerequisites](#prerequisites)
+- [Installation](#installation)
+- [Configuration](#configuration)
+- [Running the System](#running-the-system)
+- [Monitoring](#monitoring)
+- [Troubleshooting](#troubleshooting)
+- [Isolation from ai_xyz](#isolation-from-ai_xyz)
+- [Security Best Practices](#security-best-practices)
 
-# Check system status
-./status.sh
+## Overview
 
-# Monitor live trading
-tail -f /tmp/aixyz_main.log
+The Florin Trading System is a sophisticated AI-powered cryptocurrency futures trading platform that includes:
+
+- **Adaptive Fibonacci Averaging**: Dynamic position averaging based on market conditions
+- **Multi-timeframe Analysis**: Trading across 1m, 5m, 15m, 1h, 4h, and 1d timeframes
+- **Risk Management**: Advanced stop-loss, liquidation protection, and position sizing
+- **Market Intelligence**: Real-time market scanning and opportunity detection
+- **Complete Isolation**: Separate from ai_xyz system with dedicated resources
+
+## Key Features
+
+### Trading Capabilities
+- ✅ Bitget Futures Trading (USDT-M)
+- ✅ Automated position management
+- ✅ Fibonacci-based averaging system
+- ✅ Dynamic leverage adjustment (1x-20x)
+- ✅ Real-time market scanning
+- ✅ Multiple position strategies
+
+### Technical Features
+- ✅ Docker containerized deployment
+- ✅ Redis caching (DB 2 - isolated)
+- ✅ PostgreSQL data persistence
+- ✅ Health monitoring
+- ✅ Automatic restarts
+- ✅ Comprehensive logging
+
+### Risk Management
+- ✅ Liquidation protection
+- ✅ ATR-based stop losses
+- ✅ Position size limits
+- ✅ Daily loss limits
+- ✅ Margin awareness
+
+## System Architecture
+
 ```
-
-### 📊 System Overview
-
-**AI-XYZ** is a sophisticated automated trading system for Bitget exchange featuring:
-- **Zone-based position management** with 5 states (Neutral, Averaging, Surplus, Profit, StopLoss)
-- **Fibonacci-based averaging** with adaptive thresholds
-- **Surplus dump mechanism** for optimized profit-taking
-- **Multi-timeframe analysis** across 6 timeframes (1m to 1d)
-- **Dynamic position sizing** ($5 per position, max 10 concurrent)
-
-### 🏗️ Current Architecture (Actual Running System)
-
-```mermaid
-graph TB
-    BITGET[Bitget Exchange] <--> CONNECTOR[exchange_connector.py<br/>PID: 3421373]
-    CONNECTOR --> JSON[(exchange_data.json)]
-    
-    MAIN[aixyz_continuous_profit_system.py<br/>PID: 3421331] --> SCANNER[Market Scanner]
-    SCANNER --> MAIN
-    
-    MAIN --> ZONES[Zone State Machine]
-    ZONES --> FIBONACCI[Fibonacci Service]
-    
-    ZONES --> SURPLUS[automatic_surplus_executor.py<br/>PID: 3421365]
-    
-    MAIN --> LOGS[/tmp/aixyz_main.log]
-    SURPLUS --> LOGS2[/var/log/surplus_executor.log]
-```
-
-### 📁 Active System Structure
-
-```
-/root/ai_xyz/
-├── 🟢 Active Core (3 services, 17 total files)
-│   ├── aixyz_continuous_profit_system.py    # Main trading engine
-│   ├── automatic_surplus_executor.py        # Surplus dump service  
-│   ├── exchange_connector.py                # Exchange sync service
-│   ├── position_sizing_config.py            # Position calculations
-│   ├── enhanced_market_scanner.py           # Market analysis
-│   ├── simple_vsa_scanner.py               # Volume spread analysis
-│   └── core/
-│       ├── adaptive_fibonacci_system.py     # Averaging logic
-│       ├── zone_state_machine.py           # State transitions
-│       └── [4 more active modules]
+florin_trading/
+├── Docker Services
+│   ├── florin_trading_system (Main trading bot)
+│   ├── florin_redis (Redis DB 2)
+│   └── florin_postgres (PostgreSQL)
 │
-└── 🔴 Inactive (201 unused files - 93% of codebase)
-    ├── test_*.py (66 test files)
-    ├── services/* (40 microservice files - not running)
-    └── [95 other unused files]
+├── Data Persistence
+│   ├── /var/log/florin_trading/ (Logs)
+│   ├── /app/data/ (Market data)
+│   └── State files (JSON)
+│
+└── Network: florin_trading_network
 ```
 
-### ⚙️ System Configuration
+## Prerequisites
 
-#### Capital Management
-| Parameter | Value | Description |
-|-----------|-------|-------------|
-| Position Size | $5 | Per position allocation |
-| Max Positions | 10 | Global cap (even with >$50) |
-| Min Notional | $6.50 | After leverage |
-| Capital Split | 70/30 | Trading/Reserve |
+### System Requirements
+- **OS**: Linux (Ubuntu 20.04+ recommended) or macOS
+- **RAM**: Minimum 2GB, recommended 4GB+
+- **Storage**: 10GB free space
+- **Network**: Stable internet connection
 
-#### Zone Configuration
-| Zone | UPNL Range | Action |
-|------|------------|--------|
-| Stop Loss | ≤ -90% | Emergency close |
-| Averaging | ≤ -25% | Execute DCA |
-| Neutral | -25% to +5% | Monitor only |
-| Surplus/Profit | ≥ +5% | Take profits |
+### Software Requirements
+- Docker Engine 20.10+
+- Docker Compose 2.0+
+- Git (for cloning)
 
-### 📈 Current Performance
+### API Requirements
+- Bitget account with API access
+- API Key with Futures Trading permissions
+- **Important**: Enable Read + Trade, NOT Withdraw
 
-```
-System Status: ✅ RUNNING
-Active Positions: 5-7
-Balance: ~$28-30 USDT
-Active Processes: 3
-Active Files: 17/216 (7.9%)
-CPU Usage: 2-5%
-Memory: ~500MB
-```
+## Installation
 
-### 🛠️ System Commands
+### 1. Navigate to the Directory
 
 ```bash
-# Core Operations
-./restart_aixyz_system.sh    # Full restart
-./status.sh                   # Check status
-./stop_aixyz_system.sh        # Stop all
-
-# Monitoring
-tail -f /tmp/aixyz_main.log                    # Main logs
-tail -f /var/log/surplus_executor.log          # Surplus logs
-tail -f /var/log/exchange_connector.log        # Exchange sync
-
-# Debugging
-ps aux | grep aixyz           # Check processes
-cat exchange_data.json        # View positions
+cd /root/florin_trading
 ```
 
-### 📊 Key Features
+### 2. Create Environment File
 
-#### Fibonacci Averaging System
-- Dynamically calculates safe averaging levels
-- Uses historical delta analysis
-- Adapts to market volatility
-- Maximum 5-8 averaging steps
-
-#### Surplus Dump Mechanism
-- Triggers when averaged positions recover
-- Dumps 50% of surplus at profit
-- Minimum threshold: $0.10
-- Automatic execution every 30 seconds
-
-#### Position Lifecycle
-1. **Market Scanner** finds opportunity (score > 0.3)
-2. **Position Opening** with Fibonacci parameters
-3. **Zone Monitoring** every 5 seconds
-4. **Averaging** if UPNL ≤ -25%
-5. **Surplus Dump** if recovered with averaging steps
-6. **Profit Taking** or Stop Loss
-
-### 🔧 Troubleshooting
-
-| Issue | Solution |
-|-------|----------|
-| System not starting | `pkill -f aixyz && rm *.pid && ./restart_aixyz_system.sh` |
-| Positions not syncing | Check `/var/log/exchange_connector.log` |
-| Averaging not executing | Verify UPNL ≤ -25% and margin available |
-| High CPU usage | Restart with `./restart_aixyz_system.sh` |
-
-### 📝 Documentation
-
-- **[SYSTEM_ARCHITECTURE.md](SYSTEM_ARCHITECTURE.md)** - Complete technical details
-- **[UNUSED_FILES_LIST.md](UNUSED_FILES_LIST.md)** - 201 unused files list
-- **[CARDINAL_RULES_TRADING_SYSTEM.md](CARDINAL_RULES_TRADING_SYSTEM.md)** - Core trading rules
-
-### 🚨 Safety Features
-
-- **Stop Loss**: Auto-close at -90% UPNL
-- **Position Cap**: Maximum 10 positions enforced
-- **Reserve Capital**: 30% always kept safe
-- **Exchange Sync**: Updates every 10 seconds
-- **Error Recovery**: Automatic retry with exponential backoff
-
-### 📊 System Metrics
-
-| Metric | Value |
-|--------|-------|
-| Total Python Files | 216 |
-| Active Files | 17 (7.9%) |
-| Unused Files | 201 (93.1%) |
-| Running Services | 3 |
-| Update Frequency | 5-30 seconds |
-| Log Rotation | Daily |
-
-### 🔮 Roadmap
-
-- [ ] Clean up 201 unused files
-- [ ] Implement ML market regime detection
-- [ ] Add multi-exchange support
-- [ ] Build real-time web dashboard
-- [ ] Add Telegram bot notifications
-- [ ] Create comprehensive backtesting
-
----
-
-**Version**: 2.0.0  
-**Updated**: 2025-09-17 20:22 UTC  
-**Status**: 🟢 PRODUCTION ACTIVE
-
-### Frontend Application
-- **React Dashboard** (Port 3000) - Real-time trading interface
-
-## 🔑 Bitget Integration
-
-The system is pre-configured with Bitget API credentials for live trading:
-
-```
-BITGET_API_KEY=bg_f483546274ffb2bfa567328e98dba6c0
-BITGET_API_SECRET=387cd492982a12f906a040a984d0fb3396277750f778543e869790ce4fcb2bb0
-BITGET_API_PASSPHRASE=2609Luiza
-```
-
-### Live Trading Features
-- ✅ Real-time position monitoring
-- ✅ Automated trade execution
-- ✅ Risk management and stop-losses
-- ✅ Portfolio rebalancing
-- ✅ Performance tracking
-
-## 📊 Key Features
-
-### AI Decision Engine - The Cortex
-- **5-Gate Hierarchical System**: Signal validation, risk assessment, portfolio impact, market regime, executive override
-- **Market Regime Detection**: Bull/bear/sideways/volatile market identification
-- **Confidence Scoring**: Every decision includes confidence metrics
-- **Audit Trail**: Complete decision history and reasoning
-
-### Market Scanner - The Observatory
-- **Real-time Analysis**: 15+ technical indicators (RSI, MACD, Bollinger Bands, etc.)
-- **Signal Generation**: Buy/sell signals with confidence scoring
-- **Multi-timeframe**: 1m, 5m, 15m, 1h, 4h, 1d analysis
-- **Custom Indicators**: Plugin architecture for custom indicators
-
-### Position Management - Zone-Based Strategy
-- **Accumulation Zones**: Strategic position building
-- **Distribution Zones**: Profit-taking strategies
-- **Dynamic Stop-Losses**: Trailing and zone-based stops
-- **Portfolio Balancing**: Automatic rebalancing
-- **Adaptive Fibonacci Averaging**: Automatic K coefficient calculation for safe averaging
-- **Surplus Dump Logic**: Intelligent profit-taking at 85% and 50% of peak UPNL
-- **Zone State Machine**: Neutral, Averaging, Surplus Dump, Profit Taking, Stop Loss zones
-- **Liquidation Safety**: All averaging steps maintain >10% distance from liquidation
-
-### Backtesting Engine - The Chronosphere
-- **Multiple Strategies**: RSI mean reversion, MA crossover, Bollinger Bands, momentum
-- **Walk-Forward Analysis**: Robust strategy validation
-- **Performance Metrics**: Sharpe ratio, max drawdown, win rate, profit factor
-- **Monte Carlo Simulation**: Risk assessment
-
-### ML Framework - Model Marketplace
-- **Multiple Algorithms**: Random Forest, Gradient Boosting, SVM, Logistic Regression
-- **Feature Engineering**: 8+ technical features with automatic generation
-- **Model Validation**: Cross-validation and performance tracking
-- **Prediction API**: Real-time ML predictions
-
-### Risk Engine - Real-time Risk Management
-- **Portfolio VaR**: Value at Risk calculation
-- **Position Sizing**: Dynamic position sizing based on risk
-- **Correlation Analysis**: Portfolio correlation monitoring
-- **Liquidity Risk**: Real-time liquidity assessment
-
-### Monitoring Service - The Vital Signs
-- **System Metrics**: CPU, memory, disk, network monitoring
-- **Service Health**: Real-time health checks for all services
-- **Alert Rules**: Configurable alerting system
-- **Performance Tracking**: Response times and error rates
-
-## 🔧 Configuration
-
-### Environment Variables
 ```bash
-# Bitget API Configuration
-BITGET_API_KEY=your_api_key
-BITGET_API_SECRET=your_api_secret
-BITGET_API_PASSPHRASE=your_passphrase
+# Copy the example environment file
+cp .env.example .env
 
-# Redis Configuration
-REDIS_HOST=localhost
-REDIS_PORT=6379
-
-# Database Configuration
-DATABASE_URL=postgresql://user:pass@localhost/trading_db
+# Edit with your API credentials
+nano .env
 ```
 
-### Risk Limits
-```python
-risk_limits = {
-    'max_portfolio_var': 0.05,      # 5% daily VaR
-    'max_position_size': 0.1,       # 10% of portfolio
-    'max_sector_concentration': 0.3, # 30% per sector
-    'max_correlation': 0.8,         # 80% correlation limit
-    'min_liquidity_score': 0.5      # Minimum liquidity score
-}
-```
+### 3. Configure Your API Keys
 
-## 📈 Trading Strategies
+Edit `.env` and set at minimum:
 
-### Built-in Strategies
-1. **RSI Mean Reversion** - Buy oversold, sell overbought
-2. **Moving Average Crossover** - Golden/death cross signals
-3. **Bollinger Bands** - Band touch and mean reversion
-4. **Momentum** - Trend following strategy
-
-### Custom Strategy Development
-```python
-async def custom_strategy(data, parameters, initial_capital):
-    # Your strategy logic here
-    return {
-        'final_portfolio_value': portfolio_value,
-        'trades': trades,
-        'performance_data': performance_data
-    }
-```
-
-## 🚀 Deployment
-
-### Local Development
 ```bash
-python start_system.py
+FLORIN_BITGET_API_KEY=your_actual_api_key
+FLORIN_BITGET_API_SECRET=your_actual_api_secret
+FLORIN_BITGET_API_PASSPHRASE=your_actual_passphrase
+FLORIN_DB_PASSWORD=secure_database_password
 ```
 
-### Docker Deployment
+### 4. Review Configuration
+
+Check other settings in `.env`:
+- Initial balance tracking
+- Position limits
+- Leverage settings
+- Risk management parameters
+
+## Configuration
+
+### Essential Settings
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `FLORIN_BITGET_API_KEY` | - | Your Bitget API key (required) |
+| `FLORIN_BITGET_API_SECRET` | - | Your Bitget API secret (required) |
+| `FLORIN_BITGET_API_PASSPHRASE` | - | Your Bitget passphrase (required) |
+| `FLORIN_INITIAL_BALANCE` | 100.00 | Starting balance for tracking |
+| `FLORIN_MAX_POSITIONS` | 10 | Max simultaneous positions |
+| `FLORIN_DEFAULT_LEVERAGE` | 5 | Default leverage multiplier |
+| `FLORIN_POSITION_SIZE_USD` | 10 | Size per position in USD |
+
+### Advanced Settings
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `FLORIN_USE_TESTNET` | false | Use testnet (true) or live (false) |
+| `FLORIN_LOG_LEVEL` | INFO | Logging verbosity |
+| `FLORIN_DASHBOARD_PORT` | 8081 | Web dashboard port |
+| `REDIS_DB` | 2 | Redis database number |
+
+## Running the System
+
+### Build and Start
+
 ```bash
+# Build the Docker images
+docker-compose build
+
+# Start all services
+docker-compose up -d
+
+# View logs
+docker-compose logs -f florin_trading
+```
+
+### Stop the System
+
+```bash
+# Stop all services
+docker-compose down
+
+# Stop and remove volumes (WARNING: deletes all data)
+docker-compose down -v
+```
+
+### Restart the System
+
+```bash
+# Restart specific service
+docker-compose restart florin_trading
+
+# Restart all services
+docker-compose restart
+```
+
+## Monitoring
+
+### View Logs
+
+```bash
+# Real-time logs from trading system
+docker-compose logs -f florin_trading
+
+# Last 100 lines
+docker-compose logs --tail=100 florin_trading
+
+# All services
+docker-compose logs -f
+```
+
+### Check System Status
+
+```bash
+# View running containers
+docker-compose ps
+
+# Check resource usage
+docker stats florin_trading_system
+
+# Check health status
+docker inspect florin_trading_system | grep -A 10 Health
+```
+
+### Access Container Shell
+
+```bash
+# Interactive shell
+docker-compose exec florin_trading bash
+
+# Run Python config test
+docker-compose exec florin_trading python3 florin_config.py
+
+# Check Redis connection
+docker-compose exec florin_trading python3 -c "from florin_config import get_redis_connection; r = get_redis_connection(); print('Connected:', r.ping())"
+```
+
+### Monitor Redis
+
+```bash
+# Access Redis CLI
+docker-compose exec redis redis-cli
+
+# Select Florin database (DB 2)
+redis> SELECT 2
+redis> KEYS *
+
+# Monitor commands in real-time
+redis> MONITOR
+```
+
+### Monitor PostgreSQL
+
+```bash
+# Access PostgreSQL
+docker-compose exec postgres psql -U florin_user -d florin_trading
+
+# List tables
+florin_trading=> \dt
+
+# Check recent activity
+florin_trading=> SELECT * FROM positions ORDER BY created_at DESC LIMIT 10;
+```
+
+## Troubleshooting
+
+### Container Won't Start
+
+```bash
+# Check logs for errors
+docker-compose logs florin_trading
+
+# Check if ports are available
+netstat -tulpn | grep 8081
+
+# Rebuild from scratch
+docker-compose down -v
+docker-compose build --no-cache
 docker-compose up -d
 ```
 
-### Kubernetes Deployment
+### API Connection Issues
+
 ```bash
-kubectl apply -f infrastructure/kubernetes/
+# Verify API credentials in container
+docker-compose exec florin_trading env | grep FLORIN_BITGET
+
+# Test API connection
+docker-compose exec florin_trading python3 -c "
+import os
+import ccxt
+exchange = ccxt.bitget({
+    'apiKey': os.getenv('FLORIN_BITGET_API_KEY'),
+    'secret': os.getenv('FLORIN_BITGET_API_SECRET'),
+    'password': os.getenv('FLORIN_BITGET_API_PASSPHRASE')
+})
+print('Balance:', exchange.fetch_balance())
+"
 ```
 
-### Cloud Deployment
+### Redis Connection Issues
+
 ```bash
-# AWS
-terraform apply -var-file="aws.tfvars"
+# Check Redis is running
+docker-compose ps redis
 
-# Azure
-terraform apply -var-file="azure.tfvars"
+# Test connection
+docker-compose exec redis redis-cli ping
 
-# GCP
-terraform apply -var-file="gcp.tfvars"
+# Check database isolation
+docker-compose exec florin_trading python3 florin_config.py
 ```
 
-## 📊 Performance Specifications
+### Database Migration Issues
 
-- **Latency**: <50ms for ML inference, <100ms for trading decisions
-- **Throughput**: 1000+ market data updates/second
-- **Scalability**: Supports 100+ concurrent users
-- **Availability**: 99.9% uptime with auto-recovery
-- **Data**: Multi-year historical backtesting capability
-
-## 🔍 Monitoring & Observability
-
-### Health Checks
 ```bash
-# Check all services
-curl http://localhost:8000/health
-
-# Individual service health
-curl http://localhost:8001/health  # Market Scanner
-curl http://localhost:8002/health  # AI Decision Engine
+# Reset database (WARNING: deletes all data)
+docker-compose down
+docker volume rm florin_trading_florin_postgres_data
+docker-compose up -d
 ```
 
-### Metrics
-- System metrics (CPU, memory, disk)
-- Trading metrics (P&L, positions, trades)
-- Performance metrics (latency, throughput)
-- Business metrics (win rate, Sharpe ratio)
+### Log Files Growing Too Large
 
-### Alerts
-- System alerts (high CPU, memory)
-- Trading alerts (large losses, risk limits)
-- Performance alerts (high latency, errors)
-
-## 🧪 Testing
-
-### Unit Tests
 ```bash
-pytest services/*/tests/
+# Check log sizes
+du -sh /var/log/florin_trading/*
+
+# Rotate logs (inside container)
+docker-compose exec florin_trading bash -c "
+    cd /var/log/florin_trading
+    for log in *.log; do
+        mv \$log \$log.old
+        gzip \$log.old
+    done
+"
 ```
 
-### Integration Tests
+## Isolation from ai_xyz
+
+This system is **completely isolated** from the ai_xyz trading system:
+
+### Separate Resources
+
+| Resource | ai_xyz | florin_trading |
+|----------|--------|----------------|
+| Redis DB | 1 | 2 |
+| Container Name | `ai_xyz_system` | `florin_trading_system` |
+| Network | `ai_xyz_network` | `florin_trading_network` |
+| PostgreSQL DB | `ai_xyz` | `florin_trading` |
+| Logs | `/var/log/ai_xyz` | `/var/log/florin_trading` |
+| Dashboard Port | 8080 | 8081 |
+| Docker Volumes | `ai_xyz_*` | `florin_*` |
+
+### Verification
+
 ```bash
-pytest tests/integration/
+# Check Redis isolation
+docker-compose exec redis redis-cli
+
+# In Redis CLI:
+SELECT 1  # ai_xyz database
+DBSIZE    # Number of keys in ai_xyz
+
+SELECT 2  # florin_trading database
+DBSIZE    # Number of keys in florin_trading
+
+# Check container isolation
+docker network inspect florin_trading_network
+docker network inspect ai_xyz_network
 ```
 
-### Load Tests
+### Running Both Systems
+
+Both systems can run simultaneously without conflict:
+
 ```bash
-python tests/load_test.py
+# Terminal 1: ai_xyz
+cd /root/ai_xyz
+docker-compose up -d
+
+# Terminal 2: florin_trading
+cd /root/florin_trading
+docker-compose up -d
+
+# Both systems running independently
+docker ps
 ```
 
-## 📚 API Documentation
+## Security Best Practices
 
-### API Gateway
-- **Base URL**: http://localhost:8000
-- **Swagger UI**: http://localhost:8000/docs
-- **OpenAPI Spec**: http://localhost:8000/openapi.json
+### API Security
 
-### Key Endpoints
+1. **Never commit .env file** - It's in .gitignore
+2. **Use API keys with minimal permissions**:
+   - ✅ Enable: Read, Trade
+   - ❌ Disable: Withdraw
+3. **Rotate API keys regularly**
+4. **Use IP whitelist on Bitget** (if available)
+
+### Database Security
+
+1. **Change default passwords** in `.env`
+2. **Don't expose PostgreSQL port** publicly
+3. **Regular backups** of critical data
+4. **Encrypted connections** in production
+
+### Container Security
+
+1. **Keep Docker updated**
+2. **Use specific image versions** (not `latest`)
+3. **Limit container resources**:
+   ```yaml
+   deploy:
+     resources:
+       limits:
+         cpus: '1'
+         memory: 2G
+   ```
+4. **Regular security updates**:
+   ```bash
+   docker-compose pull
+   docker-compose up -d
+   ```
+
+### Monitoring Security
+
+1. **Watch for unusual activity**:
+   ```bash
+   docker-compose logs -f | grep -i error
+   ```
+2. **Monitor system resources**:
+   ```bash
+   docker stats
+   ```
+3. **Set up alerts** for critical events
+
+## File Structure
+
 ```
-GET  /health                    # System health
-GET  /positions                 # Current positions
-POST /orders                    # Place order
-GET  /signals                   # Trading signals
-GET  /backtest                  # Run backtest
-POST /ml/predict               # ML prediction
-GET  /risk/portfolio           # Portfolio risk
+/root/florin_trading/
+├── Dockerfile                          # Container definition
+├── docker-compose.yml                  # Multi-container orchestration
+├── .env.example                        # Environment template
+├── .env                                # Your credentials (DO NOT COMMIT)
+├── README.md                           # This file
+├── florin_config.py                    # Central configuration
+├── requirements.txt                    # Python dependencies
+│
+├── aixyz_continuous_profit_system.py   # Main trading system
+├── scanner_v4.py                       # Market scanner
+├── enhanced_market_scanner.py          # Market intelligence
+├── liquidation_protection_service.py   # Risk management
+│
+├── data/                               # Persistent data
+├── logs/                               # Application logs
+├── pids/                               # Process IDs
+│
+└── State Files (JSON)
+    ├── position_state.json             # Active positions
+    ├── averaging_state.json            # Averaging data
+    ├── continuous_trading_state.json   # System state
+    └── performance_history.json        # Performance metrics
 ```
 
-## 🔐 Security
+## Support
 
-- JWT authentication
-- API rate limiting
-- Input validation
-- Secure credential storage
-- Audit logging
-- Network security
+### Logs to Check
 
-## 🤝 Contributing
+1. **Trading System**: `docker-compose logs florin_trading`
+2. **Redis**: `docker-compose logs redis`
+3. **PostgreSQL**: `docker-compose logs postgres`
 
-1. Fork the repository
-2. Create feature branch
-3. Add tests
-4. Submit pull request
+### Configuration Test
 
-## 📄 License
+```bash
+# Test configuration
+docker-compose exec florin_trading python3 florin_config.py
 
-MIT License - see LICENSE file for details
+# Should output:
+# - Redis connection status
+# - Database isolation verification
+# - API key configuration status
+```
 
-## 🆘 Support
+### Health Check
 
-- **Documentation**: See `/docs` folder
-- **Issues**: GitHub Issues
-- **Discord**: Trading System Community
-- **Email**: support@trading-system.com
+```bash
+# Check all services healthy
+docker-compose ps
+
+# All should show "Up" and "healthy"
+```
+
+## License
+
+This is a private trading system. Do not distribute without permission.
+
+## Disclaimer
+
+**CRYPTOCURRENCY TRADING INVOLVES SIGNIFICANT RISK**
+
+- This software is provided "as is" without warranty
+- Past performance does not guarantee future results
+- Only trade with capital you can afford to lose
+- Test thoroughly on testnet before live trading
+- The authors are not responsible for trading losses
 
 ---
 
-**⚠️ Risk Disclaimer**: This software is for educational and research purposes. Trading involves substantial risk of loss. Past performance does not guarantee future results. Use at your own risk.
+**Last Updated**: January 2026  
+**Version**: 1.0.0  
+**System**: Florin Trading (Isolated from ai_xyz)

@@ -104,7 +104,8 @@ class UnifiedTradingEngine:
                 'enableRateLimit': True,
                 'options': {
                     'defaultType': 'swap',
-                    'productType': 'USDT-FUTURES'
+                    'productType': 'USDT-FUTURES',
+                    'positionMode': 'hedge'
                 }
             })
 

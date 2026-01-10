@@ -1,54 +1,124 @@
 version: '3.8'
 
 services:
-  ai_xyz_trading:
+  florin_trading:
     build: .
-    container_name: ai_xyz_system
+    container_name: florin_trading_system
     restart: unless-stopped
     environment:
-      - BITGET_API_KEY=${BITGET_API_KEY}
-      - BITGET_SECRET=${BITGET_SECRET}
-      - BITGET_PASSPHRASE=${BITGET_PASSPHRASE}
-      - REDIS_URL=redis://redis:6379
-      - DATABASE_URL=postgresql://user:password@postgres:5432/ai_xyz
+      # Florin-specific API credentials
+      - BITGET_API_KEY=${FLORIN_BITGET_API_KEY}
+      - BITGET_API_SECRET=${FLORIN_BITGET_API_SECRET}
+      - BITGET_API_PASSPHRASE=${FLORIN_BITGET_API_PASSPHRASE}
+
+      # Redis configuration (using DB 2 for isolation)
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=2
+      - REDIS_URL=redis://redis:6379/2
+
+      # PostgreSQL configuration
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - DATABASE_URL=postgresql://florin_user:${FLORIN_DB_PASSWORD:-florin_pass_2025}@postgres:5432/florin_trading
+
+      # Trading configuration
+      - INITIAL_BALANCE=${FLORIN_INITIAL_BALANCE:-100.00}
+      - MAX_POSITIONS=${FLORIN_MAX_POSITIONS:-10}
+      - USE_TESTNET=${FLORIN_USE_TESTNET:-false}
+      - DEFAULT_LEVERAGE=${FLORIN_DEFAULT_LEVERAGE:-5}
+      - MAX_LEVERAGE=${FLORIN_MAX_LEVERAGE:-20}
+      - POSITION_SIZE_USD=${FLORIN_POSITION_SIZE_USD:-10}
+
+      # Logging
+      - LOG_DIR=/var/log/florin_trading
+      - LOG_LEVEL=${FLORIN_LOG_LEVEL:-INFO}
+      - LOG_TO_FILE=true
+
+      # System paths
+      - DATA_DIR=/app/data
+      - PYTHONUNBUFFERED=1
+      - PYTHONPATH=/app
+
     volumes:
+      # Persistent logs
+      - florin_logs:/var/log/florin_trading
       - ./logs:/app/logs
-      - ./data:/app/data
+
+      # Persistent data
+      - florin_data:/app/data
+
+      # State files (mounted from host for easy access)
       - ./position_state.json:/app/position_state.json
       - ./averaging_state.json:/app/averaging_state.json
       - ./continuous_trading_state.json:/app/continuous_trading_state.json
+      - ./performance_history.json:/app/performance_history.json
+
+    ports:
+      # Web dashboard (if needed)
+      - "${FLORIN_DASHBOARD_PORT:-8081}:8080"
+
     networks:
-      - ai_xyz_network
+      - florin_network
+
     depends_on:
-      - redis
-      - postgres
+      redis:
+        condition: service_started
+      postgres:
+        condition: service_started
+
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import sys; sys.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   redis:
     image: redis:7-alpine
-    container_name: ai_xyz_redis
+    container_name: florin_redis
     restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
     volumes:
-      - redis_data:/data
+      - florin_redis_data:/data
     networks:
-      - ai_xyz_network
+      - florin_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
 
   postgres:
     image: timescale/timescaledb:latest-pg15
-    container_name: ai_xyz_postgres
+    container_name: florin_postgres
     restart: unless-stopped
     environment:
-      - POSTGRES_USER=user
-      - POSTGRES_PASSWORD=password
-      - POSTGRES_DB=ai_xyz
+      - POSTGRES_USER=florin_user
+      - POSTGRES_PASSWORD=${FLORIN_DB_PASSWORD:-florin_pass_2025}
+      - POSTGRES_DB=florin_trading
+      - PGDATA=/var/lib/postgresql/data/pgdata
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - florin_postgres_data:/var/lib/postgresql/data
     networks:
-      - ai_xyz_network
+      - florin_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U florin_user -d florin_trading"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
 
 volumes:
-  redis_data:
-  postgres_data:
+  florin_redis_data:
+    driver: local
+  florin_postgres_data:
+    driver: local
+  florin_logs:
+    driver: local
+  florin_data:
+    driver: local
 
 networks:
-  ai_xyz_network:
+  florin_network:
     driver: bridge
+    name: florin_trading_network

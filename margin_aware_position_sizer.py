@@ -20,8 +20,8 @@ class MarginAwarePositionSizer:
         self.maintenance_margin_ratio = 0.005  # 0.5% maintenance margin
         self.liquidation_penalty = 0.01  # 1% liquidation penalty
 
-        # Default averaging parameters
-        self.default_averaging_steps = [1.0, 2.0, 3.0, 5.0, 8.0]  # Fibonacci multipliers
+        # Default averaging parameters - FLORIN'S ACCOUNT: Reduced steps for $5 capital
+        self.default_averaging_steps = [1.0, 1.0, 2.0]  # 3 steps: [1, 1, 2] for Florin's account
         self.averaging_trigger_pct = -0.05  # -5% triggers averaging
 
     def calculate_safe_position_size(self,
@@ -50,7 +50,8 @@ class MarginAwarePositionSizer:
         volatility_factor = min(1.0, 50.0 / max(volatility_pct, 1.0))  # Cap at 50% vol
 
         # Safe margin allocation (leave buffer for fees and slippage)
-        safe_margin_allocation = account_balance * 0.15 * volatility_factor  # 15% of balance max
+        # FLORIN'S ACCOUNT: Use 70% allocation for $5 capital (matching position_sizing_config.py)
+        safe_margin_allocation = account_balance * 0.70 * volatility_factor  # 70% of balance for Florin's account
 
         # Calculate position size that allows all averaging steps
         # Position value = margin * leverage
