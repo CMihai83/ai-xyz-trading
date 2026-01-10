@@ -7,6 +7,7 @@ Distributes the full 70% capital ($17.50) across averaging steps based on timefr
 import numpy as np
 from typing import Dict, List, Tuple
 import structlog
+from position_sizing_config import PositionSizingConfig
 
 logger = structlog.get_logger(__name__)
 
@@ -29,9 +30,9 @@ class TimeframeCapitalAllocator:
     }
     
     # Steps per timeframe (how many averaging steps in each timeframe)
-    # FLORIN'S ACCOUNT: 4 steps total (initial + 3 averaging) in single timeframe
+    # 4 steps total (initial + 3 averaging) in single timeframe
     STEPS_PER_TIMEFRAME = {
-        '1m': 4,   # 4 steps: Initial ($0.70) + 3 averaging steps
+        '1m': 4,   # 4 steps: Initial ($5.00) + 3 averaging steps
         '5m': 0,   # Disabled
         '15m': 0,  # Disabled
         '1h': 0,   # Disabled
@@ -39,15 +40,22 @@ class TimeframeCapitalAllocator:
         '1d': 0,   # Disabled
     }
     
-    def __init__(self, total_capital: float = 80.0, allocation_percent: float = 0.70, min_initial_position: float = 40.0):
+    def __init__(self, total_capital: float = None, allocation_percent: float = None, min_initial_position: float = None):
         """
         Initialize the capital allocator
 
         Args:
-            total_capital: Total capital available (default $80)
+            total_capital: Total capital available (default from PositionSizingConfig)
             allocation_percent: Percent to allocate for trading (default 70%)
-            min_initial_position: Minimum initial position size after leverage (default $40)
+            min_initial_position: Minimum initial position size after leverage (default BASE_POSITION_VALUE)
         """
+        # Use config values as defaults
+        if total_capital is None:
+            total_capital = PositionSizingConfig.TOTAL_CAPITAL  # $25
+        if allocation_percent is None:
+            allocation_percent = PositionSizingConfig.TRADING_CAPITAL_PERCENT  # 0.70
+        if min_initial_position is None:
+            min_initial_position = PositionSizingConfig.BASE_POSITION_VALUE  # $32.50 ($5 × 6.5x)
         self.total_capital = total_capital
         self.allocation_percent = allocation_percent
         self.trading_capital = total_capital * allocation_percent
@@ -65,7 +73,7 @@ class TimeframeCapitalAllocator:
         self,
         current_delta: float,
         leverage: int = 10,
-        min_notional: float = 7.0  # FLORIN'S ACCOUNT: $0.70 × 10x = $7 notional
+        min_notional: float = None  # Will use PositionSizingConfig.BASE_MARGIN_SIZE * leverage if not provided
     ) -> Dict[str, Dict]:
         """
         Calculate capital allocation for each timeframe
@@ -73,11 +81,15 @@ class TimeframeCapitalAllocator:
         Args:
             current_delta: Current price delta percentage
             leverage: Trading leverage
-            min_notional: Minimum notional position size after leverage (default $7 for Florin's account)
+            min_notional: Minimum notional position size after leverage (default: BASE_MARGIN_SIZE * leverage)
 
         Returns:
             Dictionary with allocations per timeframe
         """
+        # Set default min_notional based on config if not provided
+        if min_notional is None:
+            min_notional = PositionSizingConfig.BASE_MARGIN_SIZE * leverage  # $5 × 10 = $50 notional
+
         allocations = {}
         remaining_capital = self.trading_capital
 
@@ -85,8 +97,8 @@ class TimeframeCapitalAllocator:
         active_timeframes = self._get_active_timeframes(current_delta)
 
         # Calculate minimum margin needed for initial position
-        # FLORIN'S ACCOUNT: $0.70 initial margin before leverage
-        min_initial_margin = 0.70  # $0.70 initial margin before leverage (reduced for $5 total capital)
+        # Use configured base margin size from PositionSizingConfig
+        min_initial_margin = PositionSizingConfig.BASE_MARGIN_SIZE  # $5.00 initial margin before leverage
 
         # Ensure first timeframe gets enough capital for min_initial_position
         # Reserve capital for initial position first
