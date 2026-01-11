@@ -350,4 +350,55 @@ redis_port = int(os.getenv('REDIS_PORT', 6379))
 
 ---
 
-**Version**: 1.0 | **Last Updated**: January 10, 2026
+## 13. AUTHORITATIVE SYSTEM DOCUMENTATION
+
+### 13.1 Primary Documentation (MEMORIZED)
+
+**IMPORTANT**: The authoritative comprehensive system documentation is:
+
+```
+/root/ai_xyz/AI_XYZ_SYSTEM_DOCUMENTATION_V2.md
+```
+
+**Version**: 2.0
+**Created**: January 11, 2026
+**Authors**: Claude (Opus 4.5) & Grok Consortium Analysis
+**Lines**: 1,188
+
+This document contains:
+- Complete system architecture with diagrams
+- ALL mathematical formulas with file:line references
+- Zone-based position management state machine
+- Fibonacci averaging system with golden ratio tiers
+- CSSI (Correction-Support Strength Index) full documentation
+- Multi-timeframe confirmation (MTF) logic
+- Risk management framework
+- AI/ML modules catalog (68+ modules documented)
+- State management and persistence details
+- Market Scanner V4.0 two-stage filtering
+- Complete file reference with line numbers
+- All configuration variables
+- 14 improvement recommendations with code examples
+
+### 13.2 Archived Documentation
+
+**Location**: `/root/ai_xyz/docs_archive/`
+
+All previous documentation files (86 files) were archived on January 11, 2026.
+These are **OBSOLETE** and superseded by `AI_XYZ_SYSTEM_DOCUMENTATION_V2.md`.
+
+See `docs_archive/ARCHIVE_NOTICE.md` for details.
+
+### 13.3 Key Formula Quick Reference
+
+| Formula | Expression | Source |
+|---------|------------|--------|
+| **UPNL%** | `(current - entry) / entry × lev × 100` | main.py:2556 |
+| **Dynamic Delta** | `base × vol_mult × corr_factor` | delta.py:165 |
+| **Liquidation Price** | `entry × (1 ± upnl% / (lev × 100))` | liq.py:258 |
+| **CSSI** | `correction% × proximity × risk_factor` | cssi.py:713 |
+| **Correction Prob** | `1 / (1 + exp(-(β₀ + β₁d + β₂d²)))` | cssi.py:360 |
+
+---
+
+**Version**: 2.0 | **Last Updated**: January 11, 2026
