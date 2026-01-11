@@ -1265,21 +1265,67 @@ class AIXYZContinuousProfit:
             return opportunities
 
     def get_fibonacci_parameters(self, symbol: str, direction: str, volatility: float, confidence: float = 0.5) -> Dict:
-        """Get Fibonacci-optimized trading parameters for a position"""
+        """Get Fibonacci-optimized trading parameters for a position
+
+        Uses HistoricalCorrectionAnalyzer as primary source, falls back to
+        Fibonacci system if historical analysis fails.
+        """
         try:
+            # STEP 1: Try HistoricalCorrectionAnalyzer first (data-driven approach)
+            print(f"  📊 Analyzing historical corrections for {symbol}...")
+            try:
+                from historical_correction_analyzer import get_correction_analyzer
+                correction_analyzer = get_correction_analyzer(self.exchange)
+                historical_params = correction_analyzer.get_averaging_params(symbol)
+
+                if historical_params and historical_params.get('confidence', 0) >= 0.3:
+                    print(f"  ✅ Using Historical Correction Analysis (confidence: {historical_params['confidence']*100:.0f}%)")
+                    print(f"     Initial margin: ${historical_params['initial_margin']:.2f}")
+                    print(f"     Num steps: {historical_params['max_averaging_steps']}")
+                    print(f"     Step margins: {historical_params['step_margins']}")
+                    print(f"     Avg correction: {historical_params['avg_correction_pct']*100:.1f}%")
+                    print(f"     Worst delta: {historical_params['delta_worst']*100:.1f}%")
+
+                    # Convert to fib_params format
+                    from position_sizing_config import PositionSizingConfig
+                    return {
+                        'safe_to_trade': True,
+                        'leverage': 10,  # Will be optimized separately
+                        'max_averaging_steps': historical_params['max_averaging_steps'],
+                        'total_capital_needed': historical_params['total_capital'],
+                        'max_drawdown_pct': historical_params['delta_worst'] * 100,
+                        'position_multipliers': historical_params['position_multipliers'],
+                        'averaging_thresholds': historical_params['averaging_thresholds'],
+                        'k_coefficient': 1.0,
+                        'min_safety_distance': 0.10,
+                        'initial_margin': historical_params['initial_margin'],
+                        'step_margins': historical_params['step_margins'],
+                        'correction_probs': historical_params['correction_probs'],
+                        'avg_correction_pct': historical_params['avg_correction_pct'],
+                        'source': 'historical_correction_analyzer',
+                        'averaging_plan': historical_params
+                    }
+                else:
+                    print(f"  ⚠️ Historical analysis low confidence ({historical_params.get('confidence', 0)*100:.0f}% < 30%), using Fibonacci fallback")
+            except Exception as hist_error:
+                print(f"  ⚠️ Historical analysis failed: {hist_error}, using Fibonacci fallback")
+
+            # STEP 2: Fallback to Fibonacci system
+            print(f"  🔄 Using Fibonacci averaging system (fallback)...")
+
             # Import the Fibonacci service
             import sys
             sys.path.append('/root/ai_xyz/services/api-gateway/src')
             from fibonacci_averaging_service import FibonacciAveragingService
-            
+
             # Initialize service if not already done
             if not hasattr(self, 'fibonacci_service'):
                 self.fibonacci_service = FibonacciAveragingService()
-            
+
             # Get current price for calculation
             ticker = self.exchange.fetch_ticker(symbol)
             current_price = ticker['last']
-            
+
             # Use Dynamic Fibonacci Delta (Grok AI recommendation - volatility adaptive)
             print(f"  🎯 Calculating dynamic Fibonacci delta for {symbol}...")
             audit_logger.start_trade_audit(symbol, "fibonacci_params")
@@ -2781,8 +2827,78 @@ class AIXYZContinuousProfit:
                     if remaining_margin <= 0.1 or remaining_steps <= 0:
                         print(f"  ⚠️ No margin left for averaging (used ${total_margin_used:.2f} of ${max_margin_per_position:.2f})")
                         return False
-                    
-                    # V3: Use adaptive averaging engine for dynamic step planning
+
+                    # CHECK: If using HistoricalCorrectionAnalyzer, use pre-calculated step_margins
+                    if fib_config.get('source') == 'historical_correction_analyzer':
+                        step_margins = fib_config.get('step_margins', [])
+                        if step < len(step_margins):
+                            historical_margin = step_margins[step]
+                            correction_prob = fib_config.get('correction_probs', [])[step] if step < len(fib_config.get('correction_probs', [])) else 0.5
+                            print(f"  📊 Using Historical Correction Analysis for step {step+1}")
+                            print(f"     Step margin: ${historical_margin:.2f}")
+                            print(f"     Correction probability: {correction_prob*100:.0f}%")
+
+                            # Use the pre-calculated margin directly
+                            margin_to_add = min(historical_margin, remaining_margin)
+                            multiplier = margin_to_add / original_margin
+
+                            # Get current ticker price for new order
+                            ticker = self.exchange.fetch_ticker(symbol)
+                            current_price = ticker['last']
+
+                            # Calculate contracts to add
+                            position_value_to_add = margin_to_add * leverage
+                            avg_amount = position_value_to_add / current_price
+
+                            # Use order size helper
+                            from order_size_helper import OrderSizeHelper
+                            size_helper = OrderSizeHelper()
+                            avg_amount = size_helper.prepare_order_size(symbol, avg_amount, round_up=True)
+
+                            # Get balance for logging
+                            balance_info = self.exchange.fetch_balance()
+                            free_balance = balance_info['USDT']['free']
+
+                            if free_balance < margin_to_add:
+                                print(f"  ⚠️ Insufficient balance for historical margin")
+                                print(f"     Required: ${margin_to_add:.2f}, Available: ${free_balance:.2f}")
+                                return False
+
+                            print(f"\n📉 Averaging {symbol} - Step {step + 1} (Historical Correction)")
+                            print(f"  💰 Margin to add: ${margin_to_add:.2f} (prob-weighted)")
+                            print(f"  📈 Adding: {avg_amount:.4f} contracts")
+                            print(f"  💰 Free balance: ${free_balance:.2f}")
+
+                            # Execute the order (skip to order execution section)
+                            avg_side = 'sell' if position['side'] == 'short' else 'buy'
+                            order_params = {'marginCoin': 'USDT'}
+                            if avg_side == 'buy':
+                                order = self.exchange.create_market_buy_order(symbol, avg_amount, params=order_params)
+                            else:
+                                order = self.exchange.create_market_sell_order(symbol, avg_amount, params=order_params)
+
+                            # Update position tracking
+                            if symbol in self.active_positions:
+                                self.active_positions[symbol]['amount'] += avg_amount
+                                position['amount'] += avg_amount
+
+                            self.averaging_steps[symbol] += 1
+                            self.position_zones[symbol] = 'AVERAGING'
+
+                            # Save state
+                            if self.persistence:
+                                self.persistence.save_position_state(
+                                    self.active_positions, self.position_zones,
+                                    self.averaging_steps, self.peak_upnl,
+                                    self.surplus_dump_stage, self.original_sizes,
+                                    self.position_multipliers
+                                )
+                                print(f"  💾 State saved - averaging_steps[{symbol}] = {self.averaging_steps[symbol]}")
+
+                            print(f"  ✅ Historical averaging executed - Step {step + 1}")
+                            return True
+
+                    # FALLBACK: Use adaptive averaging engine for dynamic step planning
                     # Get current position data
                     position_data = {
                         'entry_price': position.get('entry_price', position.get('entryPrice', current_price)),
