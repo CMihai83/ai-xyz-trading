@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Historical Correction Analyzer Service
-======================================
+Historical Correction Analyzer Service (v2.0 - Grok Enhanced)
+==============================================================
 Analyzes historical price data to calculate optimal averaging parameters.
 
 Key Concepts:
@@ -9,11 +9,18 @@ Key Concepts:
 - Deeper drawdowns have HIGHER probability of correction (mean reversion)
 - Step margins INCREASE with depth to capitalize on higher-probability reversals
 
+NEW in v2.0 (Grok Consortium Integration):
+- Support Zone Detection (VWAP, Fibonacci retracement levels)
+- CSSI (Correction-Support Strength Index) calculation
+- Risk-adjusted position sizing based on delta_worst
+- Dynamic step margin adjustments based on proximity to support
+
 Calculates per symbol:
 - Initial margin (min $2, dynamically adjusted)
 - Number of averaging steps
 - Step margins (increasing with depth based on correction probability)
 - Correction statistics from multiple timeframes
+- Support zone proximity and CSSI scores
 
 Author: AI-XYZ Trading System (Grok-assisted design)
 Date: January 2026
@@ -22,7 +29,7 @@ Date: January 2026
 import numpy as np
 import pandas as pd
 from typing import Dict, List, Optional, Tuple
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 import structlog
 import json
@@ -41,6 +48,41 @@ class CorrectionStats:
 
 
 @dataclass
+class SupportZone:
+    """Support zone analysis result (Grok v2.0)"""
+    symbol: str
+    current_price: float
+    # Fibonacci retracement levels (from recent swing high/low)
+    fib_236: float  # 23.6% retracement
+    fib_382: float  # 38.2% retracement
+    fib_500: float  # 50% retracement
+    fib_618: float  # 61.8% retracement (golden ratio)
+    # VWAP levels
+    vwap: float  # Current VWAP
+    vwap_lower_1std: float  # VWAP - 1 std
+    vwap_lower_2std: float  # VWAP - 2 std
+    # Bollinger Bands
+    bb_lower: float  # Lower Bollinger Band (20, 2)
+    bb_lower_2std: float  # Lower BB at 2.5 std
+    # Calculated support strength
+    nearest_support: float  # Nearest support level
+    proximity_to_support: float  # 0-1 (1 = at support)
+    support_type: str  # 'fib_618', 'vwap', 'bb_lower', etc.
+
+
+@dataclass
+class CSSI:
+    """Correction-Support Strength Index (Grok v2.0)"""
+    symbol: str
+    cssi_score: float  # Main CSSI score (higher = stronger reversal signal)
+    correction_probability: float  # Historical correction probability
+    support_proximity: float  # How close to support (0-1)
+    risk_factor: float  # Risk adjustment based on delta_worst
+    recommended_action: str  # 'AVERAGE_IN', 'HOLD', 'REDUCE'
+    step_multiplier: float  # Multiplier for step margin (0.5-2.0)
+
+
+@dataclass
 class DynamicAveragingPlan:
     """Complete averaging plan for a position"""
     symbol: str
@@ -54,6 +96,11 @@ class DynamicAveragingPlan:
     timeframe_used: str  # Best timeframe for this symbol
     total_capital: float  # Total capital allocated
     confidence: float  # Confidence in the analysis (0-1)
+    # NEW in v2.0 (Grok Integration)
+    support_zone: Optional[SupportZone] = None  # Current support zone analysis
+    cssi: Optional[CSSI] = None  # Current CSSI score
+    risk_profile: str = "MEDIUM"  # LOW, MEDIUM, HIGH based on delta_worst
+    cssi_adjusted_margins: List[float] = field(default_factory=list)  # Margins adjusted by CSSI
 
 
 class HistoricalCorrectionAnalyzer:
@@ -397,6 +444,349 @@ class HistoricalCorrectionAnalyzer:
             confidence=round(confidence, 2)
         )
 
+    # =========================================================================
+    # GROK v2.0: Support Zone and CSSI Methods
+    # =========================================================================
+
+    def calculate_vwap(self, df: pd.DataFrame) -> Tuple[float, float, float]:
+        """
+        Calculate VWAP and standard deviation bands.
+
+        VWAP = Σ(Typical Price × Volume) / Σ(Volume)
+
+        Args:
+            df: OHLCV DataFrame
+
+        Returns:
+            Tuple of (vwap, vwap_lower_1std, vwap_lower_2std)
+        """
+        if df is None or len(df) < 20:
+            return (0, 0, 0)
+
+        df = df.copy()
+        df['typical_price'] = (df['high'] + df['low'] + df['close']) / 3
+        df['tp_volume'] = df['typical_price'] * df['volume']
+        df['cumulative_volume'] = df['volume'].cumsum()
+        df['cumulative_tp_volume'] = df['tp_volume'].cumsum()
+
+        # VWAP
+        df['vwap'] = df['cumulative_tp_volume'] / df['cumulative_volume']
+
+        # Standard deviation of price from VWAP
+        df['vwap_diff'] = df['typical_price'] - df['vwap']
+        df['vwap_diff_sq'] = df['vwap_diff'] ** 2
+        vwap_std = np.sqrt(df['vwap_diff_sq'].rolling(window=20).mean())
+
+        current_vwap = df['vwap'].iloc[-1]
+        current_std = vwap_std.iloc[-1] if not np.isnan(vwap_std.iloc[-1]) else df['close'].std() * 0.1
+
+        return (
+            current_vwap,
+            current_vwap - 1.5 * current_std,
+            current_vwap - 2.5 * current_std
+        )
+
+    def calculate_fibonacci_levels(self, df: pd.DataFrame, lookback: int = 100) -> Dict[str, float]:
+        """
+        Calculate Fibonacci retracement levels from recent swing high/low.
+
+        Args:
+            df: OHLCV DataFrame
+            lookback: Number of candles to find swing points
+
+        Returns:
+            Dict with Fib levels (23.6%, 38.2%, 50%, 61.8%)
+        """
+        if df is None or len(df) < lookback:
+            return {}
+
+        recent_data = df.iloc[-lookback:]
+        swing_high = recent_data['high'].max()
+        swing_low = recent_data['low'].min()
+
+        range_size = swing_high - swing_low
+
+        return {
+            'swing_high': swing_high,
+            'swing_low': swing_low,
+            'fib_236': swing_low + 0.236 * range_size,
+            'fib_382': swing_low + 0.382 * range_size,
+            'fib_500': swing_low + 0.500 * range_size,
+            'fib_618': swing_low + 0.618 * range_size,
+            'fib_786': swing_low + 0.786 * range_size
+        }
+
+    def calculate_bollinger_bands(self, df: pd.DataFrame, period: int = 20) -> Tuple[float, float, float]:
+        """
+        Calculate Bollinger Bands.
+
+        Args:
+            df: OHLCV DataFrame
+            period: MA period (default 20)
+
+        Returns:
+            Tuple of (middle, lower_2std, lower_2.5std)
+        """
+        if df is None or len(df) < period:
+            return (0, 0, 0)
+
+        df = df.copy()
+        df['sma'] = df['close'].rolling(window=period).mean()
+        df['std'] = df['close'].rolling(window=period).std()
+
+        current_sma = df['sma'].iloc[-1]
+        current_std = df['std'].iloc[-1]
+
+        return (
+            current_sma,
+            current_sma - 2.0 * current_std,
+            current_sma - 2.5 * current_std
+        )
+
+    def calculate_support_zones(self, symbol: str, df: pd.DataFrame) -> Optional[SupportZone]:
+        """
+        Calculate comprehensive support zone analysis.
+
+        Combines VWAP, Fibonacci, and Bollinger Bands to identify
+        key support levels and proximity.
+
+        Args:
+            symbol: Trading pair
+            df: OHLCV DataFrame
+
+        Returns:
+            SupportZone object or None
+        """
+        if df is None or len(df) < 100:
+            return None
+
+        current_price = df['close'].iloc[-1]
+
+        # Calculate all indicators
+        vwap, vwap_1std, vwap_2std = self.calculate_vwap(df)
+        fib_levels = self.calculate_fibonacci_levels(df)
+        bb_mid, bb_lower, bb_lower_25 = self.calculate_bollinger_bands(df)
+
+        if not fib_levels:
+            return None
+
+        # Collect all support levels with their types
+        support_levels = [
+            (fib_levels.get('fib_618', 0), 'fib_618'),
+            (fib_levels.get('fib_500', 0), 'fib_500'),
+            (fib_levels.get('fib_382', 0), 'fib_382'),
+            (vwap_1std, 'vwap_1std'),
+            (vwap_2std, 'vwap_2std'),
+            (bb_lower, 'bb_lower'),
+            (bb_lower_25, 'bb_lower_25'),
+            (fib_levels.get('swing_low', 0), 'swing_low')
+        ]
+
+        # Filter valid supports below current price
+        valid_supports = [(level, stype) for level, stype in support_levels
+                         if 0 < level < current_price]
+
+        if not valid_supports:
+            # Price is at or below all supports
+            nearest_support = fib_levels.get('swing_low', current_price * 0.95)
+            support_type = 'swing_low'
+            proximity = 0.95  # Already at support
+        else:
+            # Find nearest support
+            nearest_support, support_type = max(valid_supports, key=lambda x: x[0])
+
+            # Calculate proximity (0 = far, 1 = at support)
+            distance_pct = (current_price - nearest_support) / current_price
+            proximity = max(0, 1 - distance_pct * 10)  # 10% distance = 0 proximity
+
+        return SupportZone(
+            symbol=symbol,
+            current_price=current_price,
+            fib_236=fib_levels.get('fib_236', 0),
+            fib_382=fib_levels.get('fib_382', 0),
+            fib_500=fib_levels.get('fib_500', 0),
+            fib_618=fib_levels.get('fib_618', 0),
+            vwap=vwap,
+            vwap_lower_1std=vwap_1std,
+            vwap_lower_2std=vwap_2std,
+            bb_lower=bb_lower,
+            bb_lower_2std=bb_lower_25,
+            nearest_support=nearest_support,
+            proximity_to_support=round(proximity, 3),
+            support_type=support_type
+        )
+
+    def calculate_multi_timeframe_confirmation(
+        self,
+        symbol: str,
+        timeframes: List[str] = ['5m', '15m', '1h']
+    ) -> Dict[str, any]:
+        """
+        Confirm support zones across multiple timeframes.
+
+        Higher confirmation when multiple timeframes agree on support.
+
+        Args:
+            symbol: Trading pair
+            timeframes: List of timeframes to analyze
+
+        Returns:
+            Dict with MTF confirmation data
+        """
+        confirmations = []
+        support_zones = {}
+
+        for tf in timeframes:
+            try:
+                df = self.fetch_ohlcv(symbol, tf, limit=500)
+                if df is None:
+                    continue
+
+                support_zone = self.calculate_support_zones(symbol, df)
+                if support_zone:
+                    support_zones[tf] = support_zone
+
+                    # Count as confirmation if proximity > 0.5
+                    if support_zone.proximity_to_support > 0.5:
+                        confirmations.append({
+                            'timeframe': tf,
+                            'support_type': support_zone.support_type,
+                            'proximity': support_zone.proximity_to_support,
+                            'nearest_support': support_zone.nearest_support
+                        })
+            except Exception as e:
+                logger.warning(f"MTF analysis failed for {tf}", error=str(e))
+
+        # Calculate MTF score
+        mtf_score = len(confirmations) / len(timeframes) if timeframes else 0
+
+        # Find consensus support level (average of confirmed supports)
+        if confirmations:
+            consensus_support = np.mean([c['nearest_support'] for c in confirmations])
+            dominant_type = max(set(c['support_type'] for c in confirmations),
+                               key=lambda x: [c['support_type'] for c in confirmations].count(x))
+        else:
+            consensus_support = 0
+            dominant_type = 'none'
+
+        return {
+            'mtf_score': round(mtf_score, 2),
+            'confirmations': confirmations,
+            'num_confirmations': len(confirmations),
+            'consensus_support': round(consensus_support, 6) if consensus_support else 0,
+            'dominant_support_type': dominant_type,
+            'support_zones': support_zones
+        }
+
+    def calculate_cssi(
+        self,
+        symbol: str,
+        historical_correction_pct: float,
+        support_zone: SupportZone,
+        delta_worst: float,
+        max_delta_in_portfolio: float = 0.20
+    ) -> CSSI:
+        """
+        Calculate Correction-Support Strength Index.
+
+        CSSI = (Historical_Correction% / 100) × Proximity_to_Support × Risk_Factor
+
+        Args:
+            symbol: Trading pair
+            historical_correction_pct: Average historical correction %
+            support_zone: Current support zone analysis
+            delta_worst: Worst case drawdown for this symbol
+            max_delta_in_portfolio: Maximum delta in portfolio for normalization
+
+        Returns:
+            CSSI object with score and recommendations
+        """
+        # Extract components
+        correction_factor = historical_correction_pct / 100.0
+        proximity = support_zone.proximity_to_support if support_zone else 0.5
+
+        # Risk factor: Lower delta_worst = higher factor (safer to average)
+        # Formula: 1 - (delta_worst / max_delta)
+        risk_factor = max(0.3, 1 - (delta_worst / max_delta_in_portfolio))
+
+        # Calculate CSSI
+        cssi_score = correction_factor * proximity * risk_factor
+
+        # Determine action and step multiplier
+        if cssi_score >= 1.5:
+            action = 'AVERAGE_IN_AGGRESSIVE'
+            step_multiplier = min(2.0, 1.0 + cssi_score * 0.3)
+        elif cssi_score >= 1.0:
+            action = 'AVERAGE_IN'
+            step_multiplier = min(1.5, 1.0 + cssi_score * 0.2)
+        elif cssi_score >= 0.5:
+            action = 'HOLD'
+            step_multiplier = 1.0
+        else:
+            action = 'REDUCE'
+            step_multiplier = max(0.5, cssi_score)
+
+        return CSSI(
+            symbol=symbol,
+            cssi_score=round(cssi_score, 3),
+            correction_probability=round(correction_factor, 3),
+            support_proximity=round(proximity, 3),
+            risk_factor=round(risk_factor, 3),
+            recommended_action=action,
+            step_multiplier=round(step_multiplier, 3)
+        )
+
+    def get_risk_profile(self, delta_worst: float) -> str:
+        """
+        Determine risk profile based on delta_worst.
+
+        Args:
+            delta_worst: Worst case drawdown
+
+        Returns:
+            Risk profile string ('LOW', 'MEDIUM', 'HIGH')
+        """
+        if delta_worst < 0.05:
+            return 'LOW'
+        elif delta_worst < 0.12:
+            return 'MEDIUM'
+        else:
+            return 'HIGH'
+
+    def adjust_margins_by_cssi(
+        self,
+        step_margins: List[float],
+        cssi: CSSI,
+        total_capital: float = 20.0
+    ) -> List[float]:
+        """
+        Adjust step margins based on CSSI score.
+
+        Args:
+            step_margins: Original step margins
+            cssi: CSSI analysis result
+            total_capital: Total averaging capital
+
+        Returns:
+            Adjusted step margins
+        """
+        multiplier = cssi.step_multiplier
+
+        # Apply multiplier
+        adjusted = [m * multiplier for m in step_margins]
+
+        # Normalize to ensure total doesn't exceed capital
+        total = sum(adjusted)
+        if total > total_capital:
+            scale = total_capital / total
+            adjusted = [m * scale for m in adjusted]
+
+        return [round(m, 2) for m in adjusted]
+
+    # =========================================================================
+    # End of Grok v2.0 Methods
+    # =========================================================================
+
     def analyze_symbol(self, symbol: str, use_cache: bool = True) -> Optional[DynamicAveragingPlan]:
         """
         Perform complete historical analysis for a symbol.
@@ -475,8 +865,58 @@ class HistoricalCorrectionAnalyzer:
                             timeframe=timeframe,
                             error=str(e))
 
-        # Cache result
+        # Cache result and enhance with Grok v2.0 features
         if best_plan:
+            # =========================================================
+            # GROK v2.0: Add Support Zone and CSSI Analysis
+            # =========================================================
+            try:
+                # Fetch fresh data for support zone analysis
+                df_support = self.fetch_ohlcv(symbol, '15m', limit=500)
+
+                if df_support is not None:
+                    # Calculate support zones
+                    support_zone = self.calculate_support_zones(symbol, df_support)
+                    best_plan.support_zone = support_zone
+
+                    # Calculate CSSI
+                    if support_zone:
+                        cssi = self.calculate_cssi(
+                            symbol=symbol,
+                            historical_correction_pct=best_plan.avg_correction_pct * 100,
+                            support_zone=support_zone,
+                            delta_worst=best_plan.delta_worst
+                        )
+                        best_plan.cssi = cssi
+
+                        # Adjust margins by CSSI
+                        best_plan.cssi_adjusted_margins = self.adjust_margins_by_cssi(
+                            best_plan.step_margins,
+                            cssi,
+                            self.AVERAGING_CAPITAL
+                        )
+
+                        logger.info("CSSI analysis complete",
+                                   symbol=symbol,
+                                   cssi_score=cssi.cssi_score,
+                                   action=cssi.recommended_action,
+                                   support_type=support_zone.support_type,
+                                   proximity=support_zone.proximity_to_support)
+
+                    # Determine risk profile
+                    best_plan.risk_profile = self.get_risk_profile(best_plan.delta_worst)
+
+                # Multi-timeframe confirmation (optional - can be slow)
+                # Uncomment to enable MTF confirmation
+                # mtf_data = self.calculate_multi_timeframe_confirmation(symbol)
+                # if mtf_data['mtf_score'] > 0.5:
+                #     logger.info("MTF confirmation", symbol=symbol, score=mtf_data['mtf_score'])
+
+            except Exception as e:
+                logger.warning("Grok v2.0 analysis failed (using base plan)",
+                             symbol=symbol, error=str(e))
+            # =========================================================
+
             self.cache[cache_key] = best_plan
 
             # Log the plan
@@ -486,7 +926,9 @@ class HistoricalCorrectionAnalyzer:
                        num_steps=best_plan.num_steps,
                        step_margins=best_plan.step_margins,
                        delta_worst=best_plan.delta_worst,
-                       avg_correction=best_plan.avg_correction_pct)
+                       avg_correction=best_plan.avg_correction_pct,
+                       risk_profile=best_plan.risk_profile,
+                       cssi_score=best_plan.cssi.cssi_score if best_plan.cssi else 'N/A')
         else:
             logger.warning("No valid analysis for symbol", symbol=symbol)
 
@@ -509,7 +951,8 @@ class HistoricalCorrectionAnalyzer:
         if not plan:
             return None
 
-        return {
+        # Build base params
+        params = {
             'symbol': symbol,
             'initial_margin': plan.initial_margin,
             'max_averaging_steps': plan.num_steps,
@@ -522,8 +965,37 @@ class HistoricalCorrectionAnalyzer:
             'total_capital': plan.total_capital,
             'confidence': plan.confidence,
             'source': 'historical_correction_analyzer',
-            'timeframe': plan.timeframe_used
+            'timeframe': plan.timeframe_used,
+            'risk_profile': plan.risk_profile
         }
+
+        # Add Grok v2.0 CSSI data if available
+        if plan.cssi:
+            params['cssi'] = {
+                'score': plan.cssi.cssi_score,
+                'correction_probability': plan.cssi.correction_probability,
+                'support_proximity': plan.cssi.support_proximity,
+                'risk_factor': plan.cssi.risk_factor,
+                'recommended_action': plan.cssi.recommended_action,
+                'step_multiplier': plan.cssi.step_multiplier
+            }
+            # Use CSSI-adjusted margins if available
+            if plan.cssi_adjusted_margins:
+                params['cssi_adjusted_margins'] = plan.cssi_adjusted_margins
+
+        # Add support zone data if available
+        if plan.support_zone:
+            params['support_zone'] = {
+                'current_price': plan.support_zone.current_price,
+                'nearest_support': plan.support_zone.nearest_support,
+                'support_type': plan.support_zone.support_type,
+                'proximity': plan.support_zone.proximity_to_support,
+                'fib_618': plan.support_zone.fib_618,
+                'vwap': plan.support_zone.vwap,
+                'bb_lower': plan.support_zone.bb_lower
+            }
+
+        return params
 
 
 # Singleton instance
