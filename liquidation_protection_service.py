@@ -188,11 +188,12 @@ class LiquidationProtectionService:
         Place limit order at liquidation price to prevent liquidation
 
         Process:
-        1. Fetch current weighted average entry from exchange
-        2. Calculate liquidation price at target UPNL% (from config)
-        3. Calculate contracts for additional margin (based on margin used so far)
-        4. Place LIMIT order (maker, not taker)
-        5. Track order for monitoring
+        1. Cancel any existing protection order for this symbol (prevent duplicates)
+        2. Fetch current weighted average entry from exchange
+        3. Calculate liquidation price at target UPNL% (from config)
+        4. Calculate contracts for additional margin (based on margin used so far)
+        5. Place LIMIT order (maker, not taker)
+        6. Track order for monitoring
 
         Args:
             symbol: Trading pair
@@ -204,6 +205,28 @@ class LiquidationProtectionService:
         Returns:
             True if order placed successfully
         """
+        # CRITICAL: Cancel any existing protection order for this symbol first
+        # This prevents duplicate orders when entry price changes
+        if symbol in self.protection_orders:
+            existing_order = self.protection_orders[symbol]
+            logger.info(
+                "Cancelling existing protection order before placing new one",
+                symbol=symbol,
+                existing_order_id=existing_order['order_id'],
+                existing_price=existing_order['price']
+            )
+            print(f"\n  🔄 Replacing existing protection order for {symbol}")
+            print(f"     Old order ID: {existing_order['order_id']} @ ${existing_order['price']:.6f}")
+            try:
+                self.exchange.cancel_order(existing_order['order_id'], symbol)
+                print(f"     ✅ Old order cancelled")
+                del self.protection_orders[symbol]
+            except Exception as cancel_error:
+                # Order might already be filled or cancelled
+                print(f"     ⚠️ Could not cancel old order: {cancel_error}")
+                # Still remove from tracking - will verify status later
+                del self.protection_orders[symbol]
+
         # Use config values as defaults
         if target_upnl_pct is None:
             target_upnl_pct = PositionSizingConfig.LIQUIDATION_ORDER_UPNL_PERCENT

@@ -3351,6 +3351,11 @@ class AIXYZContinuousProfit:
                 self.peak_upnl_timestamps[symbol] = None  # Reset peak timestamp
                 self.position_zones[symbol] = 'NEUTRAL'  # Back to neutral zone
 
+                # Cancel liquidation protection order - no longer needed after surplus dump
+                if symbol in self.liquidation_protection.protection_orders:
+                    print(f"  🛡️ Cancelling protection order after surplus dump")
+                    self.liquidation_protection.cancel_protection_order(symbol)
+
                 # FIX 2: Save state immediately (matches averaging pattern)
                 if self.persistence:
                     self.persistence.save_position_state(
