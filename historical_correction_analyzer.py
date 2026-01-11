@@ -753,6 +753,44 @@ class HistoricalCorrectionAnalyzer:
         else:
             return 'HIGH'
 
+    def _get_cssi_action(self, cssi_score: float) -> str:
+        """
+        Get recommended action based on CSSI score.
+
+        Args:
+            cssi_score: CSSI score value
+
+        Returns:
+            Action string ('AVERAGE_IN_AGGRESSIVE', 'AVERAGE_IN', 'HOLD', 'REDUCE')
+        """
+        if cssi_score >= 1.5:
+            return 'AVERAGE_IN_AGGRESSIVE'
+        elif cssi_score >= 1.0:
+            return 'AVERAGE_IN'
+        elif cssi_score >= 0.5:
+            return 'HOLD'
+        else:
+            return 'REDUCE'
+
+    def _get_cssi_multiplier(self, cssi_score: float) -> float:
+        """
+        Get step multiplier based on CSSI score.
+
+        Args:
+            cssi_score: CSSI score value
+
+        Returns:
+            Step multiplier (0.5 to 2.0)
+        """
+        if cssi_score >= 1.5:
+            return round(min(2.0, 1.0 + cssi_score * 0.3), 3)
+        elif cssi_score >= 1.0:
+            return round(min(1.5, 1.0 + cssi_score * 0.2), 3)
+        elif cssi_score >= 0.5:
+            return 1.0
+        else:
+            return round(max(0.5, cssi_score), 3)
+
     def adjust_margins_by_cssi(
         self,
         step_margins: List[float],
@@ -906,11 +944,52 @@ class HistoricalCorrectionAnalyzer:
                     # Determine risk profile
                     best_plan.risk_profile = self.get_risk_profile(best_plan.delta_worst)
 
-                # Multi-timeframe confirmation (optional - can be slow)
-                # Uncomment to enable MTF confirmation
-                # mtf_data = self.calculate_multi_timeframe_confirmation(symbol)
-                # if mtf_data['mtf_score'] > 0.5:
-                #     logger.info("MTF confirmation", symbol=symbol, score=mtf_data['mtf_score'])
+                # Multi-timeframe confirmation - validates support across timeframes
+                mtf_data = self.calculate_multi_timeframe_confirmation(
+                    symbol,
+                    timeframes=['5m', '15m', '1h']
+                )
+
+                if mtf_data and mtf_data.get('mtf_score', 0) > 0:
+                    mtf_score = mtf_data['mtf_score']
+                    num_confirms = mtf_data.get('num_confirmations', 0)
+                    dominant_support = mtf_data.get('dominant_support_type', 'none')
+
+                    logger.info("MTF confirmation complete",
+                               symbol=symbol,
+                               mtf_score=mtf_score,
+                               num_confirmations=num_confirms,
+                               dominant_support=dominant_support)
+
+                    # Boost CSSI if multiple timeframes confirm support
+                    if best_plan.cssi and mtf_score >= 0.67:  # 2/3 timeframes agree
+                        mtf_boost = 1.0 + (mtf_score * 0.2)  # Up to 20% boost
+                        original_cssi = best_plan.cssi.cssi_score
+                        boosted_cssi = original_cssi * mtf_boost
+
+                        # Update CSSI with MTF boost
+                        best_plan.cssi = CSSI(
+                            symbol=best_plan.cssi.symbol,
+                            cssi_score=round(boosted_cssi, 3),
+                            correction_probability=best_plan.cssi.correction_probability,
+                            support_proximity=best_plan.cssi.support_proximity,
+                            risk_factor=best_plan.cssi.risk_factor,
+                            recommended_action=self._get_cssi_action(boosted_cssi),
+                            step_multiplier=self._get_cssi_multiplier(boosted_cssi)
+                        )
+
+                        # Recalculate adjusted margins with boosted CSSI
+                        best_plan.cssi_adjusted_margins = self.adjust_margins_by_cssi(
+                            best_plan.step_margins,
+                            best_plan.cssi,
+                            self.AVERAGING_CAPITAL
+                        )
+
+                        logger.info("MTF boost applied to CSSI",
+                                   symbol=symbol,
+                                   original_cssi=original_cssi,
+                                   boosted_cssi=boosted_cssi,
+                                   mtf_boost=f"{(mtf_boost-1)*100:.0f}%")
 
             except Exception as e:
                 logger.warning("Grok v2.0 analysis failed (using base plan)",
