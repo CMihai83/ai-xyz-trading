@@ -11,6 +11,8 @@ Key Features:
 - Only triggers after last Fibonacci averaging steps (5+)
 - Tracks placed orders to avoid duplicates
 - Syncs entry price from exchange weighted average
+- PERSISTS protection orders to disk to survive restarts
+- SYNCS with exchange at startup to detect existing protection orders
 
 Configuration (from PositionSizingConfig):
 - LIQUIDATION_ORDER_UPNL_PERCENT: -82.5% (trigger for limit order)
@@ -19,11 +21,14 @@ Configuration (from PositionSizingConfig):
 Author: AI-XYZ Trading System
 Date: 2026-01-03
 Updated: 2026-01-10 (Config-based values, FIFO integration)
+Updated: 2026-01-11 (Persistence and startup sync)
 """
 
 from datetime import datetime, timezone
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 import structlog
+import json
+import os
 from position_sizing_config import PositionSizingConfig
 
 logger = structlog.get_logger()
@@ -38,16 +43,175 @@ class LiquidationProtectionService:
     We place protection orders at -82.5% UPNL to catch the position before liquidation.
     """
 
-    def __init__(self, exchange):
+    # State file path for persistence
+    STATE_FILE = 'protection_orders_state.json'
+
+    def __init__(self, exchange, state_dir: str = '.'):
         """
         Initialize liquidation protection service
 
         Args:
             exchange: CCXT exchange instance
+            state_dir: Directory to store state file (default: current dir)
         """
         self.exchange = exchange
+        self.state_file_path = os.path.join(state_dir, self.STATE_FILE)
         self.protection_orders = {}  # {symbol: order_info}
         self.executed_protections = {}  # Track filled orders
+
+        # Load persisted state
+        self._load_state()
+
+        logger.info(
+            "LiquidationProtectionService initialized",
+            state_file=self.state_file_path,
+            loaded_orders=len(self.protection_orders)
+        )
+
+    def _load_state(self) -> None:
+        """Load protection orders state from disk."""
+        try:
+            if os.path.exists(self.state_file_path):
+                with open(self.state_file_path, 'r') as f:
+                    data = json.load(f)
+
+                self.protection_orders = data.get('protection_orders', {})
+                self.executed_protections = data.get('executed_protections', {})
+
+                # Convert datetime strings back to datetime objects
+                for symbol, order in self.protection_orders.items():
+                    if 'placed_at' in order and isinstance(order['placed_at'], str):
+                        order['placed_at'] = datetime.fromisoformat(order['placed_at'].replace('Z', '+00:00'))
+
+                logger.info(
+                    "Loaded protection orders state",
+                    orders=len(self.protection_orders),
+                    executed=len(self.executed_protections)
+                )
+        except Exception as e:
+            logger.warning(f"Could not load protection state: {e}")
+            self.protection_orders = {}
+            self.executed_protections = {}
+
+    def _save_state(self) -> None:
+        """Save protection orders state to disk."""
+        try:
+            data = {
+                'timestamp': datetime.now(timezone.utc).isoformat(),
+                'protection_orders': {},
+                'executed_protections': self.executed_protections
+            }
+
+            # Convert datetime objects to strings for JSON serialization
+            for symbol, order in self.protection_orders.items():
+                order_copy = order.copy()
+                if 'placed_at' in order_copy and isinstance(order_copy['placed_at'], datetime):
+                    order_copy['placed_at'] = order_copy['placed_at'].isoformat()
+                data['protection_orders'][symbol] = order_copy
+
+            with open(self.state_file_path, 'w') as f:
+                json.dump(data, f, indent=2, default=str)
+
+            logger.debug(
+                "Saved protection orders state",
+                orders=len(self.protection_orders)
+            )
+        except Exception as e:
+            logger.error(f"Failed to save protection state: {e}")
+
+    def sync_from_exchange(self, symbols: List[str]) -> Dict[str, int]:
+        """
+        Sync protection orders from exchange at startup.
+
+        Checks all open orders for each symbol and identifies protection orders
+        (limit orders below current price for longs).
+
+        Args:
+            symbols: List of symbols to check
+
+        Returns:
+            Dict with sync stats {synced: int, cancelled_duplicates: int}
+        """
+        stats = {'synced': 0, 'cancelled_duplicates': 0}
+
+        print("\n🔄 Syncing protection orders from exchange...")
+
+        for symbol in symbols:
+            try:
+                # Get all open orders for this symbol
+                open_orders = self.exchange.fetch_open_orders(symbol)
+
+                if not open_orders:
+                    continue
+
+                # Get current position info
+                positions = self.exchange.fetch_positions([symbol])
+                if not positions or positions[0].get('contracts', 0) <= 0:
+                    continue
+
+                pos = positions[0]
+                entry_price = pos.get('entryPrice', 0)
+                side = 'buy' if pos.get('side') == 'long' else 'sell'
+
+                # Find protection orders (limit orders at or below protection level for longs)
+                # Protection orders are placed at -82.5% UPNL = 91.75% of entry for 10x leverage
+                # Use 95% threshold to detect any order near protection level
+                protection_orders = []
+                for order in open_orders:
+                    if order['type'] == 'limit' and order['side'] == side:
+                        # Check if price is at or below protection level (for longs)
+                        # Orders below 95% of entry are likely protection orders
+                        if side == 'buy' and order['price'] < entry_price * 0.95:
+                            protection_orders.append(order)
+                        elif side == 'sell' and order['price'] > entry_price * 1.05:
+                            protection_orders.append(order)
+
+                if not protection_orders:
+                    continue
+
+                # Handle duplicates - keep only the newest
+                if len(protection_orders) > 1:
+                    sorted_orders = sorted(protection_orders, key=lambda x: x['datetime'], reverse=True)
+                    keep_order = sorted_orders[0]
+
+                    print(f"  {symbol}: Found {len(protection_orders)} protection orders, keeping newest")
+
+                    for order in sorted_orders[1:]:
+                        try:
+                            self.exchange.cancel_order(order['id'], symbol)
+                            print(f"    ❌ Cancelled duplicate: {order['id']}")
+                            stats['cancelled_duplicates'] += 1
+                        except Exception as e:
+                            print(f"    ⚠️ Could not cancel {order['id']}: {e}")
+
+                    protection_orders = [keep_order]
+
+                # Sync the remaining protection order
+                order = protection_orders[0]
+
+                # Only add if not already tracked
+                if symbol not in self.protection_orders:
+                    self.protection_orders[symbol] = {
+                        'order_id': order['id'],
+                        'symbol': symbol,
+                        'side': order['side'],
+                        'price': order['price'],
+                        'amount': order['amount'],
+                        'placed_at': datetime.fromisoformat(order['datetime'].replace('Z', '+00:00')),
+                        'status': 'open',
+                        'synced_from_exchange': True
+                    }
+                    stats['synced'] += 1
+                    print(f"  ✅ {symbol}: Synced protection order {order['id']} @ ${order['price']}")
+
+            except Exception as e:
+                logger.warning(f"Failed to sync {symbol}: {e}")
+
+        # Save state after sync
+        self._save_state()
+
+        print(f"  📊 Sync complete: {stats['synced']} synced, {stats['cancelled_duplicates']} duplicates cancelled")
+        return stats
 
     def calculate_liquidation_price(
         self,
@@ -380,6 +544,9 @@ class LiquidationProtectionService:
 
             self.protection_orders[symbol] = order_info
 
+            # Persist to disk
+            self._save_state()
+
             print(f"\n  ✅ LIQUIDATION PROTECTION ORDER PLACED")
             print(f"     Order ID: {order['id']}")
             print(f"     Status: {order.get('status', 'unknown')}")
@@ -441,6 +608,9 @@ class LiquidationProtectionService:
                     # Remove from active orders
                     del self.protection_orders[symbol]
 
+                    # Persist state change
+                    self._save_state()
+
                     logger.info(
                         "🔍 AUDIT [LIQUIDATION_PROTECTION_EXECUTED]",
                         symbol=symbol,
@@ -453,6 +623,9 @@ class LiquidationProtectionService:
                     # Order cancelled - remove from tracking
                     print(f"\n  ⚠️ Liquidation protection order cancelled for {symbol}")
                     del self.protection_orders[symbol]
+
+                    # Persist state change
+                    self._save_state()
 
             except Exception as e:
                 logger.error(
@@ -498,6 +671,10 @@ class LiquidationProtectionService:
             self.exchange.cancel_order(order_info['order_id'], symbol)
             print(f"  ✅ Cancelled liquidation protection order for {symbol}")
             del self.protection_orders[symbol]
+
+            # Persist state change
+            self._save_state()
+
             return True
 
         except Exception as e:

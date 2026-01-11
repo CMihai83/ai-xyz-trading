@@ -440,6 +440,11 @@ class AIXYZContinuousProfit:
                             print(f"    🔧 Detected averaging from size: {symbol} → {implied_steps} steps (ratio {ratio:.2f}x)")
 
                     print(f"    {symbol}: {pos['side']} | Zone: {zone} | Avg Steps: {steps}")
+
+                # Sync protection orders from exchange at startup
+                # This ensures we don't create duplicates after restarts
+                symbols = list(self.active_positions.keys())
+                self.liquidation_protection.sync_from_exchange(symbols)
         else:
             self.persistence = None
             # Initialize empty if no persistence
