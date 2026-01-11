@@ -3080,9 +3080,18 @@ class AIXYZContinuousProfit:
                         print(f"   Protection will trigger at -82.5% UPNL to prevent liquidation")
 
                         try:
-                            # Place the protection order immediately
+                            # Get cumulated position margin from exchange (1x of total margin used)
+                            cumulated_margin = position.get('initialMargin', 0) or position.get('initial_margin', 0)
+                            if cumulated_margin <= 0:
+                                # Fallback: fetch from exchange
+                                ex_pos = self.exchange.fetch_positions([symbol])
+                                if ex_pos:
+                                    cumulated_margin = ex_pos[0].get('initialMargin', 10.0)
+                            print(f"   Cumulated position margin: ${cumulated_margin:.2f}")
+
+                            # Place protection order with 1x cumulated margin
                             self.liquidation_protection.place_protection_order(
-                                symbol, position, additional_margin=1.0  # Reduced for Florin's account ($5 total capital)
+                                symbol, position, additional_margin=cumulated_margin
                             )
                             print(f"   ✅ Liquidation protection order placed for {symbol}")
                         except Exception as prot_error:
@@ -4283,8 +4292,17 @@ class AIXYZContinuousProfit:
 
                         if symbol not in self.liquidation_protection.protection_orders:
                             try:
+                                # Get cumulated margin from exchange (1x of total margin used)
+                                pos = self.active_positions[symbol]
+                                cumulated_margin = pos.get('initialMargin', 0) or pos.get('initial_margin', 0)
+                                if cumulated_margin <= 0:
+                                    ex_pos = self.exchange.fetch_positions([symbol])
+                                    if ex_pos:
+                                        cumulated_margin = ex_pos[0].get('initialMargin', 10.0)
+                                print(f"   Cumulated margin: ${cumulated_margin:.2f}")
+
                                 self.liquidation_protection.place_protection_order(
-                                    symbol, self.active_positions[symbol], additional_margin=1.0  # Reduced for Florin's account
+                                    symbol, pos, additional_margin=cumulated_margin
                                 )
                                 print(f"   ✅ Protection order placed for {symbol}")
                             except Exception as e:
