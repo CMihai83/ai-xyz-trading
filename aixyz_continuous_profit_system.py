@@ -2834,13 +2834,14 @@ class AIXYZContinuousProfit:
                         if step < len(step_margins):
                             historical_margin = step_margins[step]
                             correction_prob = fib_config.get('correction_probs', [])[step] if step < len(fib_config.get('correction_probs', [])) else 0.5
+                            initial_margin_hist = fib_config.get('initial_margin', 5.0)
                             print(f"  📊 Using Historical Correction Analysis for step {step+1}")
                             print(f"     Step margin: ${historical_margin:.2f}")
                             print(f"     Correction probability: {correction_prob*100:.0f}%")
 
                             # Use the pre-calculated margin directly
                             margin_to_add = min(historical_margin, remaining_margin)
-                            multiplier = margin_to_add / original_margin
+                            multiplier = margin_to_add / initial_margin_hist  # Use historical initial margin
 
                             # Get current ticker price for new order
                             ticker = self.exchange.fetch_ticker(symbol)
