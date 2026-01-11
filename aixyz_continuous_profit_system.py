@@ -3187,25 +3187,30 @@ class AIXYZContinuousProfit:
                         print(f"  💾 State saved - averaging_steps[{symbol}] = {self.averaging_steps[symbol]}")
 
                     # CRITICAL: Place liquidation protection order when LAST averaging step executes
-                    # This is the user's express requirement - protection order placed immediately after last step
+                    # OR when capital is exhausted (>= 90% used)
                     current_step = self.averaging_steps[symbol]
                     max_steps = fib_config.get('max_averaging_steps', 6)
+                    total_capital = fib_config.get('total_capital_needed', 25.0)
 
-                    if current_step == max_steps:
-                        print(f"\n🛡️ LAST AVERAGING STEP EXECUTED - Placing liquidation protection order")
-                        print(f"   Step {current_step} of {max_steps} (FINAL)")
+                    # Get cumulated position margin
+                    cumulated_margin = position.get('initialMargin', 0) or position.get('initial_margin', 0)
+                    if cumulated_margin <= 0:
+                        ex_pos = self.exchange.fetch_positions([symbol])
+                        if ex_pos:
+                            cumulated_margin = float(ex_pos[0].get('initialMargin', 10.0))
+
+                    # Check if at max steps OR capital exhausted
+                    capital_exhausted = cumulated_margin >= (total_capital * 0.90)
+                    at_max_steps = current_step >= max_steps
+
+                    if at_max_steps or capital_exhausted:
+                        reason = "LAST STEP" if at_max_steps else f"CAPITAL EXHAUSTED (${cumulated_margin:.2f}/${total_capital:.2f})"
+                        print(f"\n🛡️ {reason} - Placing liquidation protection order")
+                        print(f"   Step {current_step} of {max_steps}")
                         print(f"   Protection will trigger at -82.5% UPNL to prevent liquidation")
+                        print(f"   Cumulated position margin: ${cumulated_margin:.2f}")
 
                         try:
-                            # Get cumulated position margin from exchange (1x of total margin used)
-                            cumulated_margin = position.get('initialMargin', 0) or position.get('initial_margin', 0)
-                            if cumulated_margin <= 0:
-                                # Fallback: fetch from exchange
-                                ex_pos = self.exchange.fetch_positions([symbol])
-                                if ex_pos:
-                                    cumulated_margin = ex_pos[0].get('initialMargin', 10.0)
-                            print(f"   Cumulated position margin: ${cumulated_margin:.2f}")
-
                             # Place protection order with 1x cumulated margin
                             self.liquidation_protection.place_protection_order(
                                 symbol, position, additional_margin=cumulated_margin
@@ -3214,7 +3219,8 @@ class AIXYZContinuousProfit:
                         except Exception as prot_error:
                             print(f"   ⚠️ Failed to place protection order: {prot_error}")
                     else:
-                        print(f"  📊 Step {current_step} of {max_steps} - {max_steps - current_step} steps remaining before protection")
+                        remaining_capital = total_capital - cumulated_margin
+                        print(f"  📊 Step {current_step} of {max_steps} - ${remaining_capital:.2f} remaining before protection")
 
                     print(f"  ✅ Averaging executed - Fibonacci step {step + 1}")
                     return True
@@ -4403,19 +4409,27 @@ class AIXYZContinuousProfit:
 
                 if fib_config:
                     max_steps = fib_config.get('max_averaging_steps', 6)
+                    total_capital = fib_config.get('total_capital_needed', 25.0)
 
-                    if current_step == max_steps:
-                        print(f"🛡️ {symbol} at FINAL step {current_step}/{max_steps} - placing protection order")
+                    # Get current margin used
+                    pos = self.active_positions[symbol]
+                    margin_used = pos.get('initialMargin', 0) or pos.get('initial_margin', 0)
+                    if margin_used <= 0:
+                        ex_pos = self.exchange.fetch_positions([symbol])
+                        if ex_pos:
+                            margin_used = float(ex_pos[0].get('initialMargin', 0))
+
+                    # Check if capital is exhausted (>= 90% used) OR at max steps
+                    capital_exhausted = margin_used >= (total_capital * 0.90)
+                    at_max_steps = current_step >= max_steps
+
+                    if at_max_steps or capital_exhausted:
+                        reason = "FINAL step" if at_max_steps else f"capital exhausted (${margin_used:.2f}/${total_capital:.2f})"
+                        print(f"🛡️ {symbol} - {reason} - placing protection order")
 
                         if symbol not in self.liquidation_protection.protection_orders:
                             try:
-                                # Get cumulated margin from exchange (1x of total margin used)
-                                pos = self.active_positions[symbol]
-                                cumulated_margin = pos.get('initialMargin', 0) or pos.get('initial_margin', 0)
-                                if cumulated_margin <= 0:
-                                    ex_pos = self.exchange.fetch_positions([symbol])
-                                    if ex_pos:
-                                        cumulated_margin = ex_pos[0].get('initialMargin', 10.0)
+                                cumulated_margin = margin_used if margin_used > 0 else 10.0
                                 print(f"   Cumulated margin: ${cumulated_margin:.2f}")
 
                                 self.liquidation_protection.place_protection_order(
@@ -4427,7 +4441,7 @@ class AIXYZContinuousProfit:
                         else:
                             print(f"   ℹ️ Protection already exists for {symbol}")
                     elif current_step > 0:
-                        print(f"   {symbol}: Step {current_step}/{max_steps} ({max_steps - current_step} remaining)")
+                        print(f"   {symbol}: Step {current_step}/{max_steps} (${margin_used:.2f}/${total_capital:.2f} used)")
 
             self._startup_protection_check_done = True
             print("")
