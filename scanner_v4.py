@@ -245,17 +245,17 @@ class ScannerV4:
                 final_score = opp_score_data['final_score']
                 price_change = abs(candidate.get('price_change_24h', 0))
 
-                # Filter 1: Minimum score threshold (raised from 0.6 to 0.7)
-                if final_score < 0.7:
-                    print(f"⚠️  Score: {final_score:.3f} (below 0.7 threshold)")
+                # Filter 1: Minimum score threshold (TEMP: lowered to 0.40 for testing)
+                if final_score < 0.40:
+                    print(f"⚠️  Score: {final_score:.3f} (below 0.4 threshold)")
                     continue
 
-                # Filter 2: EARLY MOMENTUM - Prefer 1-8% moves (catch early), reject late moves (>12%)
-                if price_change < 1.0:
-                    print(f"⚠️  Score: {final_score:.3f} but no momentum confirmation ({price_change:.1f}% < 1%)")
+                # Filter 2: EARLY MOMENTUM - TEMP: relaxed to 0.5-20% for testing
+                if price_change < 0.5:
+                    print(f"⚠️  Score: {final_score:.3f} but no momentum confirmation ({price_change:.1f}% < 0.5%)")
                     continue
-                if price_change > 12.0:
-                    print(f"⚠️  Score: {final_score:.3f} but move already exhausted ({price_change:.1f}% > 12%) - too late")
+                if price_change > 20.0:
+                    print(f"⚠️  Score: {final_score:.3f} but move already exhausted ({price_change:.1f}% > 20%) - too late")
                     continue
 
                 # Filter 3: Volume quality check

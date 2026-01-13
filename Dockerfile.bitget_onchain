@@ -1,0 +1,22 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install dependencies
+RUN apt-get update && apt-get install -y gcc && rm -rf /var/lib/apt/lists/*
+
+# Copy service file
+COPY bitget_onchain_service.py .
+COPY onchain_runner.py .
+
+# Install Python packages
+RUN pip install --no-cache-dir \
+    aiohttp \
+    structlog \
+    python-dotenv
+
+# Environment variables
+ENV PYTHONUNBUFFERED=1
+
+# Default command - continuous scan every 4 hours
+CMD ["python3", "onchain_runner.py"]

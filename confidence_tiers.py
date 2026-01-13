@@ -58,11 +58,19 @@ class ConfidenceTierSystem:
             position_size=0.5,
             leverage=5,
             description='Acceptable signals with lower confidence'
+        ),
+        # ENTRY tier added to cover gap between 0.40-0.55
+        'ENTRY': ConfidenceTier(
+            name='ENTRY',
+            min_score=0.40,
+            position_size=0.3,
+            leverage=5,
+            description='Entry-level signals for testing (0.40-0.55)'
         )
     }
 
     # Minimum score threshold - reject below this
-    MIN_SCORE_THRESHOLD = 0.55
+    MIN_SCORE_THRESHOLD = 0.60  # Increased for higher quality signals
 
     @classmethod
     def get_tier(cls, score: float) -> Tuple[ConfidenceTier, bool]:
@@ -79,7 +87,7 @@ class ConfidenceTierSystem:
         if score < cls.MIN_SCORE_THRESHOLD:
             return None, False
 
-        # Find appropriate tier
+        # Find appropriate tier (check in descending order)
         if score >= cls.TIERS['ULTRA_HIGH'].min_score:
             return cls.TIERS['ULTRA_HIGH'], True
         elif score >= cls.TIERS['HIGH'].min_score:
@@ -88,6 +96,8 @@ class ConfidenceTierSystem:
             return cls.TIERS['MEDIUM'], True
         elif score >= cls.TIERS['LOW'].min_score:
             return cls.TIERS['LOW'], True
+        elif score >= cls.TIERS['ENTRY'].min_score:
+            return cls.TIERS['ENTRY'], True
 
         return None, False
 

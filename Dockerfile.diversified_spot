@@ -1,0 +1,20 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy service script
+COPY diversified_spot_investment_service.py .
+
+# Install Python dependencies
+RUN pip install --no-cache-dir ccxt structlog python-dotenv numpy pytz
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1
+
+# Run in continuous mode (default 4-hour interval)
+CMD ["python3", "diversified_spot_investment_service.py", "--continuous", "--interval", "4"]

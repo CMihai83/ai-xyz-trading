@@ -98,6 +98,63 @@ services:
       - ai_xyz_trading
 
   # ==========================================================================
+  # DIVERSIFIED SPOT INVESTMENT SERVICE
+  # ==========================================================================
+  # UNIQUE SERVICE - Diversified spot portfolio (Crypto/Gold/Stocks)
+  # Features: 33/33/33 allocation, VSA scanner, ONDO/RWA stock proxies
+  # Runs every 4 hours, invests excess spot capital in diversified assets
+  # --------------------------------------------------------------------------
+  diversified_spot:
+    build:
+      context: .
+      dockerfile: Dockerfile.diversified_spot
+    container_name: ai_xyz_diversified_spot
+    restart: unless-stopped
+    environment:
+      - BITGET_API_KEY=${BITGET_API_KEY}
+      - BITGET_API_SECRET=${BITGET_API_SECRET}
+      - BITGET_API_PASSPHRASE=${BITGET_API_PASSPHRASE}
+      - STATE_FILE=/app/diversified_spot_state.json
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ./logs:/app/logs
+      - ./diversified_spot_state.json:/app/diversified_spot_state.json
+    networks:
+      - ai_xyz_network
+    depends_on:
+      - balance_manager
+
+  # ==========================================================================
+  # BITGET ONCHAIN SERVICE - Tokenized Stock Trading
+  # ==========================================================================
+  # UNIQUE SERVICE - Trades tokenized stocks (xStocks) via Bitget Onchain API
+  # Features: TSLAx, NVDAx, AAPLx, SPYx trading on Solana via Bitget Wallet
+  # Requires: Partner-Code from Bitget for swap execution
+  # --------------------------------------------------------------------------
+  bitget_onchain:
+    build:
+      context: .
+      dockerfile: Dockerfile.bitget_onchain
+    container_name: ai_xyz_bitget_onchain
+    restart: unless-stopped
+    environment:
+      - BITGET_API_KEY=${BITGET_API_KEY}
+      - BITGET_API_SECRET=${BITGET_API_SECRET}
+      - BITGET_API_PASSPHRASE=${BITGET_API_PASSPHRASE}
+      - BITGET_PARTNER_CODE=${BITGET_PARTNER_CODE:-}
+      - SOLANA_WALLET_ADDRESS=${SOLANA_WALLET_ADDRESS:-}
+      - SOLANA_PRIVATE_KEY=${SOLANA_PRIVATE_KEY:-}
+      - ONCHAIN_STATE_FILE=/app/onchain_state.json
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ./logs:/app/logs
+      - ./onchain_state.json:/app/onchain_state.json
+    networks:
+      - ai_xyz_network
+    depends_on:
+      - diversified_spot
+
+  # ==========================================================================
   # MICROSERVICES
   # ==========================================================================
 
@@ -331,6 +388,36 @@ services:
       - ai_xyz_network
     depends_on:
       - postgres
+
+  # ==========================================================================
+  # PREDICTION SERVICE
+  # ==========================================================================
+  # AI-powered price prediction service with REST API
+  # Provides: Entry/exit signals, market overview, prediction validation
+  # --------------------------------------------------------------------------
+  prediction_service:
+    build:
+      context: .
+      dockerfile: services/Dockerfile.prediction
+    container_name: ai_xyz_prediction
+    restart: unless-stopped
+    environment:
+      - BITGET_API_KEY=${BITGET_API_KEY}
+      - BITGET_API_SECRET=${BITGET_API_SECRET}
+      - BITGET_API_PASSPHRASE=${BITGET_API_PASSPHRASE}
+      - PYTHONUNBUFFERED=1
+    ports:
+      - "8009:8009"
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - ai_xyz_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8009/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
 volumes:
   redis_data:

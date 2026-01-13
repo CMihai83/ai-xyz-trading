@@ -11,11 +11,14 @@ Architecture (Based on Grok Consultation):
 4. Risk Management Framework (RMF) - Position limits, stop-loss, diversification
 
 Asset Categories:
-- Crypto: BTC, ETH, SOL, EGLD, etc. (spot)
-- Gold: XAUT, PAXG (tokenized gold)
-- Stocks/RWA: ONDO (RWA protocol) + tech-correlated crypto (RENDER, LINK, etc.)
-  NOTE: xStocks (NVDAX, TSLAx, AAPLx) are on Bitget Onchain platform, not main API.
-        Using ONDO + high-beta tech crypto as stock exposure proxies.
+- Crypto: BTC, ETH, SOL, EGLD, etc. (60+ spot trading pairs)
+- Gold: XAUT, PAXG (tokenized gold backed by physical reserves)
+  NOTE: XAU/XAG are perpetual futures only, not available on spot API
+- Stocks/RWA: High-correlation crypto proxies for stock market exposure
+  ONDO (RWA protocol), RENDER (GPU/NVIDIA proxy), FET/TAO/AGIX (AI sector),
+  LINK (Oracle/TradFi bridge), MKR/AAVE (DeFi/finance), SNX (derivatives)
+  NOTE: Actual tokenized stocks (NVDAX, TSLAx) are on Bitget Onchain platform,
+        not available via main spot API. Using crypto proxies for stock exposure.
 
 Market Hours Awareness:
 - US Stock Market: 9:30 AM - 4:00 PM ET (Mon-Fri)
@@ -92,7 +95,7 @@ class DiversifiedSpotInvestmentService:
 
     def __init__(self):
         self.exchange = None
-        self.state_file = '/root/florin_trading/diversified_spot_state.json'
+        self.state_file = os.getenv('STATE_FILE', '/app/diversified_spot_state.json')
 
         # Margin Management Module (MMM) Config
         self.MARGIN_THRESHOLD = 400.0  # Excess margin threshold
@@ -144,30 +147,38 @@ class DiversifiedSpotInvestmentService:
             'PYTH/USDT', 'JTO/USDT', 'BONK/USDT', 'WIF/USDT', 'ORDI/USDT',
         ]
 
+        # Gold/Silver/Precious Metals Universe - Available on Bitget Spot
+        # XAUT and PAXG are the only tokenized gold available on spot API
+        # NOTE: XAU/XAG are perpetual futures only, not spot
         self.GOLD_UNIVERSE = [
-            'XAUT/USDT',  # Tether Gold (main gold token)
-            'PAXG/USDT',  # Pax Gold (backup)
+            'XAUT/USDT',       # Tether Gold (backed by 1:1 physical gold in Swiss vaults)
+            'PAXG/USDT',       # Pax Gold (backed by 1:1 physical gold in London vaults)
         ]
 
-        # Stock/RWA Universe - Using proxies since xStocks are on Bitget Onchain (not main API)
-        # ONDO: RWA protocol behind tokenized stocks/bonds
-        # RENDER: GPU compute (correlates with NVIDIA)
-        # FET: AI/compute (correlates with tech stocks)
-        # LINK: Oracle infrastructure (DeFi/TradFi bridge)
-        # PENDLE: Yield tokenization (DeFi/finance proxy)
-        # NOTE: When Bitget adds xStocks to main API, add: NVDAX_USDT, TSLAx_USDT, etc.
+        # Stock Exposure via Crypto Proxies (Spot Market)
+        # NOTE: Tokenized stocks (NVDAX, TSLAx, AAPLx) are on Bitget Onchain/Wallet platform,
+        #       NOT the main spot API. NVDA/USDT:USDT etc are perpetual futures, not spot.
+        # Using high-correlation crypto proxies for stock market exposure:
+        # - ONDO: RWA protocol (tokenizes real-world assets including stocks/bonds)
+        # - RENDER: GPU compute (high correlation with NVIDIA/AI sector)
+        # - FET: AI/compute (correlates with tech stocks)
+        # - TAO: AI/ML network (correlates with AI sector)
+        # - LINK: Oracle infrastructure (DeFi/TradFi bridge)
+        # - MKR: DeFi governance (finance sector proxy)
+        # - AAVE: DeFi lending (banking proxy)
+        # - COIN: Coinbase stock (actual crypto-native stock proxy)
         self.STOCKS_UNIVERSE = [
-            'ONDO/USDT',   # RWA protocol - primary stock exposure proxy
-            'RENDER/USDT', # GPU compute - NVIDIA correlation
-            'FET/USDT',    # AI/compute - tech sector proxy
-            'LINK/USDT',   # Oracle/infrastructure - TradFi bridge
-            'PENDLE/USDT', # Yield tokenization - finance proxy
-            'AGIX/USDT',   # AI - SingularityNET
-            'OCEAN/USDT',  # AI data marketplace
-            'TAO/USDT',    # AI/ML network
-            'MKR/USDT',    # DeFi governance - finance sector
-            'AAVE/USDT',   # DeFi lending - banking proxy
-            'SNX/USDT',    # Synthetic assets - derivatives proxy
+            'ONDO/USDT',       # Ondo Finance - RWA protocol (primary stock exposure)
+            'RENDER/USDT',     # GPU compute - NVIDIA/AI correlation
+            'FET/USDT',        # AI/compute - tech sector proxy
+            'TAO/USDT',        # AI/ML network - AI sector proxy
+            'LINK/USDT',       # Oracle infrastructure - TradFi bridge
+            'MKR/USDT',        # DeFi governance - finance sector proxy
+            'AAVE/USDT',       # DeFi lending - banking proxy
+            'SNX/USDT',        # Synthetic assets - derivatives proxy
+            'PENDLE/USDT',     # Yield tokenization - finance proxy
+            'AGIX/USDT',       # AI - SingularityNET (AI sector)
+            'OCEAN/USDT',      # AI data marketplace (AI sector)
         ]
 
         # US Market hours configuration

@@ -37,6 +37,10 @@ from margin_aware_position_sizer import MarginAwarePositionSizer
 from enhanced_market_scanner import EnhancedMarketScanner
 from scanner_v4 import ScannerV4  # V4: All-market intelligent scanner
 from dynamic_fibonacci_delta import DynamicFibonacciDeltaService  # Dynamic delta based on volatility
+
+# V2.0.0: Prediction Model Integration
+from prediction_service import get_prediction_service
+from prediction_integration import PredictionIntegration
 from liquidation_protection_service import LiquidationProtectionService  # Liquidation protection
 
 # V1.1.0: Import new performance enhancement modules
@@ -102,6 +106,22 @@ try:
 except ImportError:
     VOLATILE_SERVICE_AVAILABLE = False
 
+# V2 Grok Recommendations: Profit Factor Optimization Modules
+try:
+    from grok_v2_integration import GrokV2Integration
+    GROK_V2_AVAILABLE = True
+except ImportError as e:
+    print(f"⚠️ Grok V2 modules not available: {e}")
+    GROK_V2_AVAILABLE = False
+
+# Hedge Gateway: Automatic hedge positions with gate-based closing
+try:
+    from hedge_gateway import get_hedge_gateway, HedgeGateway
+    HEDGE_GATEWAY_AVAILABLE = True
+except ImportError as e:
+    print(f"⚠️ Hedge Gateway not available: {e}")
+    HEDGE_GATEWAY_AVAILABLE = False
+
 class AIXYZContinuousProfit:
     def __init__(self):
         # Load environment variables
@@ -119,6 +139,10 @@ class AIXYZContinuousProfit:
                 'createMarketBuyOrderRequiresPrice': False
             }
         })
+
+        # HEDGE MODE: Account is configured for hedge mode (double_hold)
+        # This allows simultaneous LONG and SHORT positions on the same symbol
+        self.hedge_mode = True
 
         # Load markets to properly configure exchange options (CRITICAL for CCXT!)
         self.exchange.load_markets()
@@ -179,6 +203,19 @@ class AIXYZContinuousProfit:
         print("   💰 Additional $25 margin per position for protection")
         print("   📊 Places limit orders at -82.5% UPNL (before liquidation)")
         print("   🎯 Total capital per position: $50 ($25 averaging + $25 protection)")
+
+        # V2.0.0: Initialize Prediction Service
+        self.prediction_service = get_prediction_service(self.exchange)
+        self.prediction_integration = PredictionIntegration(
+            trading_system=self,
+            min_confidence=70,
+            min_risk_reward=0.5,
+            enable_exit_signals=True
+        )
+        print("🔮 Prediction Service enabled (V2.0.0)")
+        print("   📊 Direction accuracy: 50% (+17% vs baseline)")
+        print("   🎯 Entry/exit signal filtering")
+        print("   📈 Scanner enhancement with prediction alignment")
 
         # V1.3.1: Initialize Advanced Unused Modules (Category 1 - High Priority)
         print("\n🚀 Initializing Category 1 Advanced Modules...")
@@ -457,9 +494,9 @@ class AIXYZContinuousProfit:
             self.original_sizes = {}  # Track original position sizes
             self.position_multipliers = {}  # Track position-specific averaging multipliers
         
-        # V1.2.0: Optimized configuration for faster capital recycling and more opportunities
-        self.max_positions = 12  # Increased to allow more opportunities
-        self.max_positions_allowed = 12  # Aligned with max_positions
+        # V2.0.0: Optimized configuration with prediction model
+        self.max_positions = int(os.getenv('MAX_POSITIONS', 20))  # From env or default 20
+        self.max_positions_allowed = self.max_positions  # Aligned with max_positions
         self.max_averaging_steps = 13  # Default, will be recalculated dynamically
         # Averaging multipliers based on initial $1 margin
         # Step 1: 1x initial margin, Step 2: 2x, Step 3: 3x, Step 4: 5x, Step 5: 8x
@@ -488,6 +525,33 @@ class AIXYZContinuousProfit:
             self.opportunity_cost_engine = None
             self.advanced_delta_engine = None
             self.adaptive_averaging_engine = None
+
+        # Grok V2: Initialize Profit Factor Optimization Modules
+        if GROK_V2_AVAILABLE:
+            self.grok_v2 = GrokV2Integration()
+            print("🚀 Grok V2 Profit Factor Optimization initialized:")
+            print("   📊 Trade Results Tracker - accurate win/loss tracking")
+            print("   🎲 Bayesian Correction Model - per-symbol probability")
+            print("   📈 Volatility Regime HMM - adaptive thresholds")
+            print("   💰 VaR Position Limiter - risk-adjusted sizing")
+            print("   🤖 Ensemble Exit Model - RL+GBM+LSTM exit timing")
+            print("   📚 Online CSSI Learner - continuous SGD updates")
+            print("   🔍 Anomaly Detection - z-score monitoring")
+            print("   🛡️  Graceful Degradation - circuit breaker protection")
+        else:
+            self.grok_v2 = None
+            print("⚠️ Grok V2 modules not available")
+
+        # Hedge Gateway: Automatic hedge with gate-based closing
+        if HEDGE_GATEWAY_AVAILABLE:
+            self.hedge_gateway = get_hedge_gateway(self.exchange, enabled=True)
+            print("🛡️ Hedge Gateway enabled:")
+            print("   📊 Auto-hedge on position open")
+            print("   🚪 Gate opens at averaging step 2/5")
+            print("   📉 Closes on reversion or surplus dump")
+        else:
+            self.hedge_gateway = None
+            print("⚠️ Hedge Gateway not available")
 
         # Zone thresholds - UPDATED: wider neutral zone (-15% to +5%)
         self.zone_thresholds = {
@@ -1179,8 +1243,8 @@ class AIXYZContinuousProfit:
                     direction = opp['direction']
                     mtf_score = self.get_multi_timeframe_score(symbol, direction)
 
-                    # Require minimum 0.6 multi-timeframe score (60% alignment)
-                    if mtf_score >= 0.6:
+                    # TEMP: Lowered to -0.5 for testing (was 0.6)
+                    if mtf_score >= -0.5:
                         opp['mtf_score'] = mtf_score
                         opp['score'] = opp.get('score', 0) * (0.7 + mtf_score * 0.3)  # Boost score by MTF
                         filtered_opportunities.append(opp)
@@ -1189,6 +1253,18 @@ class AIXYZContinuousProfit:
                         print(f"    ❌ {symbol}: MTF={mtf_score:.2f} (filtered)")
 
                 print(f"  📊 Multi-timeframe filter: {len(enhanced_opportunities)} → {len(filtered_opportunities)} opportunities")
+
+                # V2.0.0: Enhance with prediction model
+                if hasattr(self, 'prediction_integration') and self.prediction_integration:
+                    print(f"  🔮 Applying prediction model enhancement...")
+                    prediction_enhanced = self.prediction_integration.enhance_scanner_opportunities(filtered_opportunities)
+
+                    # Log prediction alignment
+                    aligned_count = sum(1 for o in prediction_enhanced if o.get('prediction_aligned') is True)
+                    conflict_count = sum(1 for o in prediction_enhanced if o.get('prediction_aligned') is False)
+                    print(f"  📊 Prediction alignment: {aligned_count} aligned, {conflict_count} conflicts")
+
+                    filtered_opportunities = prediction_enhanced
 
                 # Return enough opportunities to find new positions (not already held)
                 # Give main loop enough options to find at least one new symbol
@@ -1268,6 +1344,94 @@ class AIXYZContinuousProfit:
         except Exception as e:
             print(f"  ❌ Opportunity cost enhancement failed: {e}")
             return opportunities
+
+    # =========================================================================
+    # HEDGE MODE HELPERS
+    # =========================================================================
+
+    def get_hedge_order_params(self, position_side: str, is_open: bool = True) -> Dict:
+        """Get order parameters for hedge mode trading.
+
+        In hedge mode (double_hold):
+        - Open long:  side='buy',  tradeSide='open'
+        - Close long: side='sell', tradeSide='close'
+        - Open short: side='sell', tradeSide='open'
+        - Close short: side='buy', tradeSide='close'
+
+        Args:
+            position_side: 'long' or 'short' - the position direction
+            is_open: True for opening, False for closing
+
+        Returns:
+            Dict with order params including tradeSide for hedge mode
+        """
+        params = {'marginCoin': 'USDT'}
+
+        if self.hedge_mode:
+            params['tradeSide'] = 'open' if is_open else 'close'
+            # Also set holdSide for position tracking
+            params['holdSide'] = position_side
+
+        return params
+
+    def get_position_key(self, symbol: str, side: str) -> str:
+        """Get the position tracking key for hedge mode.
+
+        In hedge mode, we track long and short positions separately.
+        Key format: "symbol:long" or "symbol:short"
+
+        Args:
+            symbol: Trading pair (e.g., 'BTC/USDT:USDT')
+            side: Position side ('buy'/'long' or 'sell'/'short')
+
+        Returns:
+            Position key string
+        """
+        if side.lower() in ['buy', 'long']:
+            return f"{symbol}:long"
+        else:
+            return f"{symbol}:short"
+
+    def parse_position_key(self, key: str) -> tuple:
+        """Parse a position key back to symbol and side.
+
+        Args:
+            key: Position key (e.g., 'BTC/USDT:USDT:long')
+
+        Returns:
+            Tuple of (symbol, side)
+        """
+        if ':long' in key:
+            return key.replace(':long', ''), 'long'
+        elif ':short' in key:
+            return key.replace(':short', ''), 'short'
+        else:
+            # Legacy format without side
+            return key, 'long'
+
+    def get_order_side(self, position_side: str, is_open: bool = True) -> str:
+        """Get the order side for hedge mode.
+
+        In Bitget hedge mode:
+        - LONG positions always use side='buy' (tradeSide='open' or 'close')
+        - SHORT positions always use side='sell' (tradeSide='open' or 'close')
+
+        The tradeSide parameter (set in get_hedge_order_params) determines
+        whether we're opening or closing the position.
+
+        Args:
+            position_side: 'long' or 'short'
+            is_open: Not used in hedge mode (tradeSide handles this)
+
+        Returns:
+            Order side ('buy' for long, 'sell' for short)
+        """
+        # In hedge mode, side matches the position type
+        # tradeSide parameter handles open vs close
+        if position_side == 'long':
+            return 'buy'
+        else:  # short
+            return 'sell'
 
     def get_fibonacci_parameters(self, symbol: str, direction: str, volatility: float, confidence: float = 0.5) -> Dict:
         """Get Fibonacci-optimized trading parameters for a position
@@ -1532,29 +1696,62 @@ class AIXYZContinuousProfit:
             print(f"  🎯 Confidence Tier: {tier_name} (score: {confidence:.3f})")
             print(f"     Tier sizing: {tier.position_size}x | Leverage: {tier.leverage}x")
 
-            # COOLDOWN FIX: Check if symbol is in cooldown period
+            # V2.0.0: Prediction-based entry filter
+            if hasattr(self, 'prediction_integration') and self.prediction_integration:
+                # Handle all direction formats: buy/long/bullish -> long, sell/short/bearish -> short, neutral -> neutral
+                dir_lower = direction.lower()
+                if dir_lower in ['buy', 'long', 'bullish']:
+                    scanner_direction = 'long'
+                elif dir_lower in ['sell', 'short', 'bearish']:
+                    scanner_direction = 'short'
+                else:
+                    scanner_direction = 'neutral'  # NEUTRAL scanner direction - let prediction decide
+                approval = self.prediction_integration.filter_entry_by_prediction(symbol, scanner_direction)
+
+                if not approval['approved']:
+                    print(f"  🔮 Entry BLOCKED by prediction: {approval['reason']}")
+                    return False
+                elif approval.get('confidence', 0) >= 70:
+                    print(f"  🔮 Entry CONFIRMED by prediction: {approval['reason']}")
+                    # If scanner was neutral, use prediction direction for the order
+                    if scanner_direction == 'neutral' and 'direction' in approval:
+                        direction = approval['direction']  # Use prediction direction (long/short)
+                        print(f"  🔮 Using prediction direction: {direction.upper()}")
+                    # Store prediction targets for later use
+                    if 'target' in approval:
+                        opportunity['prediction_target'] = approval['target']
+                    if 'stop_loss' in approval:
+                        opportunity['prediction_stop'] = approval['stop_loss']
+
+            # Determine position key for hedge mode tracking
+            position_side = 'long' if direction.lower() in ['buy', 'long', 'bullish'] else 'short'
+            position_key = self.get_position_key(symbol, position_side)
+
+            # COOLDOWN FIX: Check if this specific position (symbol:side) is in cooldown
             import time
-            if symbol in self.recently_closed_symbols:
-                elapsed = time.time() - self.recently_closed_symbols[symbol]
+            if position_key in self.recently_closed_symbols:
+                elapsed = time.time() - self.recently_closed_symbols[position_key]
                 if elapsed < self.position_cooldown_seconds:
                     remaining = self.position_cooldown_seconds - elapsed
-                    print(f"  ⏱️  Skipping {symbol}: in cooldown ({remaining:.0f}s remaining)")
+                    print(f"  ⏱️  Skipping {position_key}: in cooldown ({remaining:.0f}s remaining)")
                     return False
                 else:
                     # Cooldown expired, remove from tracking
-                    del self.recently_closed_symbols[symbol]
-                    print(f"  ✅ Cooldown expired for {symbol}")
+                    del self.recently_closed_symbols[position_key]
+                    print(f"  ✅ Cooldown expired for {position_key}")
 
-            # Skip if already have position in this symbol
-            if symbol in self.active_positions:
+            # Skip if already have this specific position (hedge mode allows both long AND short)
+            if position_key in self.active_positions:
+                print(f"  ⏭️  Already have {position_side.upper()} position on {symbol}")
                 return False
             
             # Check portfolio balance if balancer available (skip for extreme deviations)
             is_extreme = opportunity.get('is_extreme', False)
             if self.balancer and not is_extreme:
+                # Extract symbols from position keys for balancer
                 current_positions = [
-                    {'symbol': s, 'side': info['side']}
-                    for s, info in self.active_positions.items()
+                    {'symbol': info.get('symbol', self.parse_position_key(pk)[0]), 'side': info['side']}
+                    for pk, info in self.active_positions.items()
                 ]
                 can_open, reason = self.balancer.should_open_position(direction, current_positions)
                 if not can_open:
@@ -1564,8 +1761,13 @@ class AIXYZContinuousProfit:
             # V1.3.1: Check correlation with existing positions (-25% correlated drawdowns)
             try:
                 if len(self.active_positions) > 0:
-                    # Get list of symbols from active positions
-                    active_symbols = list(self.active_positions.keys())
+                    # Get list of symbols from active positions (extract from position keys)
+                    active_symbols = [
+                        info.get('symbol', self.parse_position_key(pk)[0])
+                        for pk, info in self.active_positions.items()
+                    ]
+                    # Remove duplicates (hedge mode may have same symbol twice)
+                    active_symbols = list(set(active_symbols))
                     all_symbols = active_symbols + [symbol]
 
                     # Calculate correlation matrix
@@ -1596,6 +1798,30 @@ class AIXYZContinuousProfit:
                         print(f"  🏢 Sector: {sector_analysis['sector_symbol']} | Diversity: {sector_analysis.get('diversity_score', 0):.2f}")
             except Exception as e:
                 print(f"  ⚠️ Correlation check failed (proceeding anyway): {e}")
+
+            # Grok V2: VaR-based position limit check
+            if self.grok_v2:
+                try:
+                    # Get portfolio value for VaR calculation
+                    balance = self.exchange.fetch_balance()
+                    portfolio_value = float(balance.get('USDT', {}).get('total', 0) or
+                                          balance.get('total', {}).get('USDT', 0) or 100)
+
+                    # Check if position is allowed by VaR limits
+                    position_size = 10.0  # Default position size in USD
+                    var_allowed, var_reason = self.grok_v2.check_var_position_limit(
+                        symbol=symbol,
+                        position_size=position_size,
+                        portfolio_value=portfolio_value
+                    )
+
+                    if not var_allowed:
+                        print(f"  📊 VaR LIMIT: Skipping {symbol} - {var_reason}")
+                        return False
+                    else:
+                        print(f"  📊 VaR check passed: {var_reason}")
+                except Exception as var_err:
+                    print(f"  ⚠️ VaR check failed (proceeding anyway): {var_err}")
 
             print(f"\n🎯 Opening position: {symbol}")
             
@@ -1820,22 +2046,25 @@ class AIXYZContinuousProfit:
             amount = float(amount)
             print(f"  📦 Final order amount: {amount} contracts (${amount * price:.2f})")
 
-            # Execute market order with explicit Bitget params
-            # For one-way position mode, only marginCoin is needed
-            order_params = {
-                'marginCoin': 'USDT'
-            }
+            # Execute market order with hedge mode params
+            # HEDGE MODE: Use tradeSide='open' for opening positions
+            position_side = 'long' if side == 'buy' else 'short'
+            order_params = self.get_hedge_order_params(position_side, is_open=True)
+            print(f"  🔄 Opening {position_side.upper()} position (hedge mode)")
             order = self.exchange.create_market_order(symbol, side, amount, params=order_params)
-            
+
             # Safety margin is reserved for last averaging step, not added at opening
             if sizing['safety_margin'] > 0:
                 print(f"  💰 Safety margin ${sizing['safety_margin']:.2f} reserved for last averaging step")
-            
-            # Store position info
-            self.active_positions[symbol] = {
+
+            # Store position info with hedge mode key (symbol:long or symbol:short)
+            position_key = self.get_position_key(symbol, side)
+            self.active_positions[position_key] = {
+                'symbol': symbol,  # Store original symbol for API calls
                 'entry_price': price,
                 'amount': amount,
                 'side': side,
+                'position_side': position_side,  # 'long' or 'short'
                 'leverage': leverage,
                 'confidence': confidence,
                 'opened_at': datetime.now().isoformat(),
@@ -1844,15 +2073,15 @@ class AIXYZContinuousProfit:
                 'safety_margin': sizing['safety_margin'],
                 'pyramid_count': 0  # Track pyramid count from start (max 2)
             }
-            
-            # Initialize tracking with FRESH values for new position
-            self.position_zones[symbol] = 'NEUTRAL'  # Always start at NEUTRAL
-            self.peak_upnl[symbol] = 0  # Start fresh
-            self.peak_upnl_timestamps[symbol] = None  # No peak timestamp yet
-            self.averaging_steps[symbol] = 0  # No averaging steps yet
-            self.surplus_dump_stage[symbol] = 0  # No surplus dump stage
-            self.original_sizes[symbol] = amount  # Track original size
-            
+
+            # Initialize tracking with FRESH values for new position (using position_key)
+            self.position_zones[position_key] = 'NEUTRAL'  # Always start at NEUTRAL
+            self.peak_upnl[position_key] = 0  # Start fresh
+            self.peak_upnl_timestamps[position_key] = None  # No peak timestamp yet
+            self.averaging_steps[position_key] = 0  # No averaging steps yet
+            self.surplus_dump_stage[position_key] = 0  # No surplus dump stage
+            self.original_sizes[position_key] = amount  # Track original size
+
             # NEW: Initialize missing implementation tracking
             if not hasattr(self, 'k_coefficients'):
                 self.k_coefficients = {}
@@ -1862,27 +2091,27 @@ class AIXYZContinuousProfit:
                 self.adaptive_deltas = {}
             if not hasattr(self, 'emergency_triggered'):
                 self.emergency_triggered = {}
-                
+
             # Track k-coefficient for this position
-            self.k_coefficients[symbol] = fib_params.get('k_coefficient', 1.0)
-            
+            self.k_coefficients[position_key] = fib_params.get('k_coefficient', 1.0)
+
             # Initialize adaptive Fibonacci averaging for this position
             base_delta = fib_params.get('base_delta', 0.05)  # Default 5% delta
 
             # Track current timeframe (starts with 1m)
-            self.current_timeframes[symbol] = '1m'
+            self.current_timeframes[position_key] = '1m'
 
             # Track adaptive delta (starts with base delta)
-            self.adaptive_deltas[symbol] = base_delta
+            self.adaptive_deltas[position_key] = base_delta
 
             # Track emergency close state
-            self.emergency_triggered[symbol] = False
-            self.adaptive_fibonacci.start_position(symbol, price, amount, base_delta)
+            self.emergency_triggered[position_key] = False
+            self.adaptive_fibonacci.start_position(position_key, price, amount, base_delta)
             print(f"  🧮 Adaptive Fibonacci tracking started - base delta: {base_delta*100:.1f}%")
 
             # V1.2.0: Initialize partial close ladder and ATR stop
-            self.partial_closer.initialize_ladder(symbol)
-            self.trailing_atr_stop.peak_prices[symbol] = price
+            self.partial_closer.initialize_ladder(position_key)
+            self.trailing_atr_stop.peak_prices[position_key] = price
 
             # Calculate initial ATR stop
             atr_decision = self.atr_stop.check_stop_loss(symbol, price, price, direction)
@@ -1890,10 +2119,20 @@ class AIXYZContinuousProfit:
 
             # Show partial close ladder
             ladder_status = self.partial_closer.get_ladder_status(symbol)
-            print(f"  🎯 Partial Close Ladder: {ladder_status['levels_total']} levels active")
+            print(f"  🎯 Partial Close Ladder: {ladder_status.get('levels_total', 0)} levels active")
 
             self.positions_opened += 1
-            
+
+            # HEDGE GATEWAY: Open hedge position automatically
+            if self.hedge_gateway:
+                self.hedge_gateway.open_hedge(
+                    symbol=symbol,
+                    main_side=side,
+                    size=amount,
+                    main_position_key=position_key,
+                    leverage=leverage
+                )
+
             # Save state after opening position
             if self.persistence:
                 self.persistence.save_position_state(
@@ -2763,7 +3002,7 @@ class AIXYZContinuousProfit:
             # CRITICAL FIX: Use -15% P&L threshold for averaging
             # Lowered from -25% to allow averaging at smaller losses
             averaging_pnl_threshold = -25.0  # -25% P&L triggers averaging
-            
+
             print(f"  🎯 Averaging Decision:")
             print(f"     Current P&L: {current_pnl_pct:.2f}%")
             print(f"     Averaging threshold: {averaging_pnl_threshold}%")
@@ -2773,8 +3012,20 @@ class AIXYZContinuousProfit:
             fibonacci_triggered = upnl_pct <= safe_threshold_pct
             should_average = gate_passed and fibonacci_triggered
 
+            # HEDGE POSITION GATE: Require -70% UPNL for hedge positions
+            # Hedge positions are identified by ":long" or ":short" suffix in symbol
+            is_hedge_position = ':long' in symbol or ':short' in symbol
+            hedge_gate_threshold = -70.0  # -70% UPNL gate for hedge positions
+            hedge_gate_passed = True  # Default to True for non-hedge positions
+
+            if is_hedge_position:
+                hedge_gate_passed = current_pnl_pct <= hedge_gate_threshold
+                should_average = should_average and hedge_gate_passed
+
             print(f"     Gate (-25% P&L): {'✅ PASSED' if gate_passed else '❌ NOT PASSED'}")
             print(f"     Fibonacci trigger ({safe_threshold_pct*100:.1f}% UPNL): {'✅ MET' if fibonacci_triggered else '❌ NOT MET'}")
+            if is_hedge_position:
+                print(f"     Hedge Gate (-70% P&L): {'✅ PASSED' if hedge_gate_passed else '❌ NOT PASSED (waiting for -70%)'}")
             print(f"     Should average: {should_average}")
             
             # Check if BOTH conditions are met: gate passed AND Fibonacci threshold reached
@@ -2875,13 +3126,12 @@ class AIXYZContinuousProfit:
                             print(f"  📈 Adding: {avg_amount:.4f} contracts")
                             print(f"  💰 Free balance: ${free_balance:.2f}")
 
-                            # Execute the order (skip to order execution section)
-                            avg_side = 'sell' if position['side'] == 'short' else 'buy'
-                            order_params = {'marginCoin': 'USDT'}
-                            if avg_side == 'buy':
-                                order = self.exchange.create_market_buy_order(symbol, avg_amount, params=order_params)
-                            else:
-                                order = self.exchange.create_market_sell_order(symbol, avg_amount, params=order_params)
+                            # HEDGE MODE: Use tradeSide='open' to add to position
+                            position_side = position.get('position_side', 'long' if position['side'] in ['buy', 'long'] else 'short')
+                            avg_side = self.get_order_side(position_side, is_open=True)
+                            order_params = self.get_hedge_order_params(position_side, is_open=True)
+                            actual_symbol = position.get('symbol', symbol)
+                            order = self.exchange.create_market_order(actual_symbol, avg_side, avg_amount, params=order_params)
 
                             # Update position tracking
                             if symbol in self.active_positions:
@@ -2890,6 +3140,14 @@ class AIXYZContinuousProfit:
 
                             self.averaging_steps[symbol] += 1
                             self.position_zones[symbol] = 'AVERAGING'
+
+                            # HEDGE GATEWAY: Trigger gate on averaging step
+                            if self.hedge_gateway:
+                                self.hedge_gateway.on_averaging_step(
+                                    main_position_key=symbol,
+                                    averaging_step=self.averaging_steps[symbol],
+                                    current_price=current_price
+                                )
 
                             # Save state
                             if self.persistence:
@@ -3129,14 +3387,13 @@ class AIXYZContinuousProfit:
                         pass
                     
                     print(f"  📍 Position margin mode: {margin_mode}")
-                    
-                    # Execute averaging order with explicit Bitget params
-                    avg_side = 'sell' if position['side'] == 'short' else 'buy'
-                    order_params = {'marginCoin': 'USDT'}
-                    if avg_side == 'buy':
-                        order = self.exchange.create_market_buy_order(symbol, avg_amount, params=order_params)
-                    else:
-                        order = self.exchange.create_market_sell_order(symbol, avg_amount, params=order_params)
+
+                    # HEDGE MODE: Use tradeSide='open' to add to position
+                    position_side = position.get('position_side', 'long' if position['side'] in ['buy', 'long'] else 'short')
+                    avg_side = self.get_order_side(position_side, is_open=True)
+                    order_params = self.get_hedge_order_params(position_side, is_open=True)
+                    actual_symbol = position.get('symbol', symbol)
+                    order = self.exchange.create_market_order(actual_symbol, avg_side, avg_amount, params=order_params)
                     
                     # Update position amount after averaging (CRITICAL for surplus dump!)
                     if symbol in self.active_positions:
@@ -3163,6 +3420,14 @@ class AIXYZContinuousProfit:
                         print(f"  ⚠️ Could not sync entry price from exchange: {e}")
 
                     self.averaging_steps[symbol] += 1
+
+                    # HEDGE GATEWAY: Trigger gate on averaging step
+                    if self.hedge_gateway:
+                        self.hedge_gateway.on_averaging_step(
+                            main_position_key=symbol,
+                            averaging_step=self.averaging_steps[symbol],
+                            current_price=current_price
+                        )
 
                     # V3: Update performance learning
                     self.adaptive_threshold_engine.update_performance(symbol, {
@@ -3241,13 +3506,20 @@ class AIXYZContinuousProfit:
                         print(f"  🚨🚨 EMERGENCY CLOSE - Averaging failed at {upnl_pct*100:.1f}% UPNL!")
                         print(f"  🚨🚨 Closing position to prevent liquidation!")
                         try:
-                            close_side = 'sell' if position['side'] in ['buy', 'long'] else 'buy'
+                            # HEDGE MODE: Use tradeSide='close' with position side
+                            position_side = position.get('position_side', 'long' if position['side'] in ['buy', 'long'] else 'short')
+                            close_side = self.get_order_side(position_side, is_open=False)
+                            close_params = self.get_hedge_order_params(position_side, is_open=False)
+                            actual_symbol = position.get('symbol', symbol)
                             emergency_order = self.exchange.create_market_order(
-                                symbol, close_side, position['amount'],
-                                params={'reduceOnly': True, 'marginCoin': 'USDT'}
+                                actual_symbol, close_side, position['amount'],
+                                params=close_params
                             )
                             print(f"  ✅ Emergency close executed to prevent liquidation")
-                            # Clean up position
+                            # HEDGE GATEWAY: Close hedge when main position closes
+                            if self.hedge_gateway:
+                                self.hedge_gateway.on_main_position_closed(symbol)
+                            # Clean up position (symbol is position_key in hedge mode)
                             del self.active_positions[symbol]
                             self.cleanup_position_tracking(symbol)
                         except Exception as emergency_error:
@@ -3340,7 +3612,22 @@ class AIXYZContinuousProfit:
         # Only proceed if we have meaningful profit (minimum $0.10)
         if peak < 0.10:
             return False
-        
+
+        # V2.0.0: Prediction-based exit signal check for averaged positions
+        if hasattr(self, 'prediction_integration') and self.prediction_integration:
+            try:
+                entry_price = position.get('entry_price', position.get('entryPrice', 0))
+                position_side = 'long' if position.get('side') in ['buy', 'long'] else 'short'
+                exit_signal = self.prediction_integration.check_exit_signal(
+                    symbol, position_side, entry_price, upnl_pct * 100
+                )
+                if exit_signal:
+                    print(f"  🔮 Prediction EXIT signal (averaged position) for {symbol}:")
+                    print(f"     Reason: {exit_signal.get('reason', 'Trend reversal detected')}")
+                    print(f"     Action: Proceeding to dump surplus early")
+            except Exception as e:
+                print(f"  ⚠️ Prediction exit check failed: {e}")
+
         # Debug output for surplus dump monitoring
         original_size = self.original_sizes.get(symbol, 0)
         current_size = position['amount']
@@ -3379,8 +3666,12 @@ class AIXYZContinuousProfit:
                         return False
                 
                 dump_amount = surplus * 0.5  # Dump 50% of surplus in stage 1
-                close_side = 'sell' if position['side'] in ['buy', 'long'] else 'buy'
-                
+                # HEDGE MODE: Use tradeSide='close' with position side
+                position_side = position.get('position_side', 'long' if position['side'] in ['buy', 'long'] else 'short')
+                close_side = self.get_order_side(position_side, is_open=False)
+                close_params = self.get_hedge_order_params(position_side, is_open=False)
+                actual_symbol = position.get('symbol', symbol)
+
                 print(f"\n💰 Surplus Dump {symbol} - Stage 1 (50%)")
                 print(f"  Peak UPNL: ${peak:.4f}")
                 print(f"  Current: ${upnl:.4f} (70% trigger)")
@@ -3390,8 +3681,8 @@ class AIXYZContinuousProfit:
                 print(f"  Dumping: {dump_amount:.4f} contracts (50% of surplus)")
 
                 order = self.exchange.create_market_order(
-                    symbol, close_side, dump_amount,
-                    params={'reduceOnly': True, 'marginCoin': 'USDT'}
+                    actual_symbol, close_side, dump_amount,
+                    params=close_params
                 )
 
                 # FIX 3: Verify order was executed successfully
@@ -3447,8 +3738,12 @@ class AIXYZContinuousProfit:
                     return False
                 
                 dump_amount = remaining_surplus  # Dump all remaining surplus
-                close_side = 'sell' if position['side'] in ['buy', 'long'] else 'buy'
-                
+                # HEDGE MODE: Use tradeSide='close' with position side
+                position_side = position.get('position_side', 'long' if position['side'] in ['buy', 'long'] else 'short')
+                close_side = self.get_order_side(position_side, is_open=False)
+                close_params = self.get_hedge_order_params(position_side, is_open=False)
+                actual_symbol = position.get('symbol', symbol)
+
                 print(f"\n💰 Surplus Dump {symbol} - Stage 2 (Final 50%)")
                 print(f"  Peak UPNL: ${peak:.4f}")
                 print(f"  Current: ${upnl:.4f} (30% trigger)")
@@ -3458,8 +3753,8 @@ class AIXYZContinuousProfit:
                 print(f"  Dumping: {dump_amount:.4f} contracts (remaining surplus)")
 
                 order = self.exchange.create_market_order(
-                    symbol, close_side, dump_amount,
-                    params={'reduceOnly': True, 'marginCoin': 'USDT'}
+                    actual_symbol, close_side, dump_amount,
+                    params=close_params
                 )
 
                 # FIX 3: Verify order was executed successfully
@@ -3566,6 +3861,24 @@ class AIXYZContinuousProfit:
         if peak < 0.50:
             return False
 
+        # V2.0.0: Prediction-based exit signal check
+        # Check if prediction model recommends exit based on trend reversal
+        if hasattr(self, 'prediction_integration') and self.prediction_integration:
+            try:
+                entry_price = position.get('entry_price', position.get('entryPrice', 0))
+                position_side = 'long' if position.get('side') in ['buy', 'long'] else 'short'
+                exit_signal = self.prediction_integration.check_exit_signal(
+                    symbol, position_side, entry_price, pct
+                )
+                if exit_signal:
+                    print(f"  🔮 Prediction EXIT signal for {symbol}:")
+                    print(f"     Reason: {exit_signal.get('reason', 'Trend reversal detected')}")
+                    print(f"     Confidence: {exit_signal.get('confidence', 'N/A')}%")
+                    # Prediction says exit - proceed with close
+                    return True
+            except Exception as e:
+                print(f"  ⚠️ Prediction exit check failed: {e}")
+
         # V1.3.1: Use RL Closing Agent for intelligent exit timing (+15-25% better exits)
         try:
             # Prepare position data for RL agent
@@ -3628,24 +3941,55 @@ class AIXYZContinuousProfit:
             
         if should_take_profit:
             try:
-                close_side = 'sell' if position['side'] in ['buy', 'long'] else 'buy'
-                
+                # HEDGE MODE: Use tradeSide='close' with position side
+                position_side = position.get('position_side', 'long' if position['side'] in ['buy', 'long'] else 'short')
+                close_side = self.get_order_side(position_side, is_open=False)
+                close_params = self.get_hedge_order_params(position_side, is_open=False)
+                actual_symbol = position.get('symbol', symbol)
+
                 print(f"\n🎯 Taking profit on {symbol}")
                 print(f"  UPNL: ${upnl:.4f} ({pct:.2f}%)")
 
-                # Close position with reduceOnly
+                # Close position with hedge mode params
                 order = self.exchange.create_market_order(
-                    symbol, close_side, position['amount'],
-                    params={'reduceOnly': True, 'marginCoin': 'USDT'}
+                    actual_symbol, close_side, position['amount'],
+                    params=close_params
                 )
 
                 self.total_pnl += upnl
                 self.positions_closed += 1
+
+                # Grok V2: Record trade result for profit factor tracking
+                if self.grok_v2:
+                    try:
+                        entry_time = position.get('opened_at', datetime.now().isoformat())
+                        leverage = position.get('leverage', 5)
+                        margin_used = (entry_price * position['amount']) / leverage if leverage > 0 else 0
+                        self.grok_v2.record_trade_result(
+                            symbol=symbol,
+                            side=position.get('side', 'long'),
+                            entry_price=entry_price,
+                            exit_price=position.get('markPrice', entry_price),
+                            entry_time=entry_time,
+                            contracts=position['amount'],
+                            leverage=leverage,
+                            margin_used=margin_used,
+                            realized_pnl=upnl,
+                            exit_reason='profit_taking',
+                            averaging_steps=self.averaging_steps.get(symbol, 0),
+                            peak_upnl=peak
+                        )
+                    except Exception as track_err:
+                        print(f"  ⚠️ Grok V2 tracking failed: {track_err}")
+
+                # HEDGE GATEWAY: Close hedge when main position closes
+                if self.hedge_gateway:
+                    self.hedge_gateway.on_main_position_closed(symbol)
                 del self.active_positions[symbol]
-                
+
                 print(f"  ✅ Profit taken: ${upnl:.4f}")
                 return True
-                
+
             except Exception as e:
                 print(f"  ❌ Take profit failed: {e}")
         
@@ -3705,28 +4049,58 @@ class AIXYZContinuousProfit:
             if not self.check_averaging(symbol, position, upnl):
                 # Averaging failed - must close to prevent liquidation
                 try:
-                    close_side = 'sell' if position['side'] in ['buy', 'long'] else 'buy'
-                    
+                    # HEDGE MODE: Use tradeSide='close' with position side
+                    position_side = position.get('position_side', 'long' if position['side'] in ['buy', 'long'] else 'short')
+                    close_side = self.get_order_side(position_side, is_open=False)
+                    close_params = self.get_hedge_order_params(position_side, is_open=False)
+                    actual_symbol = position.get('symbol', symbol)
+
                     print(f"\n🛑 EMERGENCY STOP LOSS on {symbol}")
                     print(f"  UPNL: ${upnl:.4f} ({upnl_pct*100:.1f}%)")
                     print(f"  Emergency threshold: -85% UPNL")
                     print(f"  Action: Closing to prevent liquidation")
 
                     order = self.exchange.create_market_order(
-                        symbol, close_side, position['amount'],
-                        params={'reduceOnly': True, 'marginCoin': 'USDT'}
+                        actual_symbol, close_side, position['amount'],
+                        params=close_params
                     )
 
                     self.total_pnl += upnl
                     self.positions_closed += 1
 
+                    # Grok V2: Record trade result for profit factor tracking (stop loss)
+                    if self.grok_v2:
+                        try:
+                            entry_price = position.get('entry_price', position.get('entryPrice', 0))
+                            entry_time = position.get('opened_at', datetime.now().isoformat())
+                            margin_used = margin
+                            self.grok_v2.record_trade_result(
+                                symbol=symbol,
+                                side=position.get('side', 'long'),
+                                entry_price=entry_price,
+                                exit_price=position.get('markPrice', entry_price),
+                                entry_time=entry_time,
+                                contracts=position['amount'],
+                                leverage=leverage,
+                                margin_used=margin_used,
+                                realized_pnl=upnl,
+                                exit_reason='emergency_stop_loss',
+                                averaging_steps=steps_taken,
+                                peak_upnl=self.peak_upnl.get(symbol, 0)
+                            )
+                        except Exception as track_err:
+                            print(f"  ⚠️ Grok V2 tracking failed: {track_err}")
+
+                    # HEDGE GATEWAY: Close hedge when main position closes
+                    if self.hedge_gateway:
+                        self.hedge_gateway.on_main_position_closed(symbol)
                     # Clean up position tracking
                     del self.active_positions[symbol]
                     self.cleanup_position_tracking(symbol)
 
                     print(f"  ✅ Emergency stop loss executed - prevented liquidation")
                     return True
-                    
+
                 except Exception as e:
                     print(f"  ❌ CRITICAL: Emergency stop loss failed: {e}")
                     print(f"  ⚠️ WARNING: Position may be liquidated!")
@@ -3892,7 +4266,7 @@ class AIXYZContinuousProfit:
                 print(f"  ❌ Pyramid blocked: Insufficient margin")
                 return False
 
-            # Execute pyramid order
+            # HEDGE MODE: Execute pyramid order with tradeSide='open'
             print(f"\n🔺 Pyramiding {symbol} - PRICE IMPROVED")
             print(f"  Current Weighted Avg Entry: ${current_entry:.6f}")
             print(f"  Pyramid Entry Price: ${current_price:.6f}")
@@ -3900,9 +4274,13 @@ class AIXYZContinuousProfit:
             print(f"  Adding: {pyramid_size:.4f} contracts")
             print(f"  Margin: ${required_margin:.2f}")
 
+            position_side = position.get('position_side', 'long' if side == 'buy' else 'short')
+            order_side = self.get_order_side(position_side, is_open=True)
+            order_params = self.get_hedge_order_params(position_side, is_open=True)
+            actual_symbol = position.get('symbol', symbol)
             order = self.exchange.create_market_order(
-                symbol, side, pyramid_size,
-                params={'marginCoin': 'USDT'}
+                actual_symbol, order_side, pyramid_size,
+                params=order_params
             )
 
             # Update position amount (exchange will update entry_price automatically)
@@ -4004,12 +4382,17 @@ class AIXYZContinuousProfit:
             bullish_signals = sum(1 for s in scores if s > 0)
             bearish_signals = sum(1 for s in scores if s < 0)
 
+            # Normalize direction to long/short for comparison (handle BULLISH/BEARISH)
+            dir_lower = direction.lower()
+            is_long = dir_lower in ['long', 'buy', 'bullish']
+            is_short = dir_lower in ['short', 'sell', 'bearish']
+
             # All timeframes aligned
-            if bullish_signals == 3 and direction == 'long':
+            if bullish_signals == 3 and is_long:
                 aligned_score = sum(scores) / len(scores) * 1.5
                 print(f"  🎯 Multi-TF: ALL BULLISH across {timeframes} | Score: {aligned_score:.2f}")
                 return aligned_score
-            elif bearish_signals == 3 and direction == 'short':
+            elif bearish_signals == 3 and is_short:
                 aligned_score = sum(scores) / len(scores) * 1.5
                 print(f"  🎯 Multi-TF: ALL BEARISH across {timeframes} | Score: {aligned_score:.2f}")
                 return aligned_score
@@ -4288,6 +4671,9 @@ class AIXYZContinuousProfit:
             
             for symbol in symbols_to_remove:
                 print(f"  📤 Position {symbol} closed externally - removing")
+                # HEDGE GATEWAY: Close hedge when main position closes
+                if self.hedge_gateway:
+                    self.hedge_gateway.on_main_position_closed(symbol)
                 del self.active_positions[symbol]
                 # Clean up all tracking for this closed position
                 self.cleanup_position_tracking(symbol)
@@ -4453,10 +4839,30 @@ class AIXYZContinuousProfit:
 
         # Clean up any stale tracking data
         self.cleanup_stale_positions()
-        
+
+        # Grok V2: Anomaly Detection for system health monitoring
+        if self.grok_v2:
+            try:
+                # Check key system metrics for anomalies
+                num_positions = len(self.active_positions)
+                anomaly = self.grok_v2.check_anomaly('active_positions', num_positions)
+                if anomaly:
+                    print(f"  🔍 ANOMALY: {anomaly.description} (severity: {anomaly.severity})")
+
+                # Check total unrealized PnL for anomalies
+                total_upnl = sum(
+                    pos.get('unrealizedPnl', 0) or pos.get('upnl', 0)
+                    for pos in self.active_positions.values()
+                )
+                anomaly = self.grok_v2.check_anomaly('total_upnl', total_upnl)
+                if anomaly:
+                    print(f"  🔍 ANOMALY: {anomaly.description} (severity: {anomaly.severity})")
+            except Exception as anomaly_err:
+                pass  # Silent fail for anomaly detection
+
         if not self.active_positions:
             return
-        
+
         try:
             # Get all positions from exchange via CCXT first
             exchange_positions = self.exchange.fetch_positions()
@@ -4522,6 +4928,10 @@ class AIXYZContinuousProfit:
                         # Update adaptive Fibonacci system with current price
                         self.adaptive_fibonacci.update_price(symbol, current_price)
 
+                        # HEDGE GATEWAY: Check gate conditions (reversion or surplus dump)
+                        if self.hedge_gateway:
+                            self.hedge_gateway.check_gates(symbol, current_price)
+
                     # CRITICAL: Always track peak UPNL for all positions
                     # This ensures we capture peaks even if averaging hasn't been detected yet
                     if symbol not in self.peak_upnl:
@@ -4562,15 +4972,45 @@ class AIXYZContinuousProfit:
                                 # All averaging steps exhausted - execute stop
                                 print(f"  🛡️  ATR STOP HIT: {atr_decision.reason}")
                                 print(f"     Averaging exhausted ({current_avg_steps}/{max_avg_steps} steps used)")
-                                # Close position with stop loss
+                                # Close position with stop loss (HEDGE MODE)
                                 try:
-                                    close_side = 'sell' if local_pos.get('side') in ['buy', 'long'] else 'buy'
+                                    position_side = local_pos.get('position_side', 'long' if local_pos.get('side') in ['buy', 'long'] else 'short')
+                                    close_side = self.get_order_side(position_side, is_open=False)
+                                    close_params = self.get_hedge_order_params(position_side, is_open=False)
+                                    actual_symbol = local_pos.get('symbol', symbol)
                                     order = self.exchange.create_market_order(
-                                        symbol, close_side, local_pos.get('amount', 0),
-                                        params={'reduceOnly': True, 'marginCoin': 'USDT'}
+                                        actual_symbol, close_side, local_pos.get('amount', 0),
+                                        params=close_params
                                     )
                                     self.total_pnl += upnl
                                     self.positions_closed += 1
+
+                                    # Grok V2: Record trade result for profit factor tracking (ATR stop)
+                                    if self.grok_v2:
+                                        try:
+                                            entry_time = local_pos.get('opened_at', datetime.now().isoformat())
+                                            leverage = local_pos.get('leverage', 5)
+                                            margin_used = (entry_price * local_pos.get('amount', 0)) / leverage if leverage > 0 else 0
+                                            self.grok_v2.record_trade_result(
+                                                symbol=symbol,
+                                                side=local_pos.get('side', 'long'),
+                                                entry_price=entry_price,
+                                                exit_price=current_price,
+                                                entry_time=entry_time,
+                                                contracts=local_pos.get('amount', 0),
+                                                leverage=leverage,
+                                                margin_used=margin_used,
+                                                realized_pnl=upnl,
+                                                exit_reason='atr_stop',
+                                                averaging_steps=current_avg_steps,
+                                                peak_upnl=self.peak_upnl.get(symbol, 0)
+                                            )
+                                        except Exception as track_err:
+                                            print(f"  ⚠️ Grok V2 tracking failed: {track_err}")
+
+                                    # HEDGE GATEWAY: Close hedge when main position closes
+                                    if self.hedge_gateway:
+                                        self.hedge_gateway.on_main_position_closed(symbol)
                                     del self.active_positions[symbol]
                                     self.cleanup_position_tracking(symbol)
                                     print(f"  ✅ ATR stop executed: {symbol} @ loss=${upnl:.4f}")
@@ -4596,14 +5036,17 @@ class AIXYZContinuousProfit:
                         )
                         if partial_decision.should_close:
                             print(f"  🎯 PARTIAL CLOSE: {partial_decision.reason}")
-                            # Execute partial close
+                            # Execute partial close (HEDGE MODE)
                             try:
-                                close_side = 'sell' if local_pos.get('side') in ['buy', 'long'] else 'buy'
+                                position_side = local_pos.get('position_side', 'long' if local_pos.get('side') in ['buy', 'long'] else 'short')
+                                close_side = self.get_order_side(position_side, is_open=False)
+                                close_params = self.get_hedge_order_params(position_side, is_open=False)
+                                actual_symbol = local_pos.get('symbol', symbol)
                                 close_amount = local_pos.get('amount', 0) * partial_decision.close_percentage
 
                                 order = self.exchange.create_market_order(
-                                    symbol, close_side, close_amount,
-                                    params={'reduceOnly': True, 'marginCoin': 'USDT'}
+                                    actual_symbol, close_side, close_amount,
+                                    params=close_params
                                 )
 
                                 # Update position size
@@ -4647,18 +5090,48 @@ class AIXYZContinuousProfit:
                         print(f"     Opportunity Cost: {opportunity_analysis['opportunity_cost']*100:.1f}%")
                         print(f"     Urgency: {opportunity_analysis['urgency']}")
 
-                        # Execute position closure
+                        # Execute position closure (HEDGE MODE)
                         try:
-                            close_side = 'sell' if local_pos.get('side') in ['buy', 'long'] else 'buy'
+                            position_side = local_pos.get('position_side', 'long' if local_pos.get('side') in ['buy', 'long'] else 'short')
+                            close_side = self.get_order_side(position_side, is_open=False)
+                            close_params = self.get_hedge_order_params(position_side, is_open=False)
+                            actual_symbol = local_pos.get('symbol', symbol)
                             amount = local_pos.get('amount', 0)
 
                             order = self.exchange.create_market_order(
-                                symbol, close_side, amount,
-                                params={'reduceOnly': True, 'marginCoin': 'USDT'}
+                                actual_symbol, close_side, amount,
+                                params=close_params
                             )
 
                             self.total_pnl += upnl
                             self.positions_closed += 1
+
+                            # Grok V2: Record trade result for profit factor tracking (rotation)
+                            if self.grok_v2:
+                                try:
+                                    entry_time = local_pos.get('opened_at', datetime.now().isoformat())
+                                    leverage = local_pos.get('leverage', 5)
+                                    margin_used = (entry_price * amount) / leverage if leverage > 0 else 0
+                                    self.grok_v2.record_trade_result(
+                                        symbol=symbol,
+                                        side=local_pos.get('side', 'long'),
+                                        entry_price=entry_price,
+                                        exit_price=current_price,
+                                        entry_time=entry_time,
+                                        contracts=amount,
+                                        leverage=leverage,
+                                        margin_used=margin_used,
+                                        realized_pnl=upnl,
+                                        exit_reason='opportunity_cost_rotation',
+                                        averaging_steps=self.averaging_steps.get(symbol, 0),
+                                        peak_upnl=self.peak_upnl.get(symbol, 0)
+                                    )
+                                except Exception as track_err:
+                                    print(f"  ⚠️ Grok V2 tracking failed: {track_err}")
+
+                            # HEDGE GATEWAY: Close hedge when main position closes
+                            if self.hedge_gateway:
+                                self.hedge_gateway.on_main_position_closed(symbol)
                             del self.active_positions[symbol]
 
                             # Clean up tracking

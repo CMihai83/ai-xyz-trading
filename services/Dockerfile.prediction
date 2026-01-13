@@ -1,0 +1,27 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install dependencies
+RUN pip install --no-cache-dir \
+    ccxt \
+    numpy \
+    pandas \
+    scipy \
+    python-dotenv \
+    fastapi \
+    uvicorn \
+    pydantic
+
+# Copy prediction model files
+COPY prediction_model_final.py .
+COPY prediction_service.py .
+COPY prediction_integration.py .
+COPY prediction_api.py .
+COPY .env .
+
+# Expose API port
+EXPOSE 8009
+
+# Run API server
+CMD ["python", "prediction_api.py"]
