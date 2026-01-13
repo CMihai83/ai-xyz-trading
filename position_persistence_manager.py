@@ -121,7 +121,7 @@ class PositionPersistenceManager:
         try:
             state = None
             
-            # Try Redis first
+            # Try Redis first (uses db=1, NOT db=0!)
             if self.redis_available:
                 redis_state = self.redis_client.get('aixyz:position_state')
                 if redis_state:
@@ -179,8 +179,8 @@ class PositionPersistenceManager:
             peak_upnl_timestamps = saved_state.get('peak_upnl_timestamps', {})
             position_multipliers = saved_state.get('position_multipliers', {})
 
-            # DEBUG: Log averaging_steps from saved state
-            logger.info(f"🔍 Reconcile: averaging_steps from saved state: {averaging_steps}")
+            # Log averaging_steps from saved state for debugging
+            logger.info(f"Reconcile: averaging_steps from saved state: {averaging_steps}")
             
             # Remove positions that no longer exist on exchange
             symbols_to_remove = []

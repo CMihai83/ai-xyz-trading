@@ -270,6 +270,41 @@ if hasattr(self, 'sync_integration') and self.sync_integration:
 - `aixyz_continuous_profit_system.py:3487` - adaptive averaging
 - `aixyz_continuous_profit_system.py:4364` - pyramid execution
 
+### 8.5 Redis Database Configuration (CRITICAL)
+
+**IMPORTANT**: The persistence manager uses Redis database 1 (db=1), NOT database 0!
+
+```python
+# position_persistence_manager.py - connects to db=1
+self.redis_client = redis.Redis(host=redis_host, port=redis_port, db=1)
+```
+
+**State storage locations:**
+| Source | Redis DB | Key Pattern | Priority |
+|--------|----------|-------------|----------|
+| PositionPersistenceManager | db=1 | `aixyz:position_state` | 1 (highest) |
+| EnhancedPositionSync | db=0 | `aixyz:sync:position:{symbol}` | 2 |
+| Host file (fallback) | N/A | `/app/position_state.json` | 3 (lowest) |
+
+**To fix corrupted averaging_steps:**
+```bash
+# 1. Stop the container
+docker stop ai_xyz_trading_system
+
+# 2. Delete corrupted state from db=1 (NOT db=0!)
+docker exec ai_xyz_redis redis-cli -n 1 DEL "aixyz:position_state"
+docker exec ai_xyz_redis redis-cli -n 1 KEYS "aixyz:*" | xargs -r -I{} docker exec ai_xyz_redis redis-cli -n 1 DEL "{}"
+
+# 3. Also delete sync keys from db=0
+docker exec ai_xyz_redis redis-cli -n 0 KEYS "aixyz:sync:position:*" | xargs -r -I{} docker exec ai_xyz_redis redis-cli -n 0 DEL "{}"
+
+# 4. Fix the host file (edit averaging_steps values)
+vim /root/ai_xyz/position_state.json
+
+# 5. Start the container (will load from file)
+docker start ai_xyz_trading_system
+```
+
 ---
 
 ## 9. Key Files Reference
