@@ -3172,6 +3172,18 @@ class AIXYZContinuousProfit:
                                 )
                                 print(f"  💾 State saved - averaging_steps[{symbol}] = {self.averaging_steps[symbol]}")
 
+                            # CRITICAL FIX: Sync averaging state to EnhancedPositionSync
+                            # This prevents reconcile_with_exchange from resetting the counter
+                            if hasattr(self, 'sync_integration') and self.sync_integration:
+                                self.sync_integration.sync.update_averaging_state(
+                                    symbol,
+                                    self.averaging_steps[symbol],
+                                    multipliers=self.position_multipliers.get(symbol, []),
+                                    last_price=current_price,
+                                    fibonacci_config=self.fibonacci_configs.get(symbol)
+                                )
+                                print(f"  🔄 Sync: EnhancedPositionSync updated - averaging_steps={self.averaging_steps[symbol]}")
+
                             print(f"  ✅ Historical averaging executed - Step {step + 1}")
                             return True
 
@@ -3468,6 +3480,18 @@ class AIXYZContinuousProfit:
                             self.position_multipliers
                         )
                         print(f"  💾 State saved - averaging_steps[{symbol}] = {self.averaging_steps[symbol]}")
+
+                    # CRITICAL FIX: Sync averaging state to EnhancedPositionSync
+                    # This prevents reconcile_with_exchange from resetting the counter
+                    if hasattr(self, 'sync_integration') and self.sync_integration:
+                        self.sync_integration.sync.update_averaging_state(
+                            symbol,
+                            self.averaging_steps[symbol],
+                            multipliers=self.position_multipliers.get(symbol, []),
+                            last_price=current_price,
+                            fibonacci_config=self.fibonacci_configs.get(symbol)
+                        )
+                        print(f"  🔄 Sync: EnhancedPositionSync updated - averaging_steps={self.averaging_steps[symbol]}")
 
                     # CRITICAL: Place liquidation protection order when LAST averaging step executes
                     # OR when capital is exhausted (>= 90% used)
@@ -4333,6 +4357,18 @@ class AIXYZContinuousProfit:
                     self.original_sizes,
                     self.position_multipliers
                 )
+
+            # CRITICAL FIX: Sync averaging state to EnhancedPositionSync
+            # This prevents reconcile_with_exchange from resetting the counter
+            if hasattr(self, 'sync_integration') and self.sync_integration:
+                self.sync_integration.sync.update_averaging_state(
+                    symbol,
+                    self.averaging_steps[symbol],
+                    multipliers=self.position_multipliers.get(symbol, []),
+                    last_price=current_price,
+                    fibonacci_config=self.fibonacci_configs.get(symbol)
+                )
+                print(f"  🔄 Sync: EnhancedPositionSync updated - averaging_steps={self.averaging_steps[symbol]}")
 
             print(f"  ✅ Pyramid executed - Position size now: {position['amount']:.4f}")
             return True
