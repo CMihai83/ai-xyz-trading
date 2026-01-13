@@ -244,6 +244,32 @@ hedge_gate_threshold = -70.0  # Only for hedge positions
 docker exec ai_xyz_redis redis-cli GET "hedge_gateway:state" | python3 -m json.tool
 ```
 
+### 8.4 Position Sync State Synchronization (Critical Fix)
+
+**Important**: When averaging steps execute, the counter MUST be synced to EnhancedPositionSync.
+
+```python
+# After incrementing averaging_steps, sync to EnhancedPositionSync:
+if hasattr(self, 'sync_integration') and self.sync_integration:
+    self.sync_integration.sync.update_averaging_state(
+        symbol,
+        self.averaging_steps[symbol],
+        multipliers=self.position_multipliers.get(symbol, []),
+        last_price=current_price,
+        fibonacci_config=self.fibonacci_configs.get(symbol)
+    )
+```
+
+**Why this matters:**
+- `position_sync_integration._update_system_state()` OVERWRITES all tracking dicts from EnhancedPositionSync
+- If EnhancedPositionSync isn't notified of averaging, reconciliation resets the counter to 0
+- This caused liquidations because protection orders only placed after max steps
+
+**Sync calls are at:**
+- `aixyz_continuous_profit_system.py:3178` - historical averaging
+- `aixyz_continuous_profit_system.py:3487` - adaptive averaging
+- `aixyz_continuous_profit_system.py:4364` - pyramid execution
+
 ---
 
 ## 9. Key Files Reference
