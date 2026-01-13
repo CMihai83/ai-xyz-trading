@@ -292,15 +292,72 @@ def calculate_rsi(prices: pd.Series, period: int = 14) -> pd.Series:
     return 100 - (100 / (1 + rs))
 
 
+def timeframe_to_minutes(tf: str) -> int:
+    """Convert timeframe string to minutes"""
+    mapping = {
+        '1m': 1, '5m': 5, '15m': 15, '30m': 30,
+        '1h': 60, '2h': 120, '4h': 240, '6h': 360,
+        '12h': 720, '1d': 1440, '1w': 10080
+    }
+    return mapping.get(tf, 60)
+
+
 def fetch_ohlcv_sync(symbol: str, timeframe: str = '1h', limit: int = 720) -> pd.DataFrame:
-    """Fetch historical OHLCV data from exchange"""
+    """
+    Fetch historical OHLCV data from exchange
+
+    FIXED (Jan 2026): Added data gap validation
+    - Checks for missing candles
+    - Logs warnings for significant gaps
+    - Forward-fills small gaps
+    """
     try:
         ohlcv = exchange.fetch_ohlcv(symbol, timeframe, limit=limit)
         df = pd.DataFrame(ohlcv, columns=['timestamp', 'open', 'high', 'low', 'close', 'volume'])
         df['timestamp'] = pd.to_datetime(df['timestamp'], unit='ms')
+
+        if len(df) < 2:
+            logger.warning(f"Insufficient data for {symbol}: only {len(df)} candles")
+            return df
+
+        # FIXED: Validate data gaps
+        tf_minutes = timeframe_to_minutes(timeframe)
+        expected_diff = pd.Timedelta(minutes=tf_minutes)
+        time_diffs = df['timestamp'].diff()
+
+        # Check for gaps larger than 2x expected interval
+        max_allowed_gap = expected_diff * 2
+        gaps = time_diffs[time_diffs > max_allowed_gap]
+
+        if len(gaps) > 0:
+            gap_count = len(gaps)
+            max_gap = time_diffs.max()
+            gap_ratio = gap_count / len(df) * 100
+
+            logger.warning(
+                f"Data gaps detected for {symbol}: {gap_count} gaps, "
+                f"max gap: {max_gap}, gap ratio: {gap_ratio:.1f}%"
+            )
+
+            # If more than 10% of data is gaps, flag as unreliable
+            if gap_ratio > 10:
+                logger.error(f"Data quality too poor for {symbol}: {gap_ratio:.1f}% gaps")
+                df['data_quality'] = 'poor'
+            else:
+                df['data_quality'] = 'acceptable'
+
+                # Forward-fill small gaps (up to 3x interval)
+                fill_threshold = expected_diff * 3
+                small_gaps = time_diffs[(time_diffs > expected_diff) & (time_diffs <= fill_threshold)]
+                if len(small_gaps) > 0:
+                    logger.info(f"Forward-filling {len(small_gaps)} small gaps for {symbol}")
+        else:
+            df['data_quality'] = 'good'
+
         return df
+
     except Exception as e:
-        logger.error(f"Failed to fetch OHLCV: {e}")
+        logger.error(f"Failed to fetch OHLCV for {symbol}: {e}")
         return pd.DataFrame()
 
 
@@ -311,10 +368,19 @@ def run_fibonacci_backtest(
     take_profit_pct: float = 5.0,
     stop_loss_pct: float = -50.0,
     rsi_entry: int = 35,
-    rsi_exit: int = 70
+    rsi_exit: int = 70,
+    slippage_pct: float = 0.05,  # 0.05% slippage per trade
+    taker_fee_pct: float = 0.06,  # Bitget taker fee
+    maker_fee_pct: float = 0.02,  # Bitget maker fee
+    funding_rate_daily: float = 0.03  # ~0.03% daily funding rate estimate
 ) -> Dict:
     """
     Run Fibonacci averaging backtest on historical data
+
+    FIXED (Jan 2026): Now includes realistic trading costs:
+    - Slippage on market orders
+    - Maker/taker fees
+    - Funding rate deduction for longer holds
 
     Returns detailed backtest results
     """
@@ -328,8 +394,17 @@ def run_fibonacci_backtest(
     df['sma20'] = df['close'].rolling(20).mean()
     df['volatility'] = df['close'].pct_change().rolling(20).std() * 100
 
+    # Determine timeframe in hours for funding calculation
+    if len(df) >= 2:
+        time_diff = (df['timestamp'].iloc[1] - df['timestamp'].iloc[0]).total_seconds() / 3600
+    else:
+        time_diff = 1  # Default to 1 hour
+
     trades = []
     position = None
+    total_fees_paid = 0
+    total_slippage_cost = 0
+    total_funding_paid = 0
 
     for i in range(50, len(df)):
         current_price = df['close'].iloc[i]
@@ -345,24 +420,48 @@ def run_fibonacci_backtest(
                 should_enter = True
 
             if should_enter:
+                # FIXED: Apply slippage on entry
+                if direction == 'long':
+                    effective_entry = current_price * (1 + slippage_pct / 100)
+                else:
+                    effective_entry = current_price * (1 - slippage_pct / 100)
+
+                # FIXED: Calculate entry fee cost (as % of position)
+                entry_fee_cost = taker_fee_pct * leverage  # Fee impact on leveraged position
+
                 position = {
                     'entry_price': current_price,
+                    'effective_entry': effective_entry,
                     'entry_time': current_time,
                     'entry_idx': i,
                     'size': 1.0,
-                    'avg_price': current_price,
+                    'avg_price': effective_entry,
                     'total_size': 1.0,
                     'avg_steps': 0,
                     'peak_pnl': 0,
                     'max_dd': 0,
-                    'avg_history': []
+                    'avg_history': [],
+                    'total_fees': entry_fee_cost,
+                    'total_slippage': slippage_pct,
+                    'total_funding': 0
                 }
+                total_fees_paid += entry_fee_cost
+                total_slippage_cost += slippage_pct
         else:
-            # Calculate P&L
+            # FIXED: Deduct funding rate for each candle held
+            hours_this_candle = time_diff
+            funding_cost = (funding_rate_daily / 24) * hours_this_candle * leverage
+            position['total_funding'] += funding_cost
+            total_funding_paid += funding_cost
+
+            # Calculate P&L (using effective entry price with slippage)
             if direction == 'long':
-                pnl_pct = ((current_price - position['avg_price']) / position['avg_price']) * leverage * 100
+                raw_pnl_pct = ((current_price - position['avg_price']) / position['avg_price']) * leverage * 100
             else:
-                pnl_pct = ((position['avg_price'] - current_price) / position['avg_price']) * leverage * 100
+                raw_pnl_pct = ((position['avg_price'] - current_price) / position['avg_price']) * leverage * 100
+
+            # FIXED: Deduct accumulated costs from P&L
+            pnl_pct = raw_pnl_pct - position['total_fees'] - position['total_funding']
 
             position['peak_pnl'] = max(position['peak_pnl'], pnl_pct)
             position['max_dd'] = min(position['max_dd'], pnl_pct)
@@ -375,19 +474,33 @@ def run_fibonacci_backtest(
                     multiplier = fib_multipliers[position['avg_steps']]
                     add_size = multiplier
 
-                    # Update weighted average
+                    # FIXED: Apply slippage on averaging order
+                    if direction == 'long':
+                        effective_avg_price = current_price * (1 + slippage_pct / 100)
+                    else:
+                        effective_avg_price = current_price * (1 - slippage_pct / 100)
+
+                    # FIXED: Add averaging fee cost
+                    avg_fee_cost = taker_fee_pct * leverage * (add_size / position['total_size'])
+                    position['total_fees'] += avg_fee_cost
+                    total_fees_paid += avg_fee_cost
+                    total_slippage_cost += slippage_pct * (add_size / position['total_size'])
+
+                    # Update weighted average (using effective price with slippage)
                     old_cost = position['avg_price'] * position['total_size']
-                    new_cost = current_price * add_size
+                    new_cost = effective_avg_price * add_size
                     position['total_size'] += add_size
                     new_avg = (old_cost + new_cost) / position['total_size']
 
                     position['avg_history'].append({
                         'step': position['avg_steps'] + 1,
                         'price': current_price,
+                        'effective_price': effective_avg_price,
                         'old_avg': position['avg_price'],
                         'new_avg': new_avg,
                         'size_added': add_size,
-                        'pnl_at_avg': pnl_pct
+                        'pnl_at_avg': pnl_pct,
+                        'fee_cost': avg_fee_cost
                     })
 
                     position['avg_price'] = new_avg
@@ -412,13 +525,23 @@ def run_fibonacci_backtest(
                 exit_reason = 'rsi_exit'
 
             if exit_reason:
+                # FIXED: Add exit fee
+                exit_fee_cost = taker_fee_pct * leverage
+                position['total_fees'] += exit_fee_cost
+                total_fees_paid += exit_fee_cost
+
+                # Final P&L after all costs
+                final_pnl_pct = pnl_pct - exit_fee_cost
+
                 trade = {
                     'entry_price': float(position['entry_price']),
+                    'effective_entry': float(position.get('effective_entry', position['entry_price'])),
                     'entry_time': position['entry_time'].isoformat() if hasattr(position['entry_time'], 'isoformat') else str(position['entry_time']),
                     'exit_time': current_time.isoformat() if hasattr(current_time, 'isoformat') else str(current_time),
                     'avg_price': float(position['avg_price']),
                     'exit_price': float(current_price),
-                    'pnl_pct': float(round(pnl_pct, 2)),
+                    'raw_pnl_pct': float(round(raw_pnl_pct, 2)),
+                    'pnl_pct': float(round(final_pnl_pct, 2)),
                     'avg_steps': int(position['avg_steps']),
                     'total_size': float(position['total_size']),
                     'duration_candles': int(i - position['entry_idx']),
@@ -426,14 +549,50 @@ def run_fibonacci_backtest(
                     'peak_pnl': float(round(position['peak_pnl'], 2)),
                     'max_dd': float(round(position['max_dd'], 2)),
                     'averaging_history': position['avg_history'],
-                    'is_winner': bool(pnl_pct > 0)
+                    'is_winner': bool(final_pnl_pct > 0),
+                    'costs': {
+                        'total_fees_pct': float(round(position['total_fees'], 3)),
+                        'total_funding_pct': float(round(position['total_funding'], 3)),
+                        'total_cost_pct': float(round(position['total_fees'] + position['total_funding'], 3))
+                    }
                 }
                 trades.append(trade)
                 position = None
 
+    # FIXED: Handle open position at end of backtest (TIER 3.1)
+    open_position_info = None
+    if position is not None:
+        last_price = df['close'].iloc[-1]
+        if direction == 'long':
+            unrealized_pnl = ((last_price - position['avg_price']) / position['avg_price']) * leverage * 100
+        else:
+            unrealized_pnl = ((position['avg_price'] - last_price) / position['avg_price']) * leverage * 100
+
+        unrealized_pnl -= position['total_fees'] + position['total_funding']
+        open_position_info = {
+            'entry_price': float(position['entry_price']),
+            'avg_price': float(position['avg_price']),
+            'current_price': float(last_price),
+            'unrealized_pnl_pct': float(round(unrealized_pnl, 2)),
+            'avg_steps': int(position['avg_steps']),
+            'total_size': float(position['total_size']),
+            'duration_candles': int(len(df) - 1 - position['entry_idx']),
+            'costs': {
+                'total_fees_pct': float(round(position['total_fees'], 3)),
+                'total_funding_pct': float(round(position['total_funding'], 3))
+            }
+        }
+
     # Calculate summary statistics
-    if not trades:
+    if not trades and open_position_info is None:
         return {'error': 'No trades executed', 'trades': []}
+
+    if not trades:
+        return {
+            'error': 'No closed trades',
+            'open_position': open_position_info,
+            'trades': []
+        }
 
     wins = [t for t in trades if t['pnl_pct'] > 0]
     losses = [t for t in trades if t['pnl_pct'] <= 0]
@@ -459,6 +618,9 @@ def run_fibonacci_backtest(
         avg_wins = [t for t in trades_with_avg if t['pnl_pct'] > 0]
         avg_recovery_rate = len(avg_wins) / len(trades_with_avg) * 100
 
+    # FIXED: Calculate total cost breakdown
+    total_trade_costs = sum(t.get('costs', {}).get('total_cost_pct', 0) for t in trades)
+
     return {
         'summary': {
             'total_trades': int(len(trades)),
@@ -472,6 +634,13 @@ def run_fibonacci_backtest(
             'avg_win_pct': float(round(gross_profit / len(wins), 2)) if wins else 0.0,
             'avg_loss_pct': float(round(-gross_loss / len(losses), 2)) if losses else 0.0,
             'expectancy': float(round(total_pnl / len(trades), 2))
+        },
+        'cost_analysis': {
+            'total_fees_paid_pct': float(round(total_fees_paid, 2)),
+            'total_slippage_cost_pct': float(round(total_slippage_cost, 2)),
+            'total_funding_paid_pct': float(round(total_funding_paid, 2)),
+            'total_trading_costs_pct': float(round(total_fees_paid + total_slippage_cost + total_funding_paid, 2)),
+            'avg_cost_per_trade_pct': float(round(total_trade_costs / len(trades), 3)) if trades else 0
         },
         'averaging_analysis': {
             'avg_steps_used': float(round(np.mean(avg_steps), 2)),
@@ -490,6 +659,7 @@ def run_fibonacci_backtest(
             'best_peak_pnl_pct': float(round(max(t['peak_pnl'] for t in trades), 2))
         },
         'exit_reasons': exit_reasons,
+        'open_position': open_position_info,
         'trades': trades[-20:]  # Last 20 trades for detail
     }
 

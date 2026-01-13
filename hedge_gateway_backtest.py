@@ -180,17 +180,28 @@ def run_gateway_backtest(df, symbol):
                     })
 
                     # Partial close at gate open (30%)
-                    if PARTIAL_CLOSE_AT_GATE > 0:
-                        close_amount = hedge_size * PARTIAL_CLOSE_AT_GATE * hedge_remaining
+                    # FIXED: Use cumulative tracking to avoid Zeno's paradox
+                    if PARTIAL_CLOSE_AT_GATE > 0 and hedge_remaining > 0:
+                        # Close based on ORIGINAL size, not remaining
+                        close_amount = hedge_size * PARTIAL_CLOSE_AT_GATE
+                        # Clamp to actual remaining
+                        actual_remaining_amount = hedge_size * hedge_remaining
+                        if close_amount > actual_remaining_amount:
+                            close_amount = actual_remaining_amount
+
                         realized = close_amount * (short_upnl_pct / 100)
                         capital += realized
-                        hedge_remaining -= PARTIAL_CLOSE_AT_GATE * hedge_remaining
+
+                        # Track cumulative closed (not fractional remaining)
                         gateway.total_closed_pct += PARTIAL_CLOSE_AT_GATE
+                        hedge_remaining = max(0, 1.0 - gateway.total_closed_pct)
+
                         results['trades'].append({
                             'type': 'gate_partial_close',
                             'step': averaging_step,
                             'pnl': realized,
-                            'price': price
+                            'price': price,
+                            'remaining_pct': hedge_remaining * 100
                         })
 
         # GATEWAY: Check surplus dump or reversion close
