@@ -1,7 +1,13 @@
 #!/usr/bin/env python3
 """
 Hedge Gateway Backtest - Per Symbol Analysis
-Gate opens at averaging step 2/5, tracks peak, surplus dump or reversion close
+Gate opens at averaging step 2/4/5, tracks peak, surplus dump or reversion close
+
+Grok+Claude Consortium Optimized (Jan 2026):
+- Added step 4 gate for mid-range protection
+- Changed close percentages to 25%/25%/50% (was 30%/70%)
+- Increased reversion buffer to 10% (was 5%)
+- Surplus dump at 85% of peak
 """
 
 import ccxt
@@ -28,11 +34,13 @@ INITIAL_CAPITAL = 1000
 # Averaging thresholds (main position UPNL %)
 AVERAGING_STEPS = [-25, -50, -75, -100, -125]
 
-# Gateway configuration
-GATE_OPEN_STEPS = [2, 5]  # Gates open at step 2 and 5
-GATE_BUFFER_PCT = 2.0     # 2% buffer for reversion detection
-SURPLUS_DUMP_PCT = 0.85   # Close at 85% of peak profit
-PARTIAL_CLOSE_AT_GATE = 0.30  # Close 30% when gate opens
+# Gateway configuration (Grok+Claude consortium optimized - Jan 2026)
+GATE_OPEN_STEPS = [2, 4, 5]  # Gates open at step 2, 4, and 5 (added step 4)
+GATE_BUFFER_PCT = 10.0     # 10% buffer for reversion detection (was 5% - too tight)
+SURPLUS_DUMP_PCT = 0.85    # Close at 85% of peak profit
+CLOSE_AT_STEP_2 = 0.25     # Close 25% at step 2
+CLOSE_AT_STEP_4 = 0.25     # Close 25% at step 4 (NEW)
+CLOSE_AT_STEP_5 = 0.50     # Close 50% at step 5
 
 # Exit rules
 PROFIT_TARGET = 0.05  # +5% net P&L
@@ -169,7 +177,7 @@ def run_gateway_backtest(df, symbol):
                 total_long_invested += add_size
                 avg_long_entry = total_cost / long_size
 
-                # GATEWAY LOGIC: Open gate at step 2 or 5
+                # GATEWAY LOGIC: Open gate at step 2, 4, or 5
                 if averaging_step in GATE_OPEN_STEPS and not gateway.is_open and hedge_remaining > 0:
                     gateway.open_gate(hedge_profit_usd, averaging_step)
                     results['gate_events'].append({
@@ -179,11 +187,18 @@ def run_gateway_backtest(df, symbol):
                         'price': price
                     })
 
-                    # Partial close at gate open (30%)
+                    # Partial close at gate open (step-specific: 25%/25%/50%)
                     # FIXED: Use cumulative tracking to avoid Zeno's paradox
-                    if PARTIAL_CLOSE_AT_GATE > 0 and hedge_remaining > 0:
+                    if averaging_step == 2:
+                        close_pct = CLOSE_AT_STEP_2
+                    elif averaging_step == 4:
+                        close_pct = CLOSE_AT_STEP_4
+                    else:  # step 5
+                        close_pct = CLOSE_AT_STEP_5
+
+                    if close_pct > 0 and hedge_remaining > 0:
                         # Close based on ORIGINAL size, not remaining
-                        close_amount = hedge_size * PARTIAL_CLOSE_AT_GATE
+                        close_amount = hedge_size * close_pct
                         # Clamp to actual remaining
                         actual_remaining_amount = hedge_size * hedge_remaining
                         if close_amount > actual_remaining_amount:
@@ -193,12 +208,13 @@ def run_gateway_backtest(df, symbol):
                         capital += realized
 
                         # Track cumulative closed (not fractional remaining)
-                        gateway.total_closed_pct += PARTIAL_CLOSE_AT_GATE
+                        gateway.total_closed_pct += close_pct
                         hedge_remaining = max(0, 1.0 - gateway.total_closed_pct)
 
                         results['trades'].append({
                             'type': 'gate_partial_close',
                             'step': averaging_step,
+                            'close_pct': close_pct * 100,
                             'pnl': realized,
                             'price': price,
                             'remaining_pct': hedge_remaining * 100
