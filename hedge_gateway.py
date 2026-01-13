@@ -58,11 +58,14 @@ class HedgeGateway:
         self.enabled = enabled
 
         # Redis connection for persistence
+        # CRITICAL: Use db=1 to match PositionPersistenceManager (not db=0!)
+        # This ensures hedge state persists/restores correctly with position state
         redis_host = os.getenv('REDIS_HOST', 'localhost')
         redis_port = int(os.getenv('REDIS_PORT', 6379))
         try:
-            self.redis = redis.Redis(host=redis_host, port=redis_port, decode_responses=True)
+            self.redis = redis.Redis(host=redis_host, port=redis_port, db=1, decode_responses=True)
             self.redis.ping()
+            print(f"  ✅ HedgeGateway connected to Redis db=1")
         except Exception as e:
             print(f"  ⚠️ HedgeGateway Redis connection failed: {e}")
             self.redis = None
@@ -179,6 +182,7 @@ class HedgeGateway:
                     'symbol': symbol,
                     'side': hedge_side,
                     'position_side': hedge_position_side,
+                    'position_type': 'hedge',  # EXPLICIT: Distinguishes from main positions
                     'entry_price': entry_price,
                     'size': size,
                     'remaining': 1.0,  # 100% of hedge remaining
@@ -347,7 +351,16 @@ class HedgeGateway:
         if hedge['remaining'] <= 0:
             return None
 
-        close_amount = hedge['size'] * hedge['remaining'] * close_pct
+        # FIX: Calculate close amount based on ORIGINAL size, not remaining
+        # This fixes Zeno's paradox where remaining never reaches 0
+        # Example: 30% at step 2 = 30% of original, 70% at step 5 = 70% of original
+        close_amount = hedge['size'] * close_pct  # Based on original size
+
+        # Clamp to actual remaining (can't close more than we have)
+        actual_remaining_amount = hedge['size'] * hedge['remaining']
+        if close_amount > actual_remaining_amount:
+            close_amount = actual_remaining_amount
+            close_pct = hedge['remaining']  # Adjust percentage to match
 
         if close_amount < 0.001:  # Minimum amount check
             print(f"  ⚠️ Close amount too small: {close_amount}")
@@ -364,17 +377,22 @@ class HedgeGateway:
                 'holdSide': position_side
             }
 
-            print(f"  🔻 Partial close hedge: {hedge['symbol']} {close_pct*100:.0f}% ({close_amount})")
+            print(f"  🔻 Partial close hedge: {hedge['symbol']} {close_pct*100:.0f}% ({close_amount:.6f})")
             order = self.exchange.create_market_order(
                 hedge['symbol'], close_side, close_amount, params=params
             )
 
             if order:
-                hedge['remaining'] -= close_pct * hedge['remaining']
+                # FIX: Track cumulative closed instead of fractional remaining
+                # This ensures 30% + 70% = 100% (remaining = 0)
+                cumulative_closed = hedge.get('cumulative_closed', 0) + close_pct
+                hedge['cumulative_closed'] = min(1.0, cumulative_closed)
+                hedge['remaining'] = max(0, 1.0 - hedge['cumulative_closed'])
+
                 realized_pnl = float(order.get('info', {}).get('realizedPnl', 0))
                 self.stats['total_hedge_pnl'] += realized_pnl
                 self._save_state()
-                print(f"  ✅ Partial close executed: realized=${realized_pnl:.2f}")
+                print(f"  ✅ Partial close executed: realized=${realized_pnl:.2f}, remaining={hedge['remaining']*100:.1f}%")
                 return order
 
         except Exception as e:

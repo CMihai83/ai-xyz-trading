@@ -2065,6 +2065,7 @@ class AIXYZContinuousProfit:
                 'amount': amount,
                 'side': side,
                 'position_side': position_side,  # 'long' or 'short'
+                'position_type': 'main',  # EXPLICIT: Distinguishes from hedge positions
                 'leverage': leverage,
                 'confidence': confidence,
                 'opened_at': datetime.now().isoformat(),
@@ -2823,9 +2824,12 @@ class AIXYZContinuousProfit:
         fib_config = self.fibonacci_configs[symbol]
         
         # STRICT: Use ONLY Fibonacci max steps
+        # CRITICAL FIX: Use >= instead of > to prevent step from reaching max_steps
+        # This ensures we don't try to access fib_multipliers[max_steps] which is out of bounds
         max_steps = fib_config['max_averaging_steps']
-        if step > max_steps:
-            print(f"  🔢 Reached Fibonacci max steps: {step}/{max_steps} - NO MORE AVERAGING")
+        if step >= max_steps:
+            print(f"  ⛔ Reached max averaging steps: {step}/{max_steps} - NO MORE AVERAGING")
+            print(f"     Fibonacci multipliers array has {max_steps} elements (0-indexed)")
             return False
         
         # Get base allocations for timeframe mapping
@@ -3023,8 +3027,9 @@ class AIXYZContinuousProfit:
                     if hedge_info.get('remaining', 0) > 0:
                         hedge_symbol = hedge_info.get('symbol', '')
                         hedge_side = hedge_info.get('side', '').lower()
-                        # Match if same symbol AND same side as the hedge
-                        if hedge_symbol == symbol and hedge_side == pos_side:
+                        hedge_type = hedge_info.get('position_type', '')  # EXPLICIT check
+                        # Match if same symbol AND same side AND confirmed hedge type
+                        if hedge_symbol == symbol and hedge_side == pos_side and hedge_type == 'hedge':
                             is_hedge_position = True
                             break
 
@@ -3153,6 +3158,14 @@ class AIXYZContinuousProfit:
 
                             self.averaging_steps[symbol] += 1
                             self.position_zones[symbol] = 'AVERAGING'
+
+                            # CRITICAL: Reset peak_upnl after averaging (entry price changed)
+                            # Old peak is stale because position characteristics changed
+                            old_peak = self.peak_upnl.get(symbol, 0)
+                            self.peak_upnl[symbol] = 0  # Reset to 0, will rebuild from new entry
+                            self.peak_upnl_timestamps[symbol] = None
+                            if old_peak > 0:
+                                print(f"  🔄 Reset peak_upnl for {symbol} (was ${old_peak:.4f}, now fresh after averaging)")
 
                             # HEDGE GATEWAY: Trigger gate on averaging step
                             if self.hedge_gateway:
@@ -3445,6 +3458,14 @@ class AIXYZContinuousProfit:
                         print(f"  ⚠️ Could not sync entry price from exchange: {e}")
 
                     self.averaging_steps[symbol] += 1
+
+                    # CRITICAL: Reset peak_upnl after averaging (entry price changed)
+                    # Old peak is stale because position characteristics changed
+                    old_peak = self.peak_upnl.get(symbol, 0)
+                    self.peak_upnl[symbol] = 0  # Reset to 0, will rebuild from new entry
+                    self.peak_upnl_timestamps[symbol] = None
+                    if old_peak > 0:
+                        print(f"  🔄 Reset peak_upnl for {symbol} (was ${old_peak:.4f}, now fresh after averaging)")
 
                     # HEDGE GATEWAY: Trigger gate on averaging step
                     if self.hedge_gateway:
@@ -4382,6 +4403,14 @@ class AIXYZContinuousProfit:
             self.averaging_steps[symbol] = self.averaging_steps.get(symbol, 0) + 1
             print(f"  📊 Updated averaging_steps[{symbol}] = {self.averaging_steps[symbol]}")
 
+            # CRITICAL: Reset peak_upnl after pyramid (entry price changed)
+            # Old peak is stale because position characteristics changed
+            old_peak = self.peak_upnl.get(symbol, 0)
+            self.peak_upnl[symbol] = 0  # Reset to 0, will rebuild from new entry
+            self.peak_upnl_timestamps[symbol] = None
+            if old_peak > 0:
+                print(f"  🔄 Reset peak_upnl for {symbol} (was ${old_peak:.4f}, now fresh after pyramid)")
+
             print(f"  📊 Pyramid #{pyramid_count} executed for {symbol}")
             print(f"     Pyramids remaining: {max(0, 2 - pyramid_count)}/2")
             print(f"     ✅ Counter persisted in self.active_positions[{symbol}]")
@@ -4996,7 +5025,8 @@ class AIXYZContinuousProfit:
                     for hedge_key, hedge_info in self.hedge_gateway.hedges.items():
                         hedge_symbol = hedge_info.get('symbol', '')
                         hedge_side = hedge_info.get('position_side', '')
-                        if hedge_symbol == exchange_symbol and hedge_side == exchange_side:
+                        hedge_type = hedge_info.get('position_type', '')  # EXPLICIT check
+                        if hedge_symbol == exchange_symbol and hedge_side == exchange_side and hedge_type == 'hedge':
                             is_hedge_position = True
                             break
 

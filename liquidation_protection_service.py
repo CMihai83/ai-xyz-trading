@@ -28,6 +28,9 @@ from datetime import datetime, timezone
 from typing import Dict, List, Optional
 import structlog
 import json
+
+# Unified liquidation calculator (single source of truth)
+from liquidation_calculator import get_liquidation_calculator, LiquidationCalculator
 import os
 from position_sizing_config import PositionSizingConfig
 
@@ -58,6 +61,12 @@ class LiquidationProtectionService:
         self.state_file_path = os.path.join(state_dir, self.STATE_FILE)
         self.protection_orders = {}  # {symbol: order_info}
         self.executed_protections = {}  # Track filled orders
+
+        # Retry queue for failed protection orders
+        # {symbol: {'position': pos, 'margin': margin, 'retry_count': n, 'last_attempt': timestamp}}
+        self.retry_queue = {}
+        self.MAX_RETRIES = 3
+        self.RETRY_DELAY_SECONDS = 60  # Exponential backoff base
 
         # Load persisted state
         self._load_state()
@@ -239,23 +248,20 @@ class LiquidationProtectionService:
 
         Example:
             LONG at $1.00 entry, 10x leverage, -82.5% UPNL target:
-            liquidation_price = $1.00 × (1 + (-82.5) / (10 × 100))
-            liquidation_price = $1.00 × 0.9175 = $0.9175
+            Uses unified LiquidationCalculator for consistent results
         """
         # Use config default if not provided
         if target_upnl_pct is None:
             target_upnl_pct = PositionSizingConfig.LIQUIDATION_ORDER_UPNL_PERCENT
 
-        # Convert UPNL% to ratio relative to price movement
-        # For 10x leverage: -82.5% UPNL = -8.25% price move
-        upnl_ratio = target_upnl_pct / (leverage * 100)
-
-        if side == 'buy':  # LONG position
-            # Price must drop for negative UPNL
-            liquidation_price = entry_price * (1 + upnl_ratio)
-        else:  # SHORT position
-            # Price must rise for negative UPNL
-            liquidation_price = entry_price * (1 - upnl_ratio)
+        # Use unified calculator for consistent liquidation price calculation
+        calc = get_liquidation_calculator()
+        liquidation_price = calc.calculate_price_at_upnl(
+            entry_price=entry_price,
+            target_upnl_pct=target_upnl_pct,
+            side=side,
+            leverage=leverage
+        )
 
         return liquidation_price
 
@@ -576,6 +582,28 @@ class LiquidationProtectionService:
                 error=str(e),
                 exc_info=True
             )
+
+            # Add to retry queue with exponential backoff
+            import time
+            if symbol not in self.retry_queue:
+                self.retry_queue[symbol] = {
+                    'position': position,
+                    'margin': additional_margin,
+                    'retry_count': 0,
+                    'last_attempt': time.time(),
+                    'error': str(e)
+                }
+                print(f"  📋 Added {symbol} to protection order retry queue")
+                logger.info(
+                    "Protection order queued for retry",
+                    symbol=symbol,
+                    retry_count=0
+                )
+            else:
+                self.retry_queue[symbol]['retry_count'] += 1
+                self.retry_queue[symbol]['last_attempt'] = time.time()
+                self.retry_queue[symbol]['error'] = str(e)
+
             return False
 
     def check_protection_orders(self) -> None:
@@ -641,6 +669,68 @@ class LiquidationProtectionService:
                     order_id=order_info['order_id'],
                     error=str(e)
                 )
+
+        # Process retry queue for failed orders
+        self._process_retry_queue()
+
+    def _process_retry_queue(self) -> None:
+        """
+        Process retry queue for failed protection orders.
+
+        Uses exponential backoff: wait 60s, 120s, 240s between retries.
+        Removes from queue after MAX_RETRIES (3) attempts.
+        """
+        import time
+
+        if not self.retry_queue:
+            return
+
+        current_time = time.time()
+
+        for symbol in list(self.retry_queue.keys()):
+            retry_info = self.retry_queue[symbol]
+
+            # Check if max retries exceeded
+            if retry_info['retry_count'] >= self.MAX_RETRIES:
+                print(f"  ⛔ {symbol}: Max retries ({self.MAX_RETRIES}) exceeded for protection order")
+                logger.warning(
+                    "Protection order retry exhausted",
+                    symbol=symbol,
+                    retry_count=retry_info['retry_count'],
+                    last_error=retry_info.get('error', 'unknown')
+                )
+                del self.retry_queue[symbol]
+                continue
+
+            # Check if enough time has passed (exponential backoff)
+            delay = self.RETRY_DELAY_SECONDS * (2 ** retry_info['retry_count'])
+            time_since_last = current_time - retry_info['last_attempt']
+
+            if time_since_last < delay:
+                # Not ready for retry yet
+                continue
+
+            # Attempt retry
+            print(f"\n  🔄 Retrying protection order for {symbol} (attempt {retry_info['retry_count'] + 1}/{self.MAX_RETRIES})")
+            logger.info(
+                "Retrying protection order",
+                symbol=symbol,
+                attempt=retry_info['retry_count'] + 1,
+                delay_waited=time_since_last
+            )
+
+            # Try to place the order again
+            success = self.place_protection_order(
+                symbol=symbol,
+                position=retry_info['position'],
+                additional_margin=retry_info['margin']
+            )
+
+            if success:
+                # Success - remove from retry queue
+                print(f"  ✅ Protection order retry succeeded for {symbol}")
+                del self.retry_queue[symbol]
+            # If failed, the exception handler already updated retry_queue
 
     def get_protection_status(self, symbol: str) -> Optional[Dict]:
         """
