@@ -3012,19 +3012,24 @@ class AIXYZContinuousProfit:
             fibonacci_triggered = upnl_pct <= safe_threshold_pct
             should_average = gate_passed and fibonacci_triggered
 
-            # HEDGE POSITION GATE: Require -70% UPNL for hedge positions
-            # Hedge positions are identified by ":long" or ":short" suffix in symbol
-            is_hedge_position = ':long' in symbol or ':short' in symbol
+            # HEDGE POSITION GATE: Require -70% UPNL for positions with active hedges
+            # Check if this position has an active hedge via hedge_gateway
+            has_active_hedge = False
+            if self.hedge_gateway and hasattr(self.hedge_gateway, 'hedges'):
+                hedge_info = self.hedge_gateway.hedges.get(symbol)
+                if hedge_info and hedge_info.get('remaining', 0) > 0:
+                    has_active_hedge = True
+
             hedge_gate_threshold = -70.0  # -70% UPNL gate for hedge positions
             hedge_gate_passed = True  # Default to True for non-hedge positions
 
-            if is_hedge_position:
+            if has_active_hedge:
                 hedge_gate_passed = current_pnl_pct <= hedge_gate_threshold
                 should_average = should_average and hedge_gate_passed
 
             print(f"     Gate (-25% P&L): {'✅ PASSED' if gate_passed else '❌ NOT PASSED'}")
             print(f"     Fibonacci trigger ({safe_threshold_pct*100:.1f}% UPNL): {'✅ MET' if fibonacci_triggered else '❌ NOT MET'}")
-            if is_hedge_position:
+            if has_active_hedge:
                 print(f"     Hedge Gate (-70% P&L): {'✅ PASSED' if hedge_gate_passed else '❌ NOT PASSED (waiting for -70%)'}")
             print(f"     Should average: {should_average}")
             

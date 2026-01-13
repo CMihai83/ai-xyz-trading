@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-01-13T05:22:14.135153",
+  "timestamp": "2026-01-13T05:28:35.029983",
   "active_positions": {
     "GMT/USDT:USDT": {
       "entry_price": 0.019318785131,
@@ -10,7 +10,7 @@
     },
     "CHZ/USDT:USDT": {
       "entry_price": 0.054191986936,
-      "amount": 1236.0,
+      "amount": 1133.0,
       "side": "buy",
       "leverage": 10.0,
       "opened_at": "2026-01-13T02:30:21.654331+00:00"
@@ -137,7 +137,7 @@
   },
   "position_zones": {
     "GMT/USDT:USDT": "NEUTRAL",
-    "CHZ/USDT:USDT": "NEUTRAL",
+    "CHZ/USDT:USDT": "PROFIT_TAKING",
     "HYPE/USDT:USDT": "PROFIT_TAKING",
     "SOL/USDT:USDT": "NEUTRAL",
     "CLO/USDT:USDT": "PROFIT_TAKING",
@@ -151,7 +151,7 @@
     "RIVER/USDT:USDT": "NEUTRAL",
     "DASH/USDT:USDT": "NEUTRAL",
     "BAN/USDT:USDT": "NEUTRAL",
-    "XVG/USDT:USDT": "AVERAGING",
+    "XVG/USDT:USDT": "NEUTRAL",
     "AERO/USDT:USDT": "NEUTRAL",
     "REZ/USDT:USDT": "NEUTRAL",
     "WLD/USDT:USDT": "NEUTRAL"
@@ -179,7 +179,7 @@
   },
   "peak_upnl": {
     "GMT/USDT:USDT": 0.406769999493,
-    "CHZ/USDT:USDT": 0.65100999537,
+    "CHZ/USDT:USDT": 0.711538801512,
     "HYPE/USDT:USDT": 0.53984,
     "SOL/USDT:USDT": 1.264057142856,
     "CLO/USDT:USDT": 3.1374,
@@ -200,7 +200,7 @@
   },
   "peak_upnl_timestamps": {
     "GMT/USDT:USDT": "2026-01-12T19:24:38.736237+00:00",
-    "CHZ/USDT:USDT": "2026-01-13T04:33:15.239926+00:00",
+    "CHZ/USDT:USDT": "2026-01-13T05:28:05.273944+00:00",
     "HYPE/USDT:USDT": "2026-01-13T05:21:57.765732+00:00",
     "SOL/USDT:USDT": "2026-01-12T16:30:21.046980+00:00",
     "CLO/USDT:USDT": "2026-01-13T03:30:42.218574+00:00",
