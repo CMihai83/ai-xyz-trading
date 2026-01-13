@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-01-13T05:28:35.029983",
+  "timestamp": "2026-01-13T05:37:55.413418",
   "active_positions": {
     "GMT/USDT:USDT": {
       "entry_price": 0.019318785131,
@@ -9,8 +9,8 @@
       "opened_at": "2026-01-12T07:37:49.281536+00:00"
     },
     "CHZ/USDT:USDT": {
-      "entry_price": 0.054191986936,
-      "amount": 1133.0,
+      "entry_price": 0.05436,
+      "amount": 1030.0,
       "side": "buy",
       "leverage": 10.0,
       "opened_at": "2026-01-13T02:30:21.654331+00:00"
@@ -137,7 +137,7 @@
   },
   "position_zones": {
     "GMT/USDT:USDT": "NEUTRAL",
-    "CHZ/USDT:USDT": "PROFIT_TAKING",
+    "CHZ/USDT:USDT": "NEUTRAL",
     "HYPE/USDT:USDT": "PROFIT_TAKING",
     "SOL/USDT:USDT": "NEUTRAL",
     "CLO/USDT:USDT": "PROFIT_TAKING",
@@ -151,7 +151,7 @@
     "RIVER/USDT:USDT": "NEUTRAL",
     "DASH/USDT:USDT": "NEUTRAL",
     "BAN/USDT:USDT": "NEUTRAL",
-    "XVG/USDT:USDT": "NEUTRAL",
+    "XVG/USDT:USDT": "AVERAGING",
     "AERO/USDT:USDT": "NEUTRAL",
     "REZ/USDT:USDT": "NEUTRAL",
     "WLD/USDT:USDT": "NEUTRAL"

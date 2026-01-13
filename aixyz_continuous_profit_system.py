@@ -3012,25 +3012,33 @@ class AIXYZContinuousProfit:
             fibonacci_triggered = upnl_pct <= safe_threshold_pct
             should_average = gate_passed and fibonacci_triggered
 
-            # HEDGE POSITION GATE: Require -70% UPNL for positions with active hedges
-            # Check if this position has an active hedge via hedge_gateway
-            has_active_hedge = False
+            # HEDGE POSITION GATE: Require -70% UPNL for hedge positions (not main positions)
+            # Check if this position IS a hedge (the protective counter-position)
+            is_hedge_position = False
             if self.hedge_gateway and hasattr(self.hedge_gateway, 'hedges'):
-                hedge_info = self.hedge_gateway.hedges.get(symbol)
-                if hedge_info and hedge_info.get('remaining', 0) > 0:
-                    has_active_hedge = True
+                # Get the current position's side
+                pos_side = position.get('side', '').lower()
+                # Check if this position matches any tracked hedge
+                for main_key, hedge_info in self.hedge_gateway.hedges.items():
+                    if hedge_info.get('remaining', 0) > 0:
+                        hedge_symbol = hedge_info.get('symbol', '')
+                        hedge_side = hedge_info.get('side', '').lower()
+                        # Match if same symbol AND same side as the hedge
+                        if hedge_symbol == symbol and hedge_side == pos_side:
+                            is_hedge_position = True
+                            break
 
-            hedge_gate_threshold = -70.0  # -70% UPNL gate for hedge positions
-            hedge_gate_passed = True  # Default to True for non-hedge positions
+            hedge_gate_threshold = -70.0  # -70% UPNL gate for hedge positions only
+            hedge_gate_passed = True  # Default to True for main positions
 
-            if has_active_hedge:
+            if is_hedge_position:
                 hedge_gate_passed = current_pnl_pct <= hedge_gate_threshold
                 should_average = should_average and hedge_gate_passed
 
             print(f"     Gate (-25% P&L): {'✅ PASSED' if gate_passed else '❌ NOT PASSED'}")
             print(f"     Fibonacci trigger ({safe_threshold_pct*100:.1f}% UPNL): {'✅ MET' if fibonacci_triggered else '❌ NOT MET'}")
-            if has_active_hedge:
-                print(f"     Hedge Gate (-70% P&L): {'✅ PASSED' if hedge_gate_passed else '❌ NOT PASSED (waiting for -70%)'}")
+            if is_hedge_position:
+                print(f"     🛡️ HEDGE Position Gate (-70% P&L): {'✅ PASSED' if hedge_gate_passed else '❌ NOT PASSED (waiting for -70%)'}")
             print(f"     Should average: {should_average}")
             
             # Check if BOTH conditions are met: gate passed AND Fibonacci threshold reached
