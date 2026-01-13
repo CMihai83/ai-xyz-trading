@@ -116,20 +116,20 @@ class RedisPool:
         self._lock = threading.Lock()
         self._connected = False
 
-        # Initialize pool
-        self._create_pool()
-
-        # Start health checker
-        self._health_checker = RedisHealthChecker(self, health_check_interval)
-        self._health_checker.start()
-
-        # Stats
+        # Stats - MUST be initialized before _create_pool() and health checker
         self.stats = {
             'connections_created': 0,
             'reconnections': 0,
             'failed_operations': 0,
             'successful_operations': 0
         }
+
+        # Initialize pool
+        self._create_pool()
+
+        # Start health checker
+        self._health_checker = RedisHealthChecker(self, health_check_interval)
+        self._health_checker.start()
 
     def _create_pool(self):
         """Create the connection pool"""

@@ -4969,387 +4969,416 @@ class AIXYZContinuousProfit:
             self.positions_in_profit.clear()
             
             for pos in exchange_positions:
-                if pos['contracts'] > 0 and pos['symbol'] in self.active_positions:
-                    symbol = pos['symbol']
-                    
-                    # Get data from direct API if available
-                    direct_data = direct_pos_map.get(symbol, {})
-                    
-                    # Use direct API UPNL and percentage if available
-                    if direct_data:
-                        upnl = float(direct_data.get('unrealizedPL', 0))
-                        margin_size = float(direct_data.get('marginSize', 1))  # Actual margin used
-                        
-                        # Calculate P&L percentage from UPNL and margin
-                        # The margin field in API response is always 1.0, but marginSize has the actual margin
-                        if margin_size > 0:
-                            pct = (upnl / margin_size) * 100
-                        else:
-                            pct = 0
-                        
-                        # Log the real P&L percentage
-                        print(f"  📊 {symbol}: Direct API UPNL=${upnl:.4f}, P&L%={pct:.2f}% (margin=${margin_size:.4f})")
+                if pos['contracts'] <= 0:
+                    continue
+
+                # HEDGE MODE FIX: Generate position_key from symbol + side
+                exchange_symbol = pos['symbol']
+                exchange_side = pos.get('side', 'long')  # 'long' or 'short'
+                position_key = self.get_position_key(exchange_symbol, exchange_side)
+
+                # Check if position exists in active_positions (using composite key OR legacy symbol)
+                if position_key in self.active_positions:
+                    symbol = position_key  # Use composite key for all tracking
+                    local_pos = self.active_positions[position_key]
+                elif exchange_symbol in self.active_positions:
+                    # Legacy support: plain symbol key
+                    symbol = exchange_symbol
+                    local_pos = self.active_positions[exchange_symbol]
+                else:
+                    continue  # Not tracked
+
+                # FLAG: Determine if this is a hedge position (opposite of main)
+                is_hedge_position = False
+                if self.hedge_gateway and hasattr(self.hedge_gateway, 'hedges'):
+                    # Check if this symbol:side matches a tracked hedge
+                    for hedge_key, hedge_info in self.hedge_gateway.hedges.items():
+                        hedge_symbol = hedge_info.get('symbol', '')
+                        hedge_side = hedge_info.get('position_side', '')
+                        if hedge_symbol == exchange_symbol and hedge_side == exchange_side:
+                            is_hedge_position = True
+                            break
+
+                # Store hedge flag in local_pos for downstream use
+                local_pos['is_hedge'] = is_hedge_position
+
+                # Get data from direct API if available
+                direct_data = direct_pos_map.get(exchange_symbol, {})
+
+                # Use direct API UPNL and percentage if available
+                if direct_data:
+                    upnl = float(direct_data.get('unrealizedPL', 0))
+                    margin_size = float(direct_data.get('marginSize', 1))  # Actual margin used
+
+                    # Calculate P&L percentage from UPNL and margin
+                    # The margin field in API response is always 1.0, but marginSize has the actual margin
+                    if margin_size > 0:
+                        pct = (upnl / margin_size) * 100
                     else:
-                        # Fallback to CCXT data
-                        upnl = pos.get('unrealizedPnl', 0)
-                        pct = pos.get('percentage', 0)
-                    
-                    local_pos = self.active_positions[symbol]
+                        pct = 0
 
-                    # CRITICAL: Always sync entry price from exchange (weighted average)
-                    # Exchange maintains exact weighted avg after averaging, we should use it
-                    exchange_entry = pos.get('entryPrice', 0)
-                    local_entry = local_pos.get('entry_price', 0)
+                    # Log the real P&L percentage (show hedge flag)
+                    hedge_flag = " [HEDGE]" if is_hedge_position else ""
+                    print(f"  📊 {symbol}{hedge_flag}: Direct API UPNL=${upnl:.4f}, P&L%={pct:.2f}% (margin=${margin_size:.4f})")
+                else:
+                    # Fallback to CCXT data
+                    upnl = pos.get('unrealizedPnl', 0)
+                    pct = pos.get('percentage', 0)
 
-                    if exchange_entry > 0 and abs(exchange_entry - local_entry) > 0.0001:
-                        # Sync from exchange if different
-                        self.active_positions[symbol]['entry_price'] = exchange_entry
-                        entry_price = exchange_entry
-                    else:
-                        entry_price = local_entry or exchange_entry
+                # CRITICAL: Always sync entry price from exchange (weighted average)
+                # Exchange maintains exact weighted avg after averaging, we should use it
+                exchange_entry = pos.get('entryPrice', 0)
+                local_entry = local_pos.get('entry_price', 0)
 
-                    # Update speed tracker with current price
-                    current_price = pos.get('markPrice', 0)
-                    if current_price > 0:
-                        self.speed_tracker.update_price(symbol, current_price)
+                if exchange_entry > 0 and abs(exchange_entry - local_entry) > 0.0001:
+                    # Sync from exchange if different
+                    self.active_positions[symbol]['entry_price'] = exchange_entry
+                    entry_price = exchange_entry
+                else:
+                    entry_price = local_entry or exchange_entry
 
-                        # Update adaptive Fibonacci system with current price
-                        self.adaptive_fibonacci.update_price(symbol, current_price)
+                # Update speed tracker with current price
+                current_price = pos.get('markPrice', 0)
+                if current_price > 0:
+                    self.speed_tracker.update_price(symbol, current_price)
 
-                        # HEDGE GATEWAY: Check gate conditions (reversion or surplus dump)
-                        if self.hedge_gateway:
-                            self.hedge_gateway.check_gates(symbol, current_price)
+                    # Update adaptive Fibonacci system with current price
+                    self.adaptive_fibonacci.update_price(symbol, current_price)
 
-                    # CRITICAL: Always track peak UPNL for all positions
-                    # This ensures we capture peaks even if averaging hasn't been detected yet
-                    if symbol not in self.peak_upnl:
-                        self.peak_upnl[symbol] = max(0, upnl)
-                        if upnl > 0:
-                            self.peak_upnl_timestamps[symbol] = datetime.now().isoformat()
-                    elif upnl > self.peak_upnl[symbol]:
-                        old_peak = self.peak_upnl[symbol]
-                        self.peak_upnl[symbol] = upnl
+                    # HEDGE GATEWAY: Check gate conditions (reversion or surplus dump)
+                    if self.hedge_gateway:
+                        self.hedge_gateway.check_gates(symbol, current_price)
+
+                # CRITICAL: Always track peak UPNL for all positions
+                # This ensures we capture peaks even if averaging hasn't been detected yet
+                if symbol not in self.peak_upnl:
+                    self.peak_upnl[symbol] = max(0, upnl)
+                    if upnl > 0:
                         self.peak_upnl_timestamps[symbol] = datetime.now().isoformat()
-                        # Only show peak updates for positions with averaging
-                        if self.averaging_steps.get(symbol, 0) > 0:
-                            print(f"  📈 New peak UPNL for {symbol}: ${upnl:.4f} (was ${old_peak:.4f}) at {self.peak_upnl_timestamps[symbol]}")
-                    
-                    # Track if position is in profit
-                    if upnl > 0:
-                        self.positions_in_profit.add(symbol)
-                        # Show profit detection in real-time
-                        if pct > 1.5:  # +1.5% (lowered from 5%)
-                            print(f"  💰 {symbol} in PROFIT: ${upnl:.4f} ({pct:.2f}%)")
+                elif upnl > self.peak_upnl[symbol]:
+                    old_peak = self.peak_upnl[symbol]
+                    self.peak_upnl[symbol] = upnl
+                    self.peak_upnl_timestamps[symbol] = datetime.now().isoformat()
+                    # Only show peak updates for positions with averaging
+                    if self.averaging_steps.get(symbol, 0) > 0:
+                        print(f"  📈 New peak UPNL for {symbol}: ${upnl:.4f} (was ${old_peak:.4f}) at {self.peak_upnl_timestamps[symbol]}")
 
-                    # V1.2.0: Check ATR stop loss (for positions in loss)
-                    # Only trigger ATR stop AFTER all averaging steps are exhausted
-                    if upnl < 0:
-                        current_avg_steps = self.averaging_steps.get(symbol, 0)
-                        max_avg_steps = self.fibonacci_configs.get(symbol, {}).get('max_averaging_steps', 4)
-                        averaging_exhausted = current_avg_steps >= max_avg_steps
+                # Track if position is in profit
+                if upnl > 0:
+                    self.positions_in_profit.add(symbol)
+                    # Show profit detection in real-time
+                    if pct > 1.5:  # +1.5% (lowered from 5%)
+                        print(f"  💰 {symbol} in PROFIT: ${upnl:.4f} ({pct:.2f}%)")
 
-                        atr_decision = self.trailing_atr_stop.update_trailing_stop(
-                            symbol, entry_price, current_price, local_pos.get('side', 'buy')
-                        )
-                        if atr_decision.should_stop:
-                            if not averaging_exhausted:
-                                # Don't stop yet - still have averaging steps available
-                                print(f"  ⏳ ATR stop triggered but BLOCKED: {symbol} has {current_avg_steps}/{max_avg_steps} averaging steps used")
-                                print(f"     Waiting for averaging to complete before stop loss")
-                            else:
-                                # All averaging steps exhausted - execute stop
-                                print(f"  🛡️  ATR STOP HIT: {atr_decision.reason}")
-                                print(f"     Averaging exhausted ({current_avg_steps}/{max_avg_steps} steps used)")
-                                # Close position with stop loss (HEDGE MODE)
-                                try:
-                                    position_side = local_pos.get('position_side', 'long' if local_pos.get('side') in ['buy', 'long'] else 'short')
-                                    close_side = self.get_order_side(position_side, is_open=False)
-                                    close_params = self.get_hedge_order_params(position_side, is_open=False)
-                                    actual_symbol = local_pos.get('symbol', symbol)
-                                    order = self.exchange.create_market_order(
-                                        actual_symbol, close_side, local_pos.get('amount', 0),
-                                        params=close_params
-                                    )
-                                    self.total_pnl += upnl
-                                    self.positions_closed += 1
+                # V1.2.0: Check ATR stop loss (for positions in loss)
+                # Only trigger ATR stop AFTER all averaging steps are exhausted
+                if upnl < 0:
+                    current_avg_steps = self.averaging_steps.get(symbol, 0)
+                    max_avg_steps = self.fibonacci_configs.get(symbol, {}).get('max_averaging_steps', 4)
+                    averaging_exhausted = current_avg_steps >= max_avg_steps
 
-                                    # Grok V2: Record trade result for profit factor tracking (ATR stop)
-                                    if self.grok_v2:
-                                        try:
-                                            entry_time = local_pos.get('opened_at', datetime.now().isoformat())
-                                            leverage = local_pos.get('leverage', 5)
-                                            margin_used = (entry_price * local_pos.get('amount', 0)) / leverage if leverage > 0 else 0
-                                            self.grok_v2.record_trade_result(
-                                                symbol=symbol,
-                                                side=local_pos.get('side', 'long'),
-                                                entry_price=entry_price,
-                                                exit_price=current_price,
-                                                entry_time=entry_time,
-                                                contracts=local_pos.get('amount', 0),
-                                                leverage=leverage,
-                                                margin_used=margin_used,
-                                                realized_pnl=upnl,
-                                                exit_reason='atr_stop',
-                                                averaging_steps=current_avg_steps,
-                                                peak_upnl=self.peak_upnl.get(symbol, 0)
-                                            )
-                                        except Exception as track_err:
-                                            print(f"  ⚠️ Grok V2 tracking failed: {track_err}")
-
-                                    # HEDGE GATEWAY: Close hedge when main position closes
-                                    if self.hedge_gateway:
-                                        self.hedge_gateway.on_main_position_closed(symbol)
-                                    del self.active_positions[symbol]
-                                    self.cleanup_position_tracking(symbol)
-                                    print(f"  ✅ ATR stop executed: {symbol} @ loss=${upnl:.4f}")
-                                    continue
-                                except Exception as e:
-                                    print(f"  ❌ Failed ATR stop: {e}")
-
-                    # Category 3.2: Check pyramid opportunity on winning positions (+40% profit on trends)
-                    if upnl > 0 and pct > 3.0:  # At least 3% profit
-                        if self.check_pyramid_opportunity(symbol, local_pos, upnl, pct):
-                            print(f"  🔺 Pyramid opportunity detected for {symbol}")
-                            pyramid_success = self.execute_pyramid(symbol, local_pos)
-                            if pyramid_success:
-                                print(f"  ✅ Pyramid executed successfully")
-                            else:
-                                print(f"  ❌ Pyramid execution failed or skipped")
-
-                    # V1.2.0: Check partial close ladder (for positions in profit)
-                    if upnl > 0:
-                        partial_decision = self.partial_closer.check_partial_close(
-                            symbol, entry_price, current_price,
-                            local_pos.get('amount', 0), local_pos.get('side', 'buy')
-                        )
-                        if partial_decision.should_close:
-                            print(f"  🎯 PARTIAL CLOSE: {partial_decision.reason}")
-                            # Execute partial close (HEDGE MODE)
+                    atr_decision = self.trailing_atr_stop.update_trailing_stop(
+                        symbol, entry_price, current_price, local_pos.get('side', 'buy')
+                    )
+                    if atr_decision.should_stop:
+                        if not averaging_exhausted:
+                            # Don't stop yet - still have averaging steps available
+                            print(f"  ⏳ ATR stop triggered but BLOCKED: {symbol} has {current_avg_steps}/{max_avg_steps} averaging steps used")
+                            print(f"     Waiting for averaging to complete before stop loss")
+                        else:
+                            # All averaging steps exhausted - execute stop
+                            print(f"  🛡️  ATR STOP HIT: {atr_decision.reason}")
+                            print(f"     Averaging exhausted ({current_avg_steps}/{max_avg_steps} steps used)")
+                            # Close position with stop loss (HEDGE MODE)
                             try:
                                 position_side = local_pos.get('position_side', 'long' if local_pos.get('side') in ['buy', 'long'] else 'short')
                                 close_side = self.get_order_side(position_side, is_open=False)
                                 close_params = self.get_hedge_order_params(position_side, is_open=False)
                                 actual_symbol = local_pos.get('symbol', symbol)
-                                close_amount = local_pos.get('amount', 0) * partial_decision.close_percentage
-
                                 order = self.exchange.create_market_order(
-                                    actual_symbol, close_side, close_amount,
+                                    actual_symbol, close_side, local_pos.get('amount', 0),
                                     params=close_params
                                 )
+                                self.total_pnl += upnl
+                                self.positions_closed += 1
 
-                                # Update position size
-                                self.active_positions[symbol]['amount'] *= (1 - partial_decision.close_percentage)
+                                # Grok V2: Record trade result for profit factor tracking (ATR stop)
+                                if self.grok_v2:
+                                    try:
+                                        entry_time = local_pos.get('opened_at', datetime.now().isoformat())
+                                        leverage = local_pos.get('leverage', 5)
+                                        margin_used = (entry_price * local_pos.get('amount', 0)) / leverage if leverage > 0 else 0
+                                        self.grok_v2.record_trade_result(
+                                            symbol=symbol,
+                                            side=local_pos.get('side', 'long'),
+                                            entry_price=entry_price,
+                                            exit_price=current_price,
+                                            entry_time=entry_time,
+                                            contracts=local_pos.get('amount', 0),
+                                            leverage=leverage,
+                                            margin_used=margin_used,
+                                            realized_pnl=upnl,
+                                            exit_reason='atr_stop',
+                                            averaging_steps=current_avg_steps,
+                                            peak_upnl=self.peak_upnl.get(symbol, 0)
+                                        )
+                                    except Exception as track_err:
+                                        print(f"  ⚠️ Grok V2 tracking failed: {track_err}")
 
-                                # Track partial profit
-                                partial_profit = upnl * partial_decision.close_percentage
-                                self.total_pnl += partial_profit
-
-                                print(f"  ✅ Partial close executed: {close_amount:.4f} contracts @ profit=${partial_profit:.4f}")
-                                print(f"     Remaining: {partial_decision.remaining_position_pct*100:.0f}% ({self.active_positions[symbol]['amount']:.4f} contracts)")
+                                # HEDGE GATEWAY: Close hedge when main position closes
+                                if self.hedge_gateway:
+                                    self.hedge_gateway.on_main_position_closed(symbol)
+                                del self.active_positions[symbol]
+                                self.cleanup_position_tracking(symbol)
+                                print(f"  ✅ ATR stop executed: {symbol} @ loss=${upnl:.4f}")
+                                continue
                             except Exception as e:
-                                print(f"  ❌ Failed partial close: {e}")
-                    
-                    # V3: Update adaptive threshold for this symbol
-                    market_context = self.market_intelligence.analyze_market_context(symbol)
-                    adaptive_threshold = self.adaptive_threshold_engine.calculate_optimal_trigger(symbol, market_context)
-                    self.zone_thresholds['averaging'] = adaptive_threshold
+                                print(f"  ❌ Failed ATR stop: {e}")
 
-                    # V3: Check opportunity cost for position management
-                    # Build position data with pnl and holding time
-                    position_for_opp_cost = {
-                        'entry_price': local_pos.get('entry_price', pos.get('entryPrice', 0)),
-                        'amount': local_pos.get('amount', 0),
-                        'side': local_pos.get('side', 'long'),
-                        'pnl': pct / 100 if pct else 0,  # Convert percentage to decimal
-                        'holding_time_hours': self._calculate_holding_time(local_pos.get('opened_at')),
-                        'unrealized_pl_usd': upnl  # Pass unrealized P&L in USD for +$0.15 threshold check
-                    }
-                    opportunity_analysis = self.opportunity_cost_engine.should_close_position(
-                        symbol, position_for_opp_cost, market_context
+                # Category 3.2: Check pyramid opportunity on winning positions (+40% profit on trends)
+                if upnl > 0 and pct > 3.0:  # At least 3% profit
+                    if self.check_pyramid_opportunity(symbol, local_pos, upnl, pct):
+                        print(f"  🔺 Pyramid opportunity detected for {symbol}")
+                        pyramid_success = self.execute_pyramid(symbol, local_pos)
+                        if pyramid_success:
+                            print(f"  ✅ Pyramid executed successfully")
+                        else:
+                            print(f"  ❌ Pyramid execution failed or skipped")
+
+                # V1.2.0: Check partial close ladder (for positions in profit)
+                if upnl > 0:
+                    partial_decision = self.partial_closer.check_partial_close(
+                        symbol, entry_price, current_price,
+                        local_pos.get('amount', 0), local_pos.get('side', 'buy')
                     )
-
-                    # Debug: Log opportunity cost check for losing positions
-                    opp_cost = opportunity_analysis.get('opportunity_cost', 0)
-                    if opp_cost > 0.02:  # Log if >2% opportunity cost
-                        print(f"  ⚠️ {symbol}: Opp Cost={opp_cost*100:.1f}%, PnL={pct:.1f}%, Close={opportunity_analysis.get('should_close', False)}")
-
-                    if opportunity_analysis.get('should_close', False):
-                        print(f"  💰 OPPORTUNITY COST: Closing {symbol} - {opportunity_analysis['reason']}")
-                        print(f"     Opportunity Cost: {opportunity_analysis['opportunity_cost']*100:.1f}%")
-                        print(f"     Urgency: {opportunity_analysis['urgency']}")
-
-                        # Execute position closure (HEDGE MODE)
+                    if partial_decision.should_close:
+                        print(f"  🎯 PARTIAL CLOSE: {partial_decision.reason}")
+                        # Execute partial close (HEDGE MODE)
                         try:
                             position_side = local_pos.get('position_side', 'long' if local_pos.get('side') in ['buy', 'long'] else 'short')
                             close_side = self.get_order_side(position_side, is_open=False)
                             close_params = self.get_hedge_order_params(position_side, is_open=False)
                             actual_symbol = local_pos.get('symbol', symbol)
-                            amount = local_pos.get('amount', 0)
+                            close_amount = local_pos.get('amount', 0) * partial_decision.close_percentage
 
                             order = self.exchange.create_market_order(
-                                actual_symbol, close_side, amount,
+                                actual_symbol, close_side, close_amount,
                                 params=close_params
                             )
 
-                            self.total_pnl += upnl
-                            self.positions_closed += 1
+                            # Update position size
+                            self.active_positions[symbol]['amount'] *= (1 - partial_decision.close_percentage)
 
-                            # Grok V2: Record trade result for profit factor tracking (rotation)
-                            if self.grok_v2:
-                                try:
-                                    entry_time = local_pos.get('opened_at', datetime.now().isoformat())
-                                    leverage = local_pos.get('leverage', 5)
-                                    margin_used = (entry_price * amount) / leverage if leverage > 0 else 0
-                                    self.grok_v2.record_trade_result(
-                                        symbol=symbol,
-                                        side=local_pos.get('side', 'long'),
-                                        entry_price=entry_price,
-                                        exit_price=current_price,
-                                        entry_time=entry_time,
-                                        contracts=amount,
-                                        leverage=leverage,
-                                        margin_used=margin_used,
-                                        realized_pnl=upnl,
-                                        exit_reason='opportunity_cost_rotation',
-                                        averaging_steps=self.averaging_steps.get(symbol, 0),
-                                        peak_upnl=self.peak_upnl.get(symbol, 0)
-                                    )
-                                except Exception as track_err:
-                                    print(f"  ⚠️ Grok V2 tracking failed: {track_err}")
+                            # Track partial profit
+                            partial_profit = upnl * partial_decision.close_percentage
+                            self.total_pnl += partial_profit
 
-                            # HEDGE GATEWAY: Close hedge when main position closes
-                            if self.hedge_gateway:
-                                self.hedge_gateway.on_main_position_closed(symbol)
-                            del self.active_positions[symbol]
-
-                            # Clean up tracking
-                            if symbol in self.averaging_steps:
-                                del self.averaging_steps[symbol]
-                            if symbol in self.peak_upnl:
-                                del self.peak_upnl[symbol]
-
-                            print(f"  ✅ Position closed for rotation: {symbol} @ PnL={pct:.1f}%")
+                            print(f"  ✅ Partial close executed: {close_amount:.4f} contracts @ profit=${partial_profit:.4f}")
+                            print(f"     Remaining: {partial_decision.remaining_position_pct*100:.0f}% ({self.active_positions[symbol]['amount']:.4f} contracts)")
                         except Exception as e:
-                            print(f"  ❌ Failed to close {symbol} for opportunity cost: {e}")
+                            print(f"  ❌ Failed partial close: {e}")
 
-                    # Update zone - FIX: For SHORT positions, check price movement correctly
-                    # Calculate price-based drawdown for zone detection
-                    entry_price = local_pos.get('entry_price', pos.get('entryPrice', 0))
-                    current_price = pos.get('markPrice', 0)
-                    
-                    if entry_price > 0 and current_price > 0:
-                        # For SHORT: price going UP is a loss
-                        # For LONG: price going DOWN is a loss
-                        is_short = local_pos.get('side') == 'sell'
-                        if is_short:
-                            price_move_pct = ((current_price - entry_price) / entry_price) * 100
-                        else:
-                            price_move_pct = ((entry_price - current_price) / entry_price) * 100
+                # V3: Update adaptive threshold for this symbol
+                market_context = self.market_intelligence.analyze_market_context(symbol)
+                adaptive_threshold = self.adaptive_threshold_engine.calculate_optimal_trigger(symbol, market_context)
+                self.zone_thresholds['averaging'] = adaptive_threshold
 
-                        # Simplified zone assignment
-                        # NEUTRAL ZONE UPPER BOUNDARY: positions stay neutral until UPNL >= threshold
-                        if pct > 1.5 and upnl >= self.neutral_zone_upper_usd:  # +1.5% AND minimum UPNL
-                            # Check for surplus: averaging_steps > 0 OR size increased > 10%
-                            current_size = local_pos.get('amount', 0)
-                            original_size = self.original_sizes.get(symbol, current_size)
-                            has_surplus = self.averaging_steps[symbol] > 0 or (original_size > 0 and current_size > original_size * 1.1)
+                # V3: Check opportunity cost for position management
+                # Build position data with pnl and holding time
+                position_for_opp_cost = {
+                    'entry_price': local_pos.get('entry_price', pos.get('entryPrice', 0)),
+                    'amount': local_pos.get('amount', 0),
+                    'side': local_pos.get('side', 'long'),
+                    'pnl': pct / 100 if pct else 0,  # Convert percentage to decimal
+                    'holding_time_hours': self._calculate_holding_time(local_pos.get('opened_at')),
+                    'unrealized_pl_usd': upnl  # Pass unrealized P&L in USD for +$0.15 threshold check
+                }
+                opportunity_analysis = self.opportunity_cost_engine.should_close_position(
+                    symbol, position_for_opp_cost, market_context
+                )
 
-                            if has_surplus:
-                                # Entering SURPLUS_DUMP zone - only update peak if higher than existing
-                                if self.position_zones[symbol] != 'SURPLUS_DUMP':
-                                    existing_peak = self.peak_upnl.get(symbol, 0)
-                                    if upnl > existing_peak:
-                                        self.peak_upnl[symbol] = upnl
-                                        self.peak_upnl_timestamps[symbol] = datetime.now().isoformat()
-                                        print(f"  🎯 Entering SURPLUS_DUMP zone with peak UPNL: ${upnl:.2f}")
-                                    else:
-                                        print(f"  🎯 Re-entering SURPLUS_DUMP zone (keeping existing peak: ${existing_peak:.2f}, current: ${upnl:.2f})")
-                                self.position_zones[symbol] = 'SURPLUS_DUMP'
-                            else:
-                                self.position_zones[symbol] = 'PROFIT_TAKING'
-                        elif pct <= -25:  # -25%
-                            self.position_zones[symbol] = 'AVERAGING'
-                            print(f"  ⚠️ {symbol} in AVERAGING zone: P&L {pct:.2f}% <= {self.zone_thresholds['averaging']*100:.0f}%")
-                        else:
-                            # Check for averaged positions in profit (UPNL >= neutral zone boundary)
-                            # Also check for surplus via size increase
-                            current_size = local_pos.get('amount', 0)
-                            original_size = self.original_sizes.get(symbol, current_size)
-                            has_surplus = self.averaging_steps.get(symbol, 0) > 0 or (original_size > 0 and current_size > original_size * 1.1)
+                # Debug: Log opportunity cost check for losing positions
+                opp_cost = opportunity_analysis.get('opportunity_cost', 0)
+                if opp_cost > 0.02:  # Log if >2% opportunity cost
+                    print(f"  ⚠️ {symbol}: Opp Cost={opp_cost*100:.1f}%, PnL={pct:.1f}%, Close={opportunity_analysis.get('should_close', False)}")
 
-                            if has_surplus and upnl >= self.neutral_zone_upper_usd:
-                                if self.position_zones[symbol] != 'SURPLUS_DUMP':
-                                    if symbol not in self.peak_upnl or self.peak_upnl[symbol] == 0:
-                                        self.peak_upnl[symbol] = upnl
-                                        self.peak_upnl_timestamps[symbol] = datetime.now().isoformat()
-                                    print(f"  🔧 FIX: Moving {symbol} to SURPLUS_DUMP (steps={self.averaging_steps.get(symbol,0)}, size={current_size:.0f}/{original_size:.0f}, UPNL=${upnl:.2f})")
-                                self.position_zones[symbol] = 'SURPLUS_DUMP'
-                            else:
-                                self.position_zones[symbol] = 'NEUTRAL'
+                if opportunity_analysis.get('should_close', False):
+                    print(f"  💰 OPPORTUNITY COST: Closing {symbol} - {opportunity_analysis['reason']}")
+                    print(f"     Opportunity Cost: {opportunity_analysis['opportunity_cost']*100:.1f}%")
+                    print(f"     Urgency: {opportunity_analysis['urgency']}")
+
+                    # Execute position closure (HEDGE MODE)
+                    try:
+                        position_side = local_pos.get('position_side', 'long' if local_pos.get('side') in ['buy', 'long'] else 'short')
+                        close_side = self.get_order_side(position_side, is_open=False)
+                        close_params = self.get_hedge_order_params(position_side, is_open=False)
+                        actual_symbol = local_pos.get('symbol', symbol)
+                        amount = local_pos.get('amount', 0)
+
+                        order = self.exchange.create_market_order(
+                            actual_symbol, close_side, amount,
+                            params=close_params
+                        )
+
+                        self.total_pnl += upnl
+                        self.positions_closed += 1
+
+                        # Grok V2: Record trade result for profit factor tracking (rotation)
+                        if self.grok_v2:
+                            try:
+                                entry_time = local_pos.get('opened_at', datetime.now().isoformat())
+                                leverage = local_pos.get('leverage', 5)
+                                margin_used = (entry_price * amount) / leverage if leverage > 0 else 0
+                                self.grok_v2.record_trade_result(
+                                    symbol=symbol,
+                                    side=local_pos.get('side', 'long'),
+                                    entry_price=entry_price,
+                                    exit_price=current_price,
+                                    entry_time=entry_time,
+                                    contracts=amount,
+                                    leverage=leverage,
+                                    margin_used=margin_used,
+                                    realized_pnl=upnl,
+                                    exit_reason='opportunity_cost_rotation',
+                                    averaging_steps=self.averaging_steps.get(symbol, 0),
+                                    peak_upnl=self.peak_upnl.get(symbol, 0)
+                                )
+                            except Exception as track_err:
+                                print(f"  ⚠️ Grok V2 tracking failed: {track_err}")
+
+                        # HEDGE GATEWAY: Close hedge when main position closes
+                        if self.hedge_gateway:
+                            self.hedge_gateway.on_main_position_closed(symbol)
+                        del self.active_positions[symbol]
+
+                        # Clean up tracking
+                        if symbol in self.averaging_steps:
+                            del self.averaging_steps[symbol]
+                        if symbol in self.peak_upnl:
+                            del self.peak_upnl[symbol]
+
+                        print(f"  ✅ Position closed for rotation: {symbol} @ PnL={pct:.1f}%")
+                    except Exception as e:
+                        print(f"  ❌ Failed to close {symbol} for opportunity cost: {e}")
+
+                # Update zone - FIX: For SHORT positions, check price movement correctly
+                # Calculate price-based drawdown for zone detection
+                zone_entry_price = local_pos.get('entry_price', pos.get('entryPrice', 0))
+                zone_current_price = pos.get('markPrice', 0)
+
+                if zone_entry_price > 0 and zone_current_price > 0:
+                    # For SHORT: price going UP is a loss
+                    # For LONG: price going DOWN is a loss
+                    is_short = local_pos.get('side') == 'sell'
+                    if is_short:
+                        price_move_pct = ((zone_current_price - zone_entry_price) / zone_entry_price) * 100
                     else:
-                        # Fallback to P&L%-based detection
-                        # FIX: Use P&L percentage, not dollar amount!
-                        # Detect surplus via averaging_steps OR size increase
+                        price_move_pct = ((zone_entry_price - zone_current_price) / zone_entry_price) * 100
+
+                    # Simplified zone assignment
+                    # NEUTRAL ZONE UPPER BOUNDARY: positions stay neutral until UPNL >= threshold
+                    if pct > 1.5 and upnl >= self.neutral_zone_upper_usd:  # +1.5% AND minimum UPNL
+                        # Check for surplus: averaging_steps > 0 OR size increased > 10%
                         current_size = local_pos.get('amount', 0)
                         original_size = self.original_sizes.get(symbol, current_size)
                         has_surplus = self.averaging_steps.get(symbol, 0) > 0 or (original_size > 0 and current_size > original_size * 1.1)
 
-                        if pct <= (self.zone_thresholds['averaging'] * 100):  # -25%
-                            self.position_zones[symbol] = 'AVERAGING'
-                        elif pct > 1.5 and upnl >= self.neutral_zone_upper_usd:  # +1.5% AND minimum UPNL
-                            if has_surplus:
-                                # Entering SURPLUS_DUMP zone - only update peak if higher than existing
-                                if self.position_zones[symbol] != 'SURPLUS_DUMP':
-                                    existing_peak = self.peak_upnl.get(symbol, 0)
-                                    if upnl > existing_peak:
-                                        self.peak_upnl[symbol] = upnl
-                                        self.peak_upnl_timestamps[symbol] = datetime.now().isoformat()
-                                        print(f"  🎯 Entering SURPLUS_DUMP zone with peak UPNL: ${upnl:.2f}")
-                                    else:
-                                        print(f"  🎯 Re-entering SURPLUS_DUMP zone (keeping existing peak: ${existing_peak:.2f}, current: ${upnl:.2f})")
-                                self.position_zones[symbol] = 'SURPLUS_DUMP'
-                            else:
-                                self.position_zones[symbol] = 'PROFIT_TAKING'
+                        if has_surplus:
+                            # Entering SURPLUS_DUMP zone - only update peak if higher than existing
+                            if self.position_zones.get(symbol) != 'SURPLUS_DUMP':
+                                existing_peak = self.peak_upnl.get(symbol, 0)
+                                if upnl > existing_peak:
+                                    self.peak_upnl[symbol] = upnl
+                                    self.peak_upnl_timestamps[symbol] = datetime.now().isoformat()
+                                    print(f"  🎯 Entering SURPLUS_DUMP zone with peak UPNL: ${upnl:.2f}")
+                                else:
+                                    print(f"  🎯 Re-entering SURPLUS_DUMP zone (keeping existing peak: ${existing_peak:.2f}, current: ${upnl:.2f})")
+                            self.position_zones[symbol] = 'SURPLUS_DUMP'
                         else:
-                            # CRITICAL FIX: Check for positions with surplus that should be in SURPLUS_DUMP
-                            # If position has surplus and has any profit peak, it should be in SURPLUS_DUMP
-                            if has_surplus and self.peak_upnl.get(symbol, 0) > 0:
-                                if self.position_zones[symbol] != 'SURPLUS_DUMP':
-                                    print(f"  🔧 SURPLUS RECOVERY: {symbol} has peak ${self.peak_upnl[symbol]:.2f}, entering SURPLUS_DUMP")
-                                self.position_zones[symbol] = 'SURPLUS_DUMP'
-                            # Check for positions with surplus currently profitable (UPNL >= neutral zone boundary)
-                            elif has_surplus and upnl >= self.neutral_zone_upper_usd:
-                                if self.position_zones[symbol] != 'SURPLUS_DUMP':
-                                    # Initialize peak if not set
-                                    if symbol not in self.peak_upnl or self.peak_upnl[symbol] == 0:
-                                        self.peak_upnl[symbol] = upnl
-                                        self.peak_upnl_timestamps[symbol] = datetime.now().isoformat()
-                                    print(f"  🔧 FIX: Moving {symbol} to SURPLUS_DUMP (size={current_size:.0f}/{original_size:.0f}, UPNL=${upnl:.2f})")
-                                self.position_zones[symbol] = 'SURPLUS_DUMP'
-                            else:
-                                self.position_zones[symbol] = 'NEUTRAL'
-                    
-                    # Check for actions based on zone
-                    zone = self.position_zones[symbol]
-                    
-                    if zone == 'AVERAGING':
-                        # Pass the P&L percentage from exchange data
-                        self.check_averaging(symbol, local_pos, upnl, pct)
-                    elif zone == 'SURPLUS_DUMP':
-                        self.check_surplus_dump(symbol, local_pos, upnl)
-                        # ALSO check averaging if UPNL is negative (position went back underwater)
-                        if upnl < 0:
-                            print(f"  📉 Position in SURPLUS_DUMP but underwater, checking averaging...")
-                            self.check_averaging(symbol, local_pos, upnl, pct)
-                    elif zone == 'PROFIT_TAKING':
-                        self.check_take_profit(symbol, local_pos, upnl, pct)
-                    
-                    # Always check stop loss
-                    self.check_stop_loss(symbol, local_pos, upnl, pct)
+                            self.position_zones[symbol] = 'PROFIT_TAKING'
+                    elif pct <= -25:  # -25%
+                        self.position_zones[symbol] = 'AVERAGING'
+                        print(f"  ⚠️ {symbol} in AVERAGING zone: P&L {pct:.2f}% <= {self.zone_thresholds['averaging']*100:.0f}%")
+                    else:
+                        # Check for averaged positions in profit (UPNL >= neutral zone boundary)
+                        # Also check for surplus via size increase
+                        current_size = local_pos.get('amount', 0)
+                        original_size = self.original_sizes.get(symbol, current_size)
+                        has_surplus = self.averaging_steps.get(symbol, 0) > 0 or (original_size > 0 and current_size > original_size * 1.1)
 
-                    # NOTE: Liquidation protection is placed ONLY when last averaging step executes
-                    # See line 3039-3056 in check_averaging() function
-                    # Protection order is NOT placed during monitoring - only after final averaging execution
+                        if has_surplus and upnl >= self.neutral_zone_upper_usd:
+                            if self.position_zones.get(symbol) != 'SURPLUS_DUMP':
+                                if symbol not in self.peak_upnl or self.peak_upnl[symbol] == 0:
+                                    self.peak_upnl[symbol] = upnl
+                                    self.peak_upnl_timestamps[symbol] = datetime.now().isoformat()
+                                print(f"  🔧 FIX: Moving {symbol} to SURPLUS_DUMP (steps={self.averaging_steps.get(symbol,0)}, size={current_size:.0f}/{original_size:.0f}, UPNL=${upnl:.2f})")
+                            self.position_zones[symbol] = 'SURPLUS_DUMP'
+                        else:
+                            self.position_zones[symbol] = 'NEUTRAL'
+                else:
+                    # Fallback to P&L%-based detection
+                    # FIX: Use P&L percentage, not dollar amount!
+                    # Detect surplus via averaging_steps OR size increase
+                    current_size = local_pos.get('amount', 0)
+                    original_size = self.original_sizes.get(symbol, current_size)
+                    has_surplus = self.averaging_steps.get(symbol, 0) > 0 or (original_size > 0 and current_size > original_size * 1.1)
+
+                    if pct <= (self.zone_thresholds['averaging'] * 100):  # -25%
+                        self.position_zones[symbol] = 'AVERAGING'
+                    elif pct > 1.5 and upnl >= self.neutral_zone_upper_usd:  # +1.5% AND minimum UPNL
+                        if has_surplus:
+                            # Entering SURPLUS_DUMP zone - only update peak if higher than existing
+                            if self.position_zones.get(symbol) != 'SURPLUS_DUMP':
+                                existing_peak = self.peak_upnl.get(symbol, 0)
+                                if upnl > existing_peak:
+                                    self.peak_upnl[symbol] = upnl
+                                    self.peak_upnl_timestamps[symbol] = datetime.now().isoformat()
+                                    print(f"  🎯 Entering SURPLUS_DUMP zone with peak UPNL: ${upnl:.2f}")
+                                else:
+                                    print(f"  🎯 Re-entering SURPLUS_DUMP zone (keeping existing peak: ${existing_peak:.2f}, current: ${upnl:.2f})")
+                            self.position_zones[symbol] = 'SURPLUS_DUMP'
+                        else:
+                            self.position_zones[symbol] = 'PROFIT_TAKING'
+                    else:
+                        # CRITICAL FIX: Check for positions with surplus that should be in SURPLUS_DUMP
+                        # If position has surplus and has any profit peak, it should be in SURPLUS_DUMP
+                        if has_surplus and self.peak_upnl.get(symbol, 0) > 0:
+                            if self.position_zones.get(symbol) != 'SURPLUS_DUMP':
+                                print(f"  🔧 SURPLUS RECOVERY: {symbol} has peak ${self.peak_upnl[symbol]:.2f}, entering SURPLUS_DUMP")
+                            self.position_zones[symbol] = 'SURPLUS_DUMP'
+                        # Check for positions with surplus currently profitable (UPNL >= neutral zone boundary)
+                        elif has_surplus and upnl >= self.neutral_zone_upper_usd:
+                            if self.position_zones.get(symbol) != 'SURPLUS_DUMP':
+                                # Initialize peak if not set
+                                if symbol not in self.peak_upnl or self.peak_upnl[symbol] == 0:
+                                    self.peak_upnl[symbol] = upnl
+                                    self.peak_upnl_timestamps[symbol] = datetime.now().isoformat()
+                                print(f"  🔧 FIX: Moving {symbol} to SURPLUS_DUMP (size={current_size:.0f}/{original_size:.0f}, UPNL=${upnl:.2f})")
+                            self.position_zones[symbol] = 'SURPLUS_DUMP'
+                        else:
+                            self.position_zones[symbol] = 'NEUTRAL'
+
+                # Check for actions based on zone
+                zone = self.position_zones.get(symbol, 'NEUTRAL')
+
+                if zone == 'AVERAGING':
+                    # Pass the P&L percentage from exchange data
+                    self.check_averaging(symbol, local_pos, upnl, pct)
+                elif zone == 'SURPLUS_DUMP':
+                    self.check_surplus_dump(symbol, local_pos, upnl)
+                    # ALSO check averaging if UPNL is negative (position went back underwater)
+                    if upnl < 0:
+                        print(f"  📉 Position in SURPLUS_DUMP but underwater, checking averaging...")
+                        self.check_averaging(symbol, local_pos, upnl, pct)
+                elif zone == 'PROFIT_TAKING':
+                    self.check_take_profit(symbol, local_pos, upnl, pct)
+
+                # Always check stop loss
+                self.check_stop_loss(symbol, local_pos, upnl, pct)
+
+                # NOTE: Liquidation protection is placed ONLY when last averaging step executes
+                # See line 3039-3056 in check_averaging() function
+                # Protection order is NOT placed during monitoring - only after final averaging execution
 
             # Check status of placed protection orders
             self.liquidation_protection.check_protection_orders()
