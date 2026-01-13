@@ -213,6 +213,37 @@ LiquidationProtectionService:
 - Correlation-based diversification
 - Stop-loss at -90% UPNL
 
+### 8.3 Hedge Gateway
+Automatic hedge protection system that opens counter-positions.
+
+```python
+HedgeGateway:
+  - Auto-opens hedge (opposite position) when main position opens
+  - Tracks hedges separately in Redis (hedge_gateway:state)
+  - Gate system: closes hedge portions at averaging steps 2 and 5
+  - State: hedges dict with symbol, side, size, remaining
+```
+
+**Hedge Position Averaging Gate** (V2 - January 2026):
+```python
+# Hedge positions require -70% UPNL before averaging (stricter than main)
+# Main positions: -25% UPNL gate (normal)
+# Hedge positions: -70% UPNL gate (protective)
+
+# Location: aixyz_continuous_profit_system.py:3015-3040
+hedge_gate_threshold = -70.0  # Only for hedge positions
+```
+
+| Position Type | Averaging Gate |
+|---------------|----------------|
+| Main positions | -25% P&L |
+| Hedge positions | -70% P&L |
+
+**Check active hedges:**
+```bash
+docker exec ai_xyz_redis redis-cli GET "hedge_gateway:state" | python3 -m json.tool
+```
+
 ---
 
 ## 9. Key Files Reference
@@ -220,6 +251,7 @@ LiquidationProtectionService:
 ### 9.1 Main System
 ```
 aixyz_continuous_profit_system.py  - Main trading loop (258KB)
+hedge_gateway.py                    - Hedge position management
 position_persistence_manager.py     - Redis state management
 live_positions_registry.py          - Position tracking
 enhanced_position_sync.py           - Exchange sync
@@ -338,7 +370,8 @@ redis_port = int(os.getenv('REDIS_PORT', 6379))
 | Leverage | 5x default, 20x max |
 | Averaging Steps | 5 max |
 | Neutral Zone | -$0.15 to +$0.15 |
-| Averaging Trigger | -25% UPNL |
+| Averaging Trigger (Main) | -25% UPNL |
+| Averaging Trigger (Hedge) | -70% UPNL |
 | Profit Taking | +5% UPNL |
 | Stop Loss | -90% UPNL |
 | Surplus Dump Stage 1 | 85% of peak |
@@ -401,4 +434,4 @@ See `docs_archive/ARCHIVE_NOTICE.md` for details.
 
 ---
 
-**Version**: 2.0 | **Last Updated**: January 11, 2026
+**Version**: 2.1 | **Last Updated**: January 13, 2026
