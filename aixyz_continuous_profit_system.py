@@ -3703,11 +3703,28 @@ class AIXYZContinuousProfit:
                         return False
                 
                 dump_amount = surplus * 0.5  # Dump 50% of surplus in stage 1
+
+                # FIX: Check minimum order size before attempting dump
+                actual_symbol = position.get('symbol', symbol)
+                try:
+                    market_info = self.exchange.market(actual_symbol)
+                    min_amount = market_info.get('limits', {}).get('amount', {}).get('min', 0)
+                    if min_amount and dump_amount < min_amount:
+                        print(f"  ⚠️ Dump amount {dump_amount:.4f} below minimum {min_amount}")
+                        if surplus >= min_amount:
+                            dump_amount = surplus  # Dump full surplus instead
+                            print(f"  📊 Adjusted to full surplus: {dump_amount:.4f} contracts")
+                        else:
+                            print(f"  ⏸️ Skipping Stage 1 dump - surplus {surplus:.4f} below minimum {min_amount}")
+                            print(f"     Will wait for more surplus to accumulate or use Stage 2 full dump")
+                            return False
+                except Exception as market_err:
+                    print(f"  ⚠️ Could not check min amount: {market_err}")
+
                 # HEDGE MODE: Use tradeSide='close' with position side
                 position_side = position.get('position_side', 'long' if position['side'] in ['buy', 'long'] else 'short')
                 close_side = self.get_order_side(position_side, is_open=False)
                 close_params = self.get_hedge_order_params(position_side, is_open=False)
-                actual_symbol = position.get('symbol', symbol)
 
                 print(f"\n💰 Surplus Dump {symbol} - Stage 1 (50%)")
                 print(f"  Peak UPNL: ${peak:.4f}")
@@ -3775,11 +3792,25 @@ class AIXYZContinuousProfit:
                     return False
                 
                 dump_amount = remaining_surplus  # Dump all remaining surplus
+
+                # FIX: Check minimum order size before attempting dump
+                actual_symbol = position.get('symbol', symbol)
+                try:
+                    market_info = self.exchange.market(actual_symbol)
+                    min_amount = market_info.get('limits', {}).get('amount', {}).get('min', 0)
+                    if min_amount and dump_amount < min_amount:
+                        print(f"  ⚠️ Stage 2 dump amount {dump_amount:.4f} below minimum {min_amount}")
+                        print(f"  ⏸️ Skipping Stage 2 dump - remaining surplus too small")
+                        # Reset to stage 0 since we can't complete the dump
+                        self.surplus_dump_stage[symbol] = 0
+                        return False
+                except Exception as market_err:
+                    print(f"  ⚠️ Could not check min amount: {market_err}")
+
                 # HEDGE MODE: Use tradeSide='close' with position side
                 position_side = position.get('position_side', 'long' if position['side'] in ['buy', 'long'] else 'short')
                 close_side = self.get_order_side(position_side, is_open=False)
                 close_params = self.get_hedge_order_params(position_side, is_open=False)
-                actual_symbol = position.get('symbol', symbol)
 
                 print(f"\n💰 Surplus Dump {symbol} - Stage 2 (Final 50%)")
                 print(f"  Peak UPNL: ${peak:.4f}")
@@ -3898,6 +3929,10 @@ class AIXYZContinuousProfit:
         if peak < 0.50:
             return False
 
+        # Initialize should_take_profit flag
+        should_take_profit = False
+        prediction_exit_triggered = False
+
         # V2.0.0: Prediction-based exit signal check
         # Check if prediction model recommends exit based on trend reversal
         if hasattr(self, 'prediction_integration') and self.prediction_integration:
@@ -3911,13 +3946,17 @@ class AIXYZContinuousProfit:
                     print(f"  🔮 Prediction EXIT signal for {symbol}:")
                     print(f"     Reason: {exit_signal.get('reason', 'Trend reversal detected')}")
                     print(f"     Confidence: {exit_signal.get('confidence', 'N/A')}%")
-                    # Prediction says exit - proceed with close
-                    return True
+                    # FIX: Set flag to proceed with close instead of returning early
+                    should_take_profit = True
+                    prediction_exit_triggered = True
+                    print(f"  ✅ Prediction EXIT will execute close")
             except Exception as e:
                 print(f"  ⚠️ Prediction exit check failed: {e}")
 
         # V1.3.1: Use RL Closing Agent for intelligent exit timing (+15-25% better exits)
-        try:
+        # Skip RL logic if prediction already triggered exit
+        if not prediction_exit_triggered:
+          try:
             # Prepare position data for RL agent
             entry_price = position.get('entry_price', position.get('entryPrice', 0))
             holding_time_hours = 0
@@ -3968,14 +4007,14 @@ class AIXYZContinuousProfit:
                 else:
                     should_take_profit = False
                     print(f"  🧠 RL Agent says HOLD (confidence: {rl_recommendation.get('confidence', 0):.2f})")
-        except Exception as e:
+          except Exception as e:
             print(f"  ⚠️ RL Agent failed, using fallback: {e}")
             # Calculate exit threshold: 70% of peak (updated)
             threshold = peak * 0.70
             should_take_profit = (upnl <= threshold)
             if should_take_profit:
                 print(f"  🎯 Fallback threshold trigger: ${upnl:.4f} <= ${threshold:.4f}")
-            
+
         if should_take_profit:
             try:
                 # HEDGE MODE: Use tradeSide='close' with position side
