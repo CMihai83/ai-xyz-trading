@@ -511,12 +511,19 @@ class LiquidationProtectionService:
             # CRITICAL: Remove postOnly to ensure order WILL execute
             # If postOnly=True, order gets rejected if it would cross the spread
             # We NEED this order to execute for liquidation protection!
+
+            # HEDGE MODE FIX: Must include holdSide for Bitget hedge mode
+            # buy side = long position, sell side = short position
+            position_side = 'long' if side == 'buy' else 'short'
+
             order_params = {
                 'reduceOnly': False,  # We're adding to position
+                'holdSide': position_side,  # REQUIRED for Bitget hedge mode
+                'tradeSide': 'open',  # Opening/adding to position
                 # postOnly removed - allow order to execute as taker if needed
             }
 
-            print(f"\n  📋 Placing LIMIT {side.upper()} order (will execute as maker or taker)...")
+            print(f"\n  📋 Placing LIMIT {side.upper()} order (holdSide={position_side})...")
 
             order = self.exchange.create_order(
                 symbol=symbol,
