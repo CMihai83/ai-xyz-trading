@@ -4062,6 +4062,7 @@ class AIXYZContinuousProfit:
                 if self.hedge_gateway:
                     self.hedge_gateway.on_main_position_closed(symbol)
                 del self.active_positions[symbol]
+                self.cleanup_position_tracking(symbol)  # Cancel protection orders, reset tracking
 
                 print(f"  ✅ Profit taken: ${upnl:.4f}")
                 return True
@@ -5250,12 +5251,7 @@ class AIXYZContinuousProfit:
                         if self.hedge_gateway:
                             self.hedge_gateway.on_main_position_closed(symbol)
                         del self.active_positions[symbol]
-
-                        # Clean up tracking
-                        if symbol in self.averaging_steps:
-                            del self.averaging_steps[symbol]
-                        if symbol in self.peak_upnl:
-                            del self.peak_upnl[symbol]
+                        self.cleanup_position_tracking(symbol)  # Cancel protection orders, reset all tracking
 
                         print(f"  ✅ Position closed for rotation: {symbol} @ PnL={pct:.1f}%")
                     except Exception as e:
