@@ -29,7 +29,7 @@ from datetime import datetime, timedelta
 from dotenv import load_dotenv
 import pandas as pd
 import numpy as np
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 import threading
 import asyncio
 from position_sizing_config import PositionSizingConfig
