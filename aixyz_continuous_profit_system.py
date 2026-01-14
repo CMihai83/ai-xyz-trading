@@ -1956,13 +1956,40 @@ class AIXYZContinuousProfit:
                                 max_correlation = abs(corr)
                                 correlated_with = active_symbol
 
-                    # Skip if correlation is too high
-                    if max_correlation > 0.7:
-                        print(f"  🔗 Skipping {symbol}: too correlated with {correlated_with} ({max_correlation:.2f})")
-                        print(f"     Prevents correlated drawdowns and improves diversification")
+                    # Sprint 14: Correlation-based position sizing (Grok Option C)
+                    # - Skip at ρ > 0.9 (near-identical exposure)
+                    # - Reduce to 50% at ρ 0.7-0.9
+                    # - Normal 100% at ρ 0.3-0.7
+                    # - Increase to 120% at ρ < -0.5 (negative correlation = hedge)
+                    if max_correlation > 0.9:
+                        print(f"  🔗 Skipping {symbol}: extremely correlated with {correlated_with} ({max_correlation:.2f})")
+                        print(f"     ρ > 0.9 = near-identical exposure, no diversification benefit")
                         return False
+                    elif max_correlation > 0.7:
+                        # Reduce position size to 50% instead of skipping
+                        self.correlation_size_multiplier = 0.5
+                        print(f"  🔗 High correlation with {correlated_with}: {max_correlation:.2f}")
+                        print(f"     Position size reduced to 50% (ρ 0.7-0.9 range)")
                     elif max_correlation > 0.5:
+                        self.correlation_size_multiplier = 0.75
                         print(f"  ⚠️  Moderate correlation with {correlated_with}: {max_correlation:.2f}")
+                        print(f"     Position size reduced to 75%")
+                    else:
+                        self.correlation_size_multiplier = 1.0
+
+                    # Check for negative correlation (hedging benefit)
+                    min_correlation = 0
+                    for active_symbol in active_symbols:
+                        if 'correlations' in sector_analysis:
+                            corr = sector_analysis['correlations'].get(active_symbol, 0)
+                            if corr < min_correlation:
+                                min_correlation = corr
+
+                    if min_correlation < -0.5:
+                        # Increase size for negative correlation hedge
+                        self.correlation_size_multiplier = 1.2
+                        print(f"  🔄 Negative correlation detected: {min_correlation:.2f}")
+                        print(f"     Position size increased to 120% (hedge benefit)")
 
                     # Show sector info if available
                     if 'sector_symbol' in sector_analysis:
@@ -2145,6 +2172,16 @@ class AIXYZContinuousProfit:
                     position_value = initial_margin * leverage
             except Exception as e:
                 print(f"  ⚠️ Kelly sizing failed (using base): {e}")
+
+            # Sprint 14: Apply correlation-based position sizing multiplier
+            correlation_multiplier = getattr(self, 'correlation_size_multiplier', 1.0)
+            if correlation_multiplier != 1.0:
+                original_margin = initial_margin
+                initial_margin = initial_margin * correlation_multiplier
+                position_value = initial_margin * leverage
+                print(f"  🔗 Correlation adjustment: {correlation_multiplier:.2f}x (${original_margin:.2f} → ${initial_margin:.2f})")
+                # Reset multiplier after use
+                self.correlation_size_multiplier = 1.0
 
             print(f"  🛡️ SAFE POSITION SIZING:")
             print(f"     Volatility: {volatility_pct:.1f}%")
@@ -4279,6 +4316,38 @@ class AIXYZContinuousProfit:
             should_take_profit = (upnl <= threshold)
             if should_take_profit:
                 print(f"  🎯 Fallback threshold trigger: ${upnl:.4f} <= ${threshold:.4f}")
+
+        # ============================================================================
+        # ORDERBOOK IMBALANCE CHECK (Grok Recommendation - Sprint 14)
+        # ============================================================================
+        # Use orderbook imbalance to fine-tune exit timing:
+        # - IR > 0.2: Strong bid pressure = delay exit for longs
+        # - IR < -0.2: Strong ask pressure = accelerate exit for longs
+        # ============================================================================
+        if should_take_profit and hasattr(self, 'orderbook_detector'):
+            try:
+                imbalance_info = self.orderbook_detector.analyze_order_book(symbol)
+                imbalance_ratio = imbalance_info.get('imbalance', 0)
+                position_side = 'long' if position.get('side') in ['buy', 'long'] else 'short'
+
+                # For LONGS: Strong bid imbalance = potential recovery, delay exit
+                if position_side == 'long' and imbalance_ratio > 0.2:
+                    print(f"  📊 Orderbook: Strong bid imbalance ({imbalance_ratio:.2f}) - DELAY exit")
+                    print(f"     Bid/Ask ratio suggests potential recovery")
+                    should_take_profit = False  # Override exit decision
+
+                # For SHORTS: Strong ask imbalance = potential recovery, delay exit
+                elif position_side == 'short' and imbalance_ratio < -0.2:
+                    print(f"  📊 Orderbook: Strong ask imbalance ({imbalance_ratio:.2f}) - DELAY exit")
+                    print(f"     Bid/Ask ratio suggests potential recovery")
+                    should_take_profit = False  # Override exit decision
+
+                # Log orderbook influence on exit decision
+                elif abs(imbalance_ratio) > 0.1:
+                    print(f"  📊 Orderbook: Imbalance {imbalance_ratio:.2f} (not strong enough to override)")
+
+            except Exception as e:
+                print(f"  ⚠️ Orderbook analysis failed: {e}")
 
         # ============================================================================
         # PROFIT PROTECTION HEDGE SYSTEM (Grok+Claude Consortium - Jan 14, 2026)
