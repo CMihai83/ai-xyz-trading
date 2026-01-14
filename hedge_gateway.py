@@ -31,7 +31,13 @@ FIXES (Jan 2026 Consortium Review):
 - MEDIUM: Increased reversion buffer from 5% to 10%
 
 Author: Claude + Grok Consortium
-Version: 2.3.0 (Profit-Only Hedging)
+Version: 2.4.0 (Volatility Fallback Hedging)
+
+V2.4.0 Changes (Jan 14, 2026):
+- Added volatility-based fallback for immediate hedging (Grok recommendation)
+- In high volatility (ATR ratio > 2.0), open hedge immediately for protection
+- Uses smaller hedge size (30%) during volatility fallback
+- Normal conditions: still wait for $5+ profit before hedging
 
 V2.3.0 Changes (Jan 14, 2026):
 - DISABLED immediate hedge opening on position open
@@ -67,9 +73,15 @@ class HedgeGateway:
     """
 
     # Configuration (Grok+Claude consortium optimized - Jan 2026)
-    # V2.3.0: Delayed hedge opening - only open when main is profitable
+    # V2.4.0: Delayed hedge opening with volatility fallback
     IMMEDIATE_HEDGE_ENABLED = False  # DISABLED: Don't open hedge immediately on position open
     PROFIT_HEDGE_ONLY = True         # Only open hedges when main position is profitable
+
+    # V2.4.0: Volatility-based fallback (Grok recommendation)
+    # In high volatility, open hedge immediately to protect against large swings
+    VOLATILITY_FALLBACK_ENABLED = True    # Enable immediate hedge in high volatility
+    VOLATILITY_FALLBACK_THRESHOLD = 2.0   # ATR ratio threshold (fast/slow > 2.0 = high vol)
+    VOLATILITY_FALLBACK_HEDGE_SIZE = 0.30 # Smaller hedge (30%) during volatility fallback
 
     GATE_OPEN_STEPS = [2, 4, 5]  # Averaging steps that open gates (added step 4 for mid-range protection)
     CLOSE_AT_STEP_2 = 0.25   # Close 25% of hedge at step 2 (was 30%)
@@ -242,6 +254,56 @@ class HedgeGateway:
             return 'long'
         return 'short'
 
+    def _check_high_volatility(self, symbol: str) -> tuple:
+        """
+        V2.4.0: Check if current volatility is high enough for fallback hedge.
+
+        Uses ATR ratio (fast/slow) to detect volatility spikes.
+        Returns (is_high_volatility, ratio)
+        """
+        try:
+            # Fetch OHLCV data for ATR calculation
+            ohlcv = self.exchange.fetch_ohlcv(symbol, '5m', limit=max(self.ATR_FAST_PERIOD, self.ATR_SLOW_PERIOD) + 5)
+
+            if not ohlcv or len(ohlcv) < self.ATR_SLOW_PERIOD:
+                return (False, 0.0)
+
+            # Calculate True Range for each candle
+            true_ranges = []
+            for i in range(1, len(ohlcv)):
+                high = ohlcv[i][2]
+                low = ohlcv[i][3]
+                prev_close = ohlcv[i-1][4]
+
+                tr = max(
+                    high - low,
+                    abs(high - prev_close),
+                    abs(low - prev_close)
+                )
+                true_ranges.append(tr)
+
+            if len(true_ranges) < self.ATR_SLOW_PERIOD:
+                return (False, 0.0)
+
+            # Calculate fast and slow ATR
+            atr_fast = sum(true_ranges[-self.ATR_FAST_PERIOD:]) / self.ATR_FAST_PERIOD
+            atr_slow = sum(true_ranges[-self.ATR_SLOW_PERIOD:]) / self.ATR_SLOW_PERIOD
+
+            if atr_slow <= 0:
+                return (False, 0.0)
+
+            # Calculate ratio
+            vol_ratio = atr_fast / atr_slow
+
+            # Check against threshold
+            is_high_vol = vol_ratio >= self.VOLATILITY_FALLBACK_THRESHOLD
+
+            return (is_high_vol, vol_ratio)
+
+        except Exception as e:
+            print(f"  ⚠️ Volatility check error: {e}")
+            return (False, 0.0)
+
     def _save_state(self):
         """Persist hedge state to Redis (with JSON file fallback)."""
         state = {
@@ -320,14 +382,29 @@ class HedgeGateway:
         if not self.enabled:
             return None
 
-        # V2.3.0: Check if immediate hedging is disabled
-        if not self.IMMEDIATE_HEDGE_ENABLED:
-            print(f"  ℹ️ Immediate hedge disabled - will open when profitable (PROFIT_HEDGE_ONLY={self.PROFIT_HEDGE_ONLY})")
-            return None
-
         # Don't double hedge
         if main_position_key in self.hedges:
             print(f"  ⚠️ Hedge already exists for {main_position_key}")
+            return None
+
+        # V2.4.0: Check volatility for fallback logic
+        volatility_fallback = False
+        adjusted_size = size
+
+        if self.VOLATILITY_FALLBACK_ENABLED:
+            try:
+                is_high_vol, vol_ratio = self._check_high_volatility(symbol)
+                if is_high_vol:
+                    volatility_fallback = True
+                    adjusted_size = size * self.VOLATILITY_FALLBACK_HEDGE_SIZE  # Reduced size (30%)
+                    print(f"  ⚡ HIGH VOLATILITY detected (ATR ratio: {vol_ratio:.2f}x)")
+                    print(f"  🛡️ Volatility fallback: Opening immediate hedge ({self.VOLATILITY_FALLBACK_HEDGE_SIZE*100:.0f}% size)")
+            except Exception as e:
+                print(f"  ⚠️ Volatility check failed: {e}")
+
+        # V2.3.0: Check if immediate hedging is disabled (unless volatility fallback)
+        if not self.IMMEDIATE_HEDGE_ENABLED and not volatility_fallback:
+            print(f"  ℹ️ Immediate hedge disabled - will open when profitable (PROFIT_HEDGE_ONLY={self.PROFIT_HEDGE_ONLY})")
             return None
 
         hedge_side = self.get_hedge_side(main_side)
@@ -341,8 +418,9 @@ class HedgeGateway:
                 'holdSide': hedge_position_side
             }
 
-            print(f"  🛡️ Opening hedge: {symbol} {hedge_side.upper()} {size}")
-            order = self.exchange.create_market_order(symbol, hedge_side, size, params=params)
+            hedge_type = "VOLATILITY FALLBACK" if volatility_fallback else "STANDARD"
+            print(f"  🛡️ Opening hedge ({hedge_type}): {symbol} {hedge_side.upper()} {adjusted_size:.4f}")
+            order = self.exchange.create_market_order(symbol, hedge_side, adjusted_size, params=params)
 
             if order:
                 # Get entry price with multiple fallbacks
@@ -366,10 +444,11 @@ class HedgeGateway:
                     'position_side': hedge_position_side,
                     'position_type': 'hedge',  # EXPLICIT: Distinguishes from main positions
                     'entry_price': entry_price,
-                    'size': size,
+                    'size': adjusted_size,
                     'remaining': 1.0,  # 100% of hedge remaining
                     'opened_at': datetime.now().isoformat(),
-                    'order_id': order.get('id')
+                    'order_id': order.get('id'),
+                    'volatility_fallback': volatility_fallback  # V2.4.0: Track if this was a volatility hedge
                 }
                 self.stats['hedges_opened'] += 1
                 self._save_state()
