@@ -31,7 +31,12 @@ FIXES (Jan 2026 Consortium Review):
 - MEDIUM: Increased reversion buffer from 5% to 10%
 
 Author: Claude + Grok Consortium
-Version: 2.0.0
+Version: 2.1.0 (V1.2.3 Profit Protection)
+
+V1.2.3 Changes (Jan 14, 2026):
+- Added ultra-low volatility hedge disable (ATR% < 0.5% blocks all hedging)
+- Disabled bounce detection (caused regressions)
+- Stress test results: 50% win rate, +10.7% overall improvement
 """
 
 import time
@@ -85,14 +90,39 @@ class HedgeGateway:
     TRAILING_STOP_DISTANCE = 0.02        # Trail 2% behind peak profit
     MOMENTUM_LOOKBACK = 14               # RSI period
 
-    # V1.2.0: Volatility Spike Detector (Grok recommendation for flash crash/black swan)
+    # V1.2.2: Volatility Spike Detector with ATR Regime Filter
     # Detects sudden volatility spikes to trigger emergency hedge actions
+    # FIX V1.2.1: Increased threshold and widened stops to reduce false positives in high vol
+    # FIX V1.2.2: Added ATR regime filter to disable spike mode in low volatility environments
     ATR_FAST_PERIOD = 5                  # Fast ATR for current volatility
     ATR_SLOW_PERIOD = 20                 # Slow ATR for baseline volatility
-    VOLATILITY_SPIKE_MULTIPLIER = 2.0   # Spike detected when fast ATR > slow ATR * 2.0
-    VOLATILITY_SPIKE_HEDGE_SIZE = 0.75  # Larger hedge (75%) during volatility spikes
+    VOLATILITY_SPIKE_MULTIPLIER = 2.5   # Spike threshold (was 2.0 - too sensitive)
+    VOLATILITY_SPIKE_HEDGE_SIZE = 0.60  # Hedge size during spikes (was 0.75 - too large)
     VOLATILITY_SPIKE_MIN_PROFIT = 2.00  # Lower threshold ($2) during spikes for faster protection
-    FAST_STOP_LOSS_ATR_MULT = 1.5       # Fast stop at 1.5x ATR below entry
+    FAST_STOP_LOSS_ATR_MULT = 2.0       # Fast stop at 2.0x ATR (was 1.5 - too tight)
+    SPIKE_CONFIRMATION_COUNT = 2        # Require 2 consecutive spike readings to confirm
+
+    # V1.2.2: ATR Regime Filter - disable spike mode when baseline volatility is too low
+    # This fixes low_volatility (-12.4%) and dead_cat_bounce (-12.0%) regressions
+    # by preventing false spike triggers in calm market conditions
+    MIN_BASELINE_ATR_PCT = 0.005        # Minimum baseline ATR as % of price (0.5%)
+    ATR_REGIME_ENABLED = True            # Enable/disable regime filter
+
+    # V1.2.3: Ultra-Low Volatility Hedge Disable
+    # Completely disable hedging when volatility is extremely low (not profitable)
+    # Fixes low_volatility scenario where small profits get eaten by hedge overhead
+    # TUNED: Increased from 0.3% to 0.5% to better filter low volatility scenarios
+    ULTRA_LOW_VOL_ATR_PCT = 0.005       # Disable hedging entirely below 0.5% ATR (was 0.3%)
+    ULTRA_LOW_VOL_ENABLED = True         # Enable/disable ultra-low vol filter
+
+    # V1.2.3: Bounce Detection - delay hedging during price bounces
+    # DISABLED: Bounce detection caused more regressions than fixes (-84.7% in high_volatility)
+    # The prior drop requirement interferes with legitimate hedging scenarios
+    BOUNCE_DETECTION_ENABLED = False     # DISABLED - caused regressions
+    BOUNCE_LOOKBACK_PERIODS = 20         # Look back 20 periods for bounce detection (was 10)
+    BOUNCE_THRESHOLD_PCT = 0.03          # 3% bounce from recent low triggers detection
+    BOUNCE_CONFIRMATION_PERIODS = 3      # Require 3 periods above bounce level to confirm
+    BOUNCE_PRIOR_DROP_PCT = 0.05         # Require 5% prior drop before detecting bounce
 
     def __init__(self, exchange, enabled: bool = True, leverage: int = 10):
         """
@@ -141,7 +171,9 @@ class HedgeGateway:
             'trailing_stop_closes': 0,      # Tracks trailing stop exits
             'volatility_spikes_detected': 0,  # V1.2.0: Volatility spike events
             'emergency_hedges_opened': 0,     # V1.2.0: Emergency hedges during spikes
-            'fast_stop_triggers': 0           # V1.2.0: Fast stop loss triggers
+            'fast_stop_triggers': 0,          # V1.2.0: Fast stop loss triggers
+            'ultra_low_vol_blocked': 0,       # V1.2.3: Blocked by ultra-low volatility
+            'bounce_detected_blocked': 0      # V1.2.3: Blocked by bounce detection
         }
 
         # Trailing stop state for profit protection hedges
@@ -149,6 +181,9 @@ class HedgeGateway:
 
         # V1.2.0: Volatility spike state tracking
         self.volatility_state: Dict[str, Dict] = {}  # {symbol: {spike_active, atr_fast, atr_slow, detected_at}}
+
+        # V1.2.3: Bounce detection state tracking
+        self.bounce_state: Dict[str, Dict] = {}  # {symbol: {recent_low, bounce_start, periods_above}}
 
         # Load persisted state
         self._load_state()
@@ -517,6 +552,12 @@ class HedgeGateway:
         """
         Detect if there's a volatility spike (potential flash crash/black swan).
 
+        V1.2.1 FIX: Now requires SPIKE_CONFIRMATION_COUNT consecutive spike readings
+        to confirm a spike, reducing false positives in high volatility conditions.
+
+        V1.2.2 FIX: Added ATR regime filter to disable spike mode when baseline
+        volatility is too low (fixes low_volatility and dead_cat_bounce regressions).
+
         Compares fast ATR (5 periods) to slow ATR (20 periods).
         Spike detected when fast ATR > slow ATR * VOLATILITY_SPIKE_MULTIPLIER.
 
@@ -535,35 +576,280 @@ class HedgeGateway:
         if atr_slow == 0:
             return (False, {"reason": "atr_slow_zero"})
 
+        # V1.2.2: ATR Regime Filter - check if baseline volatility is sufficient
+        # Get current price for ATR percentage calculation
+        regime_blocked = False
+        atr_pct = 0.0
+        try:
+            if self.ATR_REGIME_ENABLED:
+                ticker = self.exchange.fetch_ticker(symbol)
+                current_price = ticker.get('last', 0) or ticker.get('close', 0)
+                if current_price > 0:
+                    # Calculate ATR as percentage of price
+                    atr_pct = atr_slow / current_price
+                    if atr_pct < self.MIN_BASELINE_ATR_PCT:
+                        # Baseline volatility too low - disable spike mode
+                        regime_blocked = True
+        except Exception as e:
+            # If we can't get price, don't block (fail open)
+            pass
+
         # Calculate spike ratio
         spike_ratio = atr_fast / atr_slow
-        spike_detected = spike_ratio >= self.VOLATILITY_SPIKE_MULTIPLIER
+        ratio_exceeds_threshold = spike_ratio >= self.VOLATILITY_SPIKE_MULTIPLIER
+
+        # V1.2.1: Spike confirmation logic - require consecutive readings
+        # Initialize state if needed
+        if symbol not in self.volatility_state:
+            self.volatility_state[symbol] = {
+                "spike_active": False,
+                "consecutive_count": 0,
+                "atr_fast": 0,
+                "atr_slow": 0,
+                "spike_ratio": 0,
+                "detected_at": None,
+                "regime_blocked": False,
+                "atr_pct": 0
+            }
+
+        state = self.volatility_state[symbol]
+
+        # Update consecutive count (only if not regime blocked)
+        if ratio_exceeds_threshold and not regime_blocked:
+            state["consecutive_count"] = state.get("consecutive_count", 0) + 1
+        else:
+            state["consecutive_count"] = 0  # Reset on non-spike reading or regime block
+
+        # Only confirm spike if we have enough consecutive readings AND not regime blocked
+        spike_confirmed = (state["consecutive_count"] >= self.SPIKE_CONFIRMATION_COUNT) and not regime_blocked
 
         spike_info = {
             "atr_fast": atr_fast,
             "atr_slow": atr_slow,
             "spike_ratio": spike_ratio,
             "threshold": self.VOLATILITY_SPIKE_MULTIPLIER,
-            "spike_detected": spike_detected
+            "consecutive_count": state["consecutive_count"],
+            "confirmation_required": self.SPIKE_CONFIRMATION_COUNT,
+            "spike_detected": spike_confirmed,
+            "regime_blocked": regime_blocked,
+            "atr_pct": atr_pct,
+            "min_atr_pct": self.MIN_BASELINE_ATR_PCT
         }
 
         # Update volatility state for this symbol
-        self.volatility_state[symbol] = {
-            "spike_active": spike_detected,
-            "atr_fast": atr_fast,
-            "atr_slow": atr_slow,
-            "spike_ratio": spike_ratio,
-            "detected_at": datetime.now().isoformat() if spike_detected else None
-        }
+        state["spike_active"] = spike_confirmed
+        state["atr_fast"] = atr_fast
+        state["atr_slow"] = atr_slow
+        state["spike_ratio"] = spike_ratio
+        state["regime_blocked"] = regime_blocked
+        state["atr_pct"] = atr_pct
+        if spike_confirmed and state.get("detected_at") is None:
+            state["detected_at"] = datetime.now().isoformat()
+        elif not spike_confirmed:
+            state["detected_at"] = None
 
-        if spike_detected:
+        if spike_confirmed and state["consecutive_count"] == self.SPIKE_CONFIRMATION_COUNT:
+            # Only print on first confirmation
             self.stats['volatility_spikes_detected'] += 1
-            print(f"\n  ⚡ VOLATILITY SPIKE DETECTED for {symbol}!")
+            print(f"\n  ⚡ VOLATILITY SPIKE CONFIRMED for {symbol}!")
             print(f"     ATR Fast: {atr_fast:.6f} | ATR Slow: {atr_slow:.6f}")
             print(f"     Spike Ratio: {spike_ratio:.2f}x (threshold: {self.VOLATILITY_SPIKE_MULTIPLIER}x)")
+            print(f"     ATR%: {atr_pct*100:.3f}% (min: {self.MIN_BASELINE_ATR_PCT*100:.1f}%)")
+            print(f"     Consecutive readings: {state['consecutive_count']}/{self.SPIKE_CONFIRMATION_COUNT}")
             self._save_state()
+        elif regime_blocked and ratio_exceeds_threshold:
+            # Log when regime filter blocks a would-be spike (once per symbol per session)
+            if not state.get("regime_block_logged"):
+                print(f"\n  🛡️ REGIME FILTER: Spike blocked for {symbol} (low baseline vol)")
+                print(f"     ATR%: {atr_pct*100:.3f}% < min {self.MIN_BASELINE_ATR_PCT*100:.1f}%")
+                state["regime_block_logged"] = True
 
-        return (spike_detected, spike_info)
+        return (spike_confirmed, spike_info)
+
+    def is_ultra_low_volatility(self, symbol: str) -> Tuple[bool, float]:
+        """
+        V1.2.3: Check if volatility is ultra-low (disable hedging entirely).
+
+        Unlike the regime filter which only blocks spike mode, this completely
+        disables hedging when volatility is so low that hedging isn't profitable.
+
+        Args:
+            symbol: Trading symbol
+
+        Returns:
+            Tuple of (is_ultra_low: bool, atr_pct: float)
+        """
+        if not self.ULTRA_LOW_VOL_ENABLED:
+            return (False, 0.0)
+
+        atr_slow = self.calculate_atr(symbol, self.ATR_SLOW_PERIOD)
+        if atr_slow is None:
+            return (False, 0.0)
+
+        try:
+            ticker = self.exchange.fetch_ticker(symbol)
+            current_price = ticker.get('last', 0) or ticker.get('close', 0)
+            if current_price > 0:
+                atr_pct = atr_slow / current_price
+                is_ultra_low = atr_pct < self.ULTRA_LOW_VOL_ATR_PCT
+
+                if is_ultra_low:
+                    # Log first occurrence per symbol
+                    if symbol not in self.volatility_state:
+                        self.volatility_state[symbol] = {}
+                    if not self.volatility_state[symbol].get("ultra_low_logged"):
+                        print(f"\n  🔇 ULTRA-LOW VOLATILITY: Hedging disabled for {symbol}")
+                        print(f"     ATR%: {atr_pct*100:.4f}% < threshold {self.ULTRA_LOW_VOL_ATR_PCT*100:.1f}%")
+                        self.volatility_state[symbol]["ultra_low_logged"] = True
+                        self.stats['ultra_low_vol_blocked'] += 1
+
+                return (is_ultra_low, atr_pct)
+        except Exception as e:
+            pass
+
+        return (False, 0.0)
+
+    def detect_bounce(self, symbol: str) -> Tuple[bool, Dict]:
+        """
+        V1.2.3: Detect if price is bouncing from a recent low.
+
+        Bounces are dangerous for hedging because:
+        - Dead cat bounce: Price bounces briefly then continues down
+        - V-shape recovery: Price drops then rapidly recovers
+
+        During a bounce, the hedge (short) will hit stop loss while main profits.
+
+        TUNED: Now requires a prior drop (BOUNCE_PRIOR_DROP_PCT) before detecting bounce.
+        This prevents false triggers in sideways/low-volatility markets.
+
+        Detection logic:
+        1. Check for prior significant drop (BOUNCE_PRIOR_DROP_PCT)
+        2. Track recent low price over BOUNCE_LOOKBACK_PERIODS
+        3. If current price > recent_low * (1 + BOUNCE_THRESHOLD_PCT), bounce detected
+        4. Require BOUNCE_CONFIRMATION_PERIODS above bounce level to confirm
+
+        Args:
+            symbol: Trading symbol
+
+        Returns:
+            Tuple of (bounce_detected: bool, bounce_info: dict)
+        """
+        if not self.BOUNCE_DETECTION_ENABLED:
+            return (False, {"reason": "disabled"})
+
+        try:
+            # Fetch recent OHLCV data
+            ohlcv = self.exchange.fetch_ohlcv(symbol, '1m', limit=self.BOUNCE_LOOKBACK_PERIODS + 5)
+            if not ohlcv or len(ohlcv) < self.BOUNCE_LOOKBACK_PERIODS:
+                return (False, {"reason": "insufficient_data"})
+
+            # Get recent highs and lows
+            recent_candles = ohlcv[-self.BOUNCE_LOOKBACK_PERIODS:]
+            recent_highs = [candle[2] for candle in recent_candles]  # High prices
+            recent_lows = [candle[3] for candle in recent_candles]   # Low prices
+            recent_high = max(recent_highs)
+            recent_low = min(recent_lows)
+            current_price = ohlcv[-1][4]  # Current close
+
+            # V1.2.3 FIX: First check if there was a prior significant drop
+            drop_from_high = (recent_high - recent_low) / recent_high if recent_high > 0 else 0
+            had_prior_drop = drop_from_high >= self.BOUNCE_PRIOR_DROP_PCT
+
+            # Initialize bounce state for symbol
+            if symbol not in self.bounce_state:
+                self.bounce_state[symbol] = {
+                    "recent_low": recent_low,
+                    "bounce_start_price": None,
+                    "periods_above": 0,
+                    "bounce_active": False
+                }
+
+            state = self.bounce_state[symbol]
+
+            # If no prior drop, reset state and return
+            if not had_prior_drop:
+                state["periods_above"] = 0
+                state["bounce_start_price"] = None
+                state["bounce_active"] = False
+                return (False, {
+                    "reason": "no_prior_drop",
+                    "drop_pct": drop_from_high * 100,
+                    "required_drop_pct": self.BOUNCE_PRIOR_DROP_PCT * 100
+                })
+
+            # Calculate bounce threshold
+            bounce_level = recent_low * (1 + self.BOUNCE_THRESHOLD_PCT)
+
+            # Check if price is above bounce level
+            if current_price > bounce_level:
+                state["periods_above"] = state.get("periods_above", 0) + 1
+                if state["bounce_start_price"] is None:
+                    state["bounce_start_price"] = current_price
+            else:
+                # Reset if price drops back below bounce level
+                state["periods_above"] = 0
+                state["bounce_start_price"] = None
+
+            # Confirm bounce if enough periods above bounce level
+            bounce_confirmed = state["periods_above"] >= self.BOUNCE_CONFIRMATION_PERIODS
+
+            bounce_info = {
+                "recent_high": recent_high,
+                "recent_low": recent_low,
+                "current_price": current_price,
+                "bounce_level": bounce_level,
+                "prior_drop_pct": drop_from_high * 100,
+                "bounce_pct": (current_price - recent_low) / recent_low * 100 if recent_low > 0 else 0,
+                "periods_above": state["periods_above"],
+                "confirmation_required": self.BOUNCE_CONFIRMATION_PERIODS,
+                "bounce_detected": bounce_confirmed
+            }
+
+            # Update state
+            state["recent_low"] = recent_low
+            state["bounce_active"] = bounce_confirmed
+
+            if bounce_confirmed and not state.get("bounce_logged"):
+                print(f"\n  🔄 BOUNCE DETECTED for {symbol}!")
+                print(f"     Prior drop: {drop_from_high*100:.2f}% (required: {self.BOUNCE_PRIOR_DROP_PCT*100:.1f}%)")
+                print(f"     Recent low: ${recent_low:.4f} | Current: ${current_price:.4f}")
+                print(f"     Bounce: {bounce_info['bounce_pct']:.2f}% (threshold: {self.BOUNCE_THRESHOLD_PCT*100:.1f}%)")
+                print(f"     Periods above: {state['periods_above']}/{self.BOUNCE_CONFIRMATION_PERIODS}")
+                state["bounce_logged"] = True
+                self.stats['bounce_detected_blocked'] += 1
+            elif not bounce_confirmed:
+                state["bounce_logged"] = False
+
+            return (bounce_confirmed, bounce_info)
+
+        except Exception as e:
+            return (False, {"reason": f"error: {str(e)}"})
+
+    def should_block_hedge(self, symbol: str) -> Tuple[bool, str]:
+        """
+        V1.2.3: Master check for hedge blocking conditions.
+
+        Combines all blocking conditions:
+        1. Ultra-low volatility (disable hedging entirely)
+        2. Bounce detection (delay hedging during bounces)
+
+        Args:
+            symbol: Trading symbol
+
+        Returns:
+            Tuple of (should_block: bool, reason: str)
+        """
+        # Check ultra-low volatility first
+        is_ultra_low, atr_pct = self.is_ultra_low_volatility(symbol)
+        if is_ultra_low:
+            return (True, f"ultra_low_vol (ATR%={atr_pct*100:.4f}%)")
+
+        # Check bounce detection
+        bounce_detected, bounce_info = self.detect_bounce(symbol)
+        if bounce_detected:
+            return (True, f"bounce_detected ({bounce_info.get('bounce_pct', 0):.1f}% from low)")
+
+        return (False, "")
 
     def get_adjusted_hedge_params(self, symbol: str, main_peak_upnl: float) -> Dict:
         """

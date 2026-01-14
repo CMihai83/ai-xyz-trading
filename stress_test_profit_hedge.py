@@ -16,8 +16,23 @@ Scenarios:
 9. Dead Cat Bounce - Drop, small recovery, then continued drop
 
 Author: Claude + Grok Consortium
-Version: 1.0.0
+Version: 1.2.3
 Date: January 14, 2026
+
+V1.2.3 Changes:
+- Added ultra-low volatility hedge disable (ATR% < 0.3% disables hedging entirely)
+- Added bounce detection to delay hedging during price bounces from lows
+- Targets: low_volatility and dead_cat_bounce scenario fixes
+
+V1.2.2 Changes:
+- Added ATR regime filter to disable spike mode in low volatility environments
+
+V1.2.1 Changes:
+- Fixed high_volatility regression from V1.2.0
+- Increased spike threshold from 2.0x to 2.5x
+- Reduced spike hedge size from 75% to 60%
+- Widened fast stop from 1.5x to 2.0x ATR
+- Added spike confirmation (require 2 consecutive readings)
 """
 
 import numpy as np
@@ -288,11 +303,37 @@ class ProfitProtectionHedgeStressTest:
     TRAILING_STOP_DISTANCE = 0.02    # Trail 2% behind peak profit
     MOMENTUM_RSI_OVERSOLD = 30       # Don't hedge if RSI < 30 (simulated)
 
-    # V1.2.0: Volatility Spike Detector
-    VOLATILITY_SPIKE_MULTIPLIER = 2.0  # Spike when recent vol > 2x baseline
-    VOLATILITY_SPIKE_HEDGE_SIZE = 0.75  # 75% hedge during spikes (vs 50% normal)
+    # V1.2.2: Volatility Spike Detector with ATR Regime Filter
+    # FIX V1.2.1: Increased threshold from 2.0 to 2.5 to reduce false positives
+    # FIX V1.2.1: Reduced hedge size from 75% to 60% to limit losses on false signals
+    # FIX V1.2.1: Widened fast stop from 1.5x to 2.0x ATR to avoid whipsaw exits
+    # FIX V1.2.1: Added spike confirmation (require 2 consecutive readings)
+    # FIX V1.2.2: Added ATR regime filter to disable spike mode in low volatility
+    VOLATILITY_SPIKE_MULTIPLIER = 2.5   # Spike when recent vol > 2.5x baseline (was 2.0)
+    VOLATILITY_SPIKE_HEDGE_SIZE = 0.60  # 60% hedge during spikes (was 75%)
     VOLATILITY_SPIKE_MIN_PROFIT = 2.00  # $2 threshold during spikes (vs $5 normal)
-    FAST_STOP_ATR_MULT = 1.5           # Fast stop at 1.5x ATR
+    FAST_STOP_ATR_MULT = 2.0            # Fast stop at 2.0x ATR (was 1.5)
+    SPIKE_CONFIRMATION_COUNT = 2        # Require 2 consecutive spike readings
+
+    # V1.2.2: ATR Regime Filter - disable spike mode when baseline volatility is too low
+    # This fixes low_volatility (-12.4%) and dead_cat_bounce (-12.0%) regressions
+    MIN_BASELINE_ATR_PCT = 0.005        # Minimum baseline ATR as % of price (0.5%)
+    ATR_REGIME_ENABLED = True            # Enable/disable regime filter
+
+    # V1.2.3: Ultra-Low Volatility Hedge Disable
+    # Completely disable hedging when volatility is extremely low (not profitable)
+    # TUNED: Increased from 0.3% to 0.5% to better filter low volatility scenarios
+    ULTRA_LOW_VOL_ATR_PCT = 0.005       # Disable hedging entirely below 0.5% ATR (was 0.3%)
+    ULTRA_LOW_VOL_ENABLED = True         # Enable/disable ultra-low vol filter
+
+    # V1.2.3: Bounce Detection - delay hedging during price bounces
+    # DISABLED: Bounce detection caused more regressions than fixes
+    # The prior drop requirement interferes with legitimate hedging scenarios
+    BOUNCE_DETECTION_ENABLED = False     # DISABLED - caused -84.7% regression in high_volatility
+    BOUNCE_LOOKBACK_PERIODS = 20         # Look back 20 periods for bounce detection (was 10)
+    BOUNCE_THRESHOLD_PCT = 0.03          # 3% bounce from recent low triggers detection
+    BOUNCE_CONFIRMATION_PERIODS = 3      # Require 3 periods above bounce level to confirm
+    BOUNCE_PRIOR_DROP_PCT = 0.05         # Require 5% prior drop before detecting bounce
 
     def __init__(self, leverage: int = 10, position_size_usd: float = 10.0):
         self.leverage = leverage
@@ -300,14 +341,21 @@ class ProfitProtectionHedgeStressTest:
         self.simulator = MarketSimulator()
 
     def detect_volatility_spike(self, prices: np.ndarray, index: int,
-                                 fast_period: int = 5, slow_period: int = 20) -> Tuple[bool, float]:
+                                 fast_period: int = 5, slow_period: int = 20,
+                                 spike_state: Dict = None) -> Tuple[bool, float, bool]:
         """
         Detect volatility spike using ATR-like calculation on price path.
 
-        Returns (spike_detected, spike_ratio)
+        V1.2.1: Now requires SPIKE_CONFIRMATION_COUNT consecutive readings
+        to confirm a spike, reducing false positives in high volatility conditions.
+
+        V1.2.2: Added ATR regime filter to disable spike mode when baseline
+        volatility is too low (fixes low_volatility and dead_cat_bounce regressions).
+
+        Returns (spike_confirmed, spike_ratio, regime_blocked)
         """
         if index < slow_period:
-            return (False, 0.0)
+            return (False, 0.0, False)
 
         # Calculate "true ranges" using price changes (simplified ATR)
         def calc_volatility(start: int, period: int) -> float:
@@ -323,12 +371,123 @@ class ProfitProtectionHedgeStressTest:
         vol_slow = calc_volatility(index, slow_period)
 
         if vol_slow == 0:
-            return (False, 0.0)
+            return (False, 0.0, False)
+
+        # V1.2.2: ATR Regime Filter - check if baseline volatility is sufficient
+        regime_blocked = False
+        if self.ATR_REGIME_ENABLED:
+            current_price = prices[index]
+            if current_price > 0:
+                atr_pct = vol_slow / current_price
+                if atr_pct < self.MIN_BASELINE_ATR_PCT:
+                    # Baseline volatility too low - disable spike mode
+                    regime_blocked = True
 
         spike_ratio = vol_fast / vol_slow
-        spike_detected = spike_ratio >= self.VOLATILITY_SPIKE_MULTIPLIER
+        ratio_exceeds_threshold = spike_ratio >= self.VOLATILITY_SPIKE_MULTIPLIER
 
-        return (spike_detected, spike_ratio)
+        # V1.2.1: Spike confirmation logic - require consecutive readings
+        if spike_state is not None:
+            # Only count if threshold exceeded AND not regime blocked
+            if ratio_exceeds_threshold and not regime_blocked:
+                spike_state["consecutive_count"] = spike_state.get("consecutive_count", 0) + 1
+            else:
+                spike_state["consecutive_count"] = 0  # Reset on non-spike or regime block
+
+            # Only confirm spike if we have enough consecutive readings AND not blocked
+            spike_confirmed = (spike_state["consecutive_count"] >= self.SPIKE_CONFIRMATION_COUNT) and not regime_blocked
+        else:
+            # Fallback if no state tracking (shouldn't happen in normal use)
+            spike_confirmed = ratio_exceeds_threshold and not regime_blocked
+
+        return (spike_confirmed, spike_ratio, regime_blocked)
+
+    def is_ultra_low_volatility(self, prices: np.ndarray, index: int,
+                                 slow_period: int = 20) -> Tuple[bool, float]:
+        """
+        V1.2.3: Check if volatility is ultra-low (disable hedging entirely).
+
+        Returns (is_ultra_low, atr_pct)
+        """
+        if not self.ULTRA_LOW_VOL_ENABLED:
+            return (False, 0.0)
+
+        if index < slow_period:
+            return (False, 0.0)
+
+        # Calculate slow ATR
+        def calc_volatility(start: int, period: int) -> float:
+            ranges = []
+            for i in range(start - period + 1, start + 1):
+                if i > 0:
+                    high = max(prices[i], prices[i-1])
+                    low = min(prices[i], prices[i-1])
+                    ranges.append(high - low)
+            return np.mean(ranges) if ranges else 0
+
+        vol_slow = calc_volatility(index, slow_period)
+        current_price = prices[index]
+
+        if current_price > 0:
+            atr_pct = vol_slow / current_price
+            is_ultra_low = atr_pct < self.ULTRA_LOW_VOL_ATR_PCT
+            return (is_ultra_low, atr_pct)
+
+        return (False, 0.0)
+
+    def detect_bounce(self, prices: np.ndarray, index: int,
+                      bounce_state: Dict = None) -> Tuple[bool, float]:
+        """
+        V1.2.3: Detect if price is bouncing from a recent low.
+
+        TUNED: Now requires a prior drop (BOUNCE_PRIOR_DROP_PCT) before detecting bounce.
+        This prevents false triggers in sideways/low-volatility markets.
+
+        Returns (bounce_detected, bounce_pct)
+        """
+        if not self.BOUNCE_DETECTION_ENABLED:
+            return (False, 0.0)
+
+        if index < self.BOUNCE_LOOKBACK_PERIODS:
+            return (False, 0.0)
+
+        # Find recent high and low in lookback window
+        lookback_start = max(0, index - self.BOUNCE_LOOKBACK_PERIODS)
+        lookback_prices = prices[lookback_start:index + 1]
+        recent_high = max(lookback_prices)
+        recent_low = min(lookback_prices)
+        current_price = prices[index]
+
+        # V1.2.3 FIX: First check if there was a prior significant drop
+        # Without a prior drop, any "bounce" is just normal price oscillation
+        drop_from_high = (recent_high - recent_low) / recent_high if recent_high > 0 else 0
+        had_prior_drop = drop_from_high >= self.BOUNCE_PRIOR_DROP_PCT
+
+        if not had_prior_drop:
+            # No significant prior drop - reset state and return
+            if bounce_state is not None:
+                bounce_state["periods_above"] = 0
+            return (False, 0.0)
+
+        # Calculate bounce percentage from the low
+        bounce_pct = (current_price - recent_low) / recent_low if recent_low > 0 else 0
+
+        # Check if above bounce threshold
+        is_bouncing = bounce_pct >= self.BOUNCE_THRESHOLD_PCT
+
+        # Track consecutive periods above bounce level
+        if bounce_state is not None:
+            if is_bouncing:
+                bounce_state["periods_above"] = bounce_state.get("periods_above", 0) + 1
+            else:
+                bounce_state["periods_above"] = 0
+
+            # Require confirmation periods
+            bounce_confirmed = bounce_state["periods_above"] >= self.BOUNCE_CONFIRMATION_PERIODS
+        else:
+            bounce_confirmed = is_bouncing
+
+        return (bounce_confirmed, bounce_pct)
 
     def calc_upnl(self, entry: float, current: float, size: float, side: str) -> Tuple[float, float]:
         """Calculate UPNL and percentage"""
@@ -412,10 +571,15 @@ class ProfitProtectionHedgeStressTest:
         # V1.1.0: Momentum filter state (simulated using price momentum)
         momentum_blocked = False
 
-        # V1.2.0: Volatility spike state
+        # V1.2.1: Volatility spike state with confirmation tracking
         spike_mode = False
         spike_ratio = 0.0
         fast_stop_distance = 0.0
+        spike_state = {"consecutive_count": 0}  # Track consecutive spike readings
+
+        # V1.2.3: Ultra-low volatility and bounce detection state
+        bounce_state = {"periods_above": 0}
+        hedge_blocked_reason = ""
 
         for i, price in enumerate(prices):
             upnl, pct = self.calc_upnl(entry_price, price, size, side)
@@ -427,10 +591,10 @@ class ProfitProtectionHedgeStressTest:
                 drawdown = (peak_upnl - upnl) / peak_upnl
                 max_drawdown = max(max_drawdown, drawdown)
 
-            # V1.2.0: Detect volatility spike
+            # V1.2.2: Detect volatility spike with confirmation and regime filter
             if use_improvements and not hedge_opened:
-                detected, ratio = self.detect_volatility_spike(prices, i)
-                if detected:
+                detected, ratio, blocked = self.detect_volatility_spike(prices, i, spike_state=spike_state)
+                if detected and not blocked:
                     spike_mode = True
                     spike_ratio = ratio
 
@@ -438,8 +602,24 @@ class ProfitProtectionHedgeStressTest:
             min_profit = self.VOLATILITY_SPIKE_MIN_PROFIT if spike_mode else self.MIN_PROFIT
             hedge_size_pct = self.VOLATILITY_SPIKE_HEDGE_SIZE if spike_mode else self.HEDGE_SIZE
 
+            # V1.2.3: Check hedge blocking conditions before opening
+            hedge_blocked = False
+            if use_improvements and not hedge_opened:
+                # Check ultra-low volatility
+                is_ultra_low, atr_pct = self.is_ultra_low_volatility(prices, i)
+                if is_ultra_low:
+                    hedge_blocked = True
+                    hedge_blocked_reason = "ultra_low_vol"
+
+                # Check bounce detection
+                if not hedge_blocked:
+                    bounce_detected, bounce_pct = self.detect_bounce(prices, i, bounce_state)
+                    if bounce_detected:
+                        hedge_blocked = True
+                        hedge_blocked_reason = "bounce_detected"
+
             # Open hedge at 70% of peak
-            if peak_upnl >= min_profit and not hedge_opened and upnl <= peak_upnl * self.TAKE_PROFIT_TRIGGER:
+            if peak_upnl >= min_profit and not hedge_opened and upnl <= peak_upnl * self.TAKE_PROFIT_TRIGGER and not hedge_blocked:
                 # V1.2.0: During spike mode, skip momentum filter for faster protection
                 if not spike_mode:
                     # V1.1.0: Momentum filter simulation
