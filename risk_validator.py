@@ -1,18 +1,24 @@
 #!/usr/bin/env python3
 """
 Risk Management Validator for AI-XYZ Trading System
-V1.0.0 - January 14, 2026
+V2.0.0 - January 14, 2026
 
 Validates risk management systems with live/shadow data:
 - Dynamic leverage trigger validation
 - Alert false positive/negative analysis
 - Circuit breaker effectiveness testing
 - Hysteresis tuning recommendations
+- Explicit performance targets with auto-tuning
 
 Sprint 6 - Grok Recommendation:
 "Conduct live or shadow trading to validate dynamic leverage triggers
 and circuit breaker effectiveness. Analyze false positives/negatives
 in risk alerts and refine if needed."
+
+Sprint 7 Enhancement (Grok):
+"Set explicit precision (>90%), recall (>85%), and F1 thresholds.
+Document regime definitions (volatility bands using ATR).
+Integrate real-time feedback from shadow trading into live risk models."
 
 Author: Claude + Grok Consortium
 """
@@ -20,8 +26,8 @@ Author: Claude + Grok Consortium
 import json
 import os
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Tuple
-from dataclasses import dataclass, field
+from typing import Dict, List, Optional, Tuple, Any
+from dataclasses import dataclass, field, asdict
 from collections import defaultdict
 from enum import Enum
 import logging
@@ -32,6 +38,201 @@ logger = logging.getLogger(__name__)
 
 # Results file
 VALIDATION_RESULTS_FILE = '/root/ai_xyz/risk_validation_results.json'
+AUTO_TUNE_CONFIG_FILE = '/root/ai_xyz/risk_auto_tune_config.json'
+
+
+# =============================================================================
+# PERFORMANCE TARGETS (Sprint 7 - Grok Recommendation)
+# =============================================================================
+
+@dataclass
+class PerformanceTargets:
+    """
+    Explicit performance targets for risk management validation.
+
+    Grok Sprint 7: "Define acceptable precision (>90%), recall (>85%),
+    and F1 thresholds for alerts, and backtest against historical data."
+    """
+    # Alert accuracy targets
+    alert_precision_min: float = 0.90      # >90% precision (few false positives)
+    alert_recall_min: float = 0.85         # >85% recall (catch real issues)
+    alert_f1_min: float = 0.87             # Harmonic mean target
+    alert_false_positive_max: float = 0.10 # <10% false positive rate
+    alert_false_negative_max: float = 0.15 # <15% false negative rate
+
+    # Leverage effectiveness targets
+    leverage_correct_min: float = 0.80     # >80% correct leverage choices
+    leverage_aggressive_max: float = 0.15  # <15% too aggressive
+    leverage_conservative_max: float = 0.20  # <20% too conservative
+
+    # Circuit breaker targets
+    circuit_breaker_effectiveness_min: float = 0.70  # >70% effective
+    circuit_breaker_false_trigger_max: float = 0.20  # <20% false triggers
+    circuit_breaker_missed_max: float = 0.10         # <10% missed triggers
+
+    # Hysteresis targets
+    hysteresis_accuracy_min: float = 0.80  # >80% accuracy
+
+    # Shadow trading targets
+    shadow_win_rate_min: float = 0.50      # >50% win rate
+    shadow_risk_check_accuracy_min: float = 0.70  # >70% risk check accuracy
+
+
+# =============================================================================
+# MARKET REGIME DEFINITIONS (Sprint 7 - Grok Recommendation)
+# =============================================================================
+
+@dataclass
+class RegimeDefinition:
+    """
+    Clear market regime definition with ATR-based thresholds.
+
+    Grok Sprint 7: "Document regime definitions (e.g., volatility bands
+    using ATR or VIX equivalents for crypto)."
+    """
+    name: str
+    atr_ratio_min: float
+    atr_ratio_max: float
+    recommended_leverage_min: int
+    recommended_leverage_max: int
+    position_size_multiplier: float
+    description: str
+
+
+# Regime definitions based on ATR ratio (14-period ATR / Price)
+REGIME_DEFINITIONS = {
+    'EXTREME_VOLATILITY': RegimeDefinition(
+        name='EXTREME_VOLATILITY',
+        atr_ratio_min=3.0,
+        atr_ratio_max=float('inf'),
+        recommended_leverage_min=1,
+        recommended_leverage_max=3,
+        position_size_multiplier=0.25,
+        description='Flash crash / extreme conditions. ATR ratio >3.0. Minimal exposure.'
+    ),
+    'HIGH_VOLATILITY': RegimeDefinition(
+        name='HIGH_VOLATILITY',
+        atr_ratio_min=2.0,
+        atr_ratio_max=3.0,
+        recommended_leverage_min=3,
+        recommended_leverage_max=5,
+        position_size_multiplier=0.50,
+        description='High volatility regime. ATR ratio 2.0-3.0. Reduced leverage.'
+    ),
+    'ELEVATED': RegimeDefinition(
+        name='ELEVATED',
+        atr_ratio_min=1.5,
+        atr_ratio_max=2.0,
+        recommended_leverage_min=5,
+        recommended_leverage_max=8,
+        position_size_multiplier=0.75,
+        description='Elevated volatility. ATR ratio 1.5-2.0. Moderate caution.'
+    ),
+    'NORMAL': RegimeDefinition(
+        name='NORMAL',
+        atr_ratio_min=0.8,
+        atr_ratio_max=1.5,
+        recommended_leverage_min=8,
+        recommended_leverage_max=12,
+        position_size_multiplier=1.0,
+        description='Normal market conditions. ATR ratio 0.8-1.5. Standard parameters.'
+    ),
+    'LOW_VOLATILITY': RegimeDefinition(
+        name='LOW_VOLATILITY',
+        atr_ratio_min=0.0,
+        atr_ratio_max=0.8,
+        recommended_leverage_min=10,
+        recommended_leverage_max=15,
+        position_size_multiplier=1.0,
+        description='Low volatility / ranging. ATR ratio <0.8. Can use higher leverage.'
+    ),
+    'TRENDING': RegimeDefinition(
+        name='TRENDING',
+        atr_ratio_min=1.0,
+        atr_ratio_max=2.0,
+        recommended_leverage_min=8,
+        recommended_leverage_max=12,
+        position_size_multiplier=1.0,
+        description='Clear trend detected (separate from volatility). Favorable conditions.'
+    )
+}
+
+
+def get_regime_from_atr_ratio(atr_ratio: float, is_trending: bool = False) -> str:
+    """
+    Determine market regime from ATR ratio.
+
+    Args:
+        atr_ratio: Current ATR / Price ratio (e.g., 1.5 = 1.5% daily range)
+        is_trending: Whether a clear trend is detected
+
+    Returns:
+        Regime name string
+    """
+    if is_trending and 1.0 <= atr_ratio <= 2.0:
+        return 'TRENDING'
+
+    if atr_ratio >= 3.0:
+        return 'EXTREME_VOLATILITY'
+    elif atr_ratio >= 2.0:
+        return 'HIGH_VOLATILITY'
+    elif atr_ratio >= 1.5:
+        return 'ELEVATED'
+    elif atr_ratio >= 0.8:
+        return 'NORMAL'
+    else:
+        return 'LOW_VOLATILITY'
+
+
+def get_regime_leverage_range(regime: str) -> Tuple[int, int]:
+    """Get recommended leverage range for a regime."""
+    if regime in REGIME_DEFINITIONS:
+        r = REGIME_DEFINITIONS[regime]
+        return (r.recommended_leverage_min, r.recommended_leverage_max)
+    return (5, 10)  # Default
+
+
+# =============================================================================
+# AUTO-TUNING CONFIGURATION
+# =============================================================================
+
+@dataclass
+class AutoTuneConfig:
+    """Configuration that can be auto-tuned based on validation results."""
+    # Alert thresholds
+    drawdown_alert_threshold: float = 0.15      # 15% drawdown
+    margin_alert_threshold: float = 0.80        # 80% margin usage
+    averaging_alert_threshold: int = 5          # 5 averaging steps
+
+    # Hysteresis settings
+    hysteresis_samples: int = 3                 # Consecutive breaches required
+    hysteresis_window_sec: int = 60             # Time window
+
+    # Circuit breaker settings
+    circuit_breaker_consecutive_losses: int = 5
+    circuit_breaker_session_loss_pct: float = 0.15
+    circuit_breaker_cooldown_min: int = 30
+
+    # Leverage limits by regime
+    leverage_limits: Dict[str, int] = field(default_factory=lambda: {
+        'EXTREME_VOLATILITY': 3,
+        'HIGH_VOLATILITY': 5,
+        'ELEVATED': 8,
+        'NORMAL': 12,
+        'LOW_VOLATILITY': 15,
+        'TRENDING': 12
+    })
+
+    # Meta
+    last_tuned: Optional[str] = None
+    tune_count: int = 0
+
+    def to_dict(self) -> Dict:
+        return asdict(self)
+
+    @classmethod
+    def from_dict(cls, data: Dict) -> 'AutoTuneConfig':
+        return cls(**{k: v for k, v in data.items() if k in cls.__dataclass_fields__})
 
 
 class ValidationResult(Enum):
@@ -71,14 +272,28 @@ class RiskValidator:
     """
     Validates risk management systems against live/historical data.
 
+    V2.0.0 Features:
+    - Explicit performance targets (precision >90%, recall >85%)
+    - Clear regime definitions (ATR-based volatility bands)
+    - Auto-tuning capability based on validation results
+    - Target status tracking (MEETS_TARGET / BELOW_TARGET)
+
     Tracks:
     - Alert accuracy (true/false positives/negatives)
-    - Leverage adjustment effectiveness
+    - Leverage adjustment effectiveness by regime
     - Circuit breaker trigger accuracy
     - Hysteresis performance
+    - Shadow trading results with regime correlation
     """
 
-    def __init__(self):
+    def __init__(self, targets: Optional[PerformanceTargets] = None,
+                 config: Optional[AutoTuneConfig] = None):
+        # Performance targets
+        self.targets = targets or PerformanceTargets()
+
+        # Auto-tune configuration
+        self.config = config or self._load_config()
+
         # Alert tracking
         self.alert_validations: List[AlertValidation] = []
         self.alert_stats: Dict[str, Dict] = defaultdict(lambda: {
@@ -89,9 +304,10 @@ class RiskValidator:
             'total': 0
         })
 
-        # Leverage tracking
+        # Leverage tracking with regime
         self.leverage_validations: List[LeverageValidation] = []
         self.leverage_outcomes: Dict[str, List[str]] = defaultdict(list)
+        self.leverage_pnl_by_regime: Dict[str, List[float]] = defaultdict(list)
 
         # Circuit breaker tracking
         self.circuit_breaker_events: List[Dict] = []
@@ -106,6 +322,29 @@ class RiskValidator:
 
         # Shadow trading results
         self.shadow_trades: List[Dict] = []
+
+        # Target status cache
+        self._target_status_cache: Dict[str, bool] = {}
+
+    def _load_config(self) -> AutoTuneConfig:
+        """Load auto-tune config from file or create default."""
+        try:
+            if os.path.exists(AUTO_TUNE_CONFIG_FILE):
+                with open(AUTO_TUNE_CONFIG_FILE, 'r') as f:
+                    data = json.load(f)
+                return AutoTuneConfig.from_dict(data)
+        except Exception as e:
+            logger.warning(f"Failed to load auto-tune config: {e}")
+        return AutoTuneConfig()
+
+    def _save_config(self):
+        """Save auto-tune config to file."""
+        try:
+            with open(AUTO_TUNE_CONFIG_FILE, 'w') as f:
+                json.dump(self.config.to_dict(), f, indent=2)
+            logger.info(f"Auto-tune config saved to {AUTO_TUNE_CONFIG_FILE}")
+        except Exception as e:
+            logger.error(f"Failed to save auto-tune config: {e}")
 
     # =========================================================================
     # ALERT VALIDATION
@@ -526,6 +765,15 @@ class RiskValidator:
         """Generate comprehensive risk validation report."""
         report = {
             'timestamp': datetime.now().isoformat(),
+            'version': '2.0.0',
+            'target_status': self.check_target_status(),
+            'performance_targets': {
+                'alert_precision_min': self.targets.alert_precision_min,
+                'alert_recall_min': self.targets.alert_recall_min,
+                'alert_f1_min': self.targets.alert_f1_min,
+                'leverage_correct_min': self.targets.leverage_correct_min,
+                'circuit_breaker_effectiveness_min': self.targets.circuit_breaker_effectiveness_min
+            },
             'alert_validation': {
                 'overall': self.get_alert_accuracy(),
                 'by_type': {
@@ -540,9 +788,18 @@ class RiskValidator:
                     for regime in self.leverage_outcomes
                 }
             },
+            'regime_definitions': {
+                name: {
+                    'atr_range': f"{d.atr_ratio_min}-{d.atr_ratio_max}",
+                    'leverage_range': f"{d.recommended_leverage_min}-{d.recommended_leverage_max}x",
+                    'description': d.description
+                }
+                for name, d in REGIME_DEFINITIONS.items()
+            },
             'circuit_breaker': self.get_circuit_breaker_effectiveness(),
             'hysteresis': self.get_hysteresis_effectiveness(),
             'shadow_trading': self.get_shadow_trading_results(),
+            'auto_tune_config': self.config.to_dict(),
             'recommendations': self._generate_recommendations()
         }
 
@@ -617,6 +874,251 @@ class RiskValidator:
 
         return recommendations
 
+    # =========================================================================
+    # TARGET STATUS CHECKING (Sprint 7)
+    # =========================================================================
+
+    def check_target_status(self) -> Dict[str, Any]:
+        """
+        Check if current metrics meet performance targets.
+
+        Returns dict with status for each metric area.
+        """
+        status = {
+            'timestamp': datetime.now().isoformat(),
+            'overall_status': 'MEETS_TARGETS',
+            'metrics': {}
+        }
+
+        # Alert targets
+        alert = self.get_alert_accuracy()
+        if alert.get('total', 0) > 0:
+            alert_status = {
+                'precision': {
+                    'current': alert['precision'],
+                    'target': self.targets.alert_precision_min,
+                    'meets_target': alert['precision'] >= self.targets.alert_precision_min
+                },
+                'recall': {
+                    'current': alert['recall'],
+                    'target': self.targets.alert_recall_min,
+                    'meets_target': alert['recall'] >= self.targets.alert_recall_min
+                },
+                'f1_score': {
+                    'current': alert['f1_score'],
+                    'target': self.targets.alert_f1_min,
+                    'meets_target': alert['f1_score'] >= self.targets.alert_f1_min
+                },
+                'false_positive_rate': {
+                    'current': alert['false_positive_rate'],
+                    'target': self.targets.alert_false_positive_max,
+                    'meets_target': alert['false_positive_rate'] <= self.targets.alert_false_positive_max
+                },
+                'false_negative_rate': {
+                    'current': alert['false_negative_rate'],
+                    'target': self.targets.alert_false_negative_max,
+                    'meets_target': alert['false_negative_rate'] <= self.targets.alert_false_negative_max
+                }
+            }
+            status['metrics']['alerts'] = alert_status
+
+            # Check if any alert metric fails
+            if not all(m['meets_target'] for m in alert_status.values()):
+                status['overall_status'] = 'BELOW_TARGETS'
+
+        # Leverage targets
+        leverage = self.get_leverage_effectiveness()
+        if leverage.get('total', 0) > 0:
+            leverage_status = {
+                'correct_pct': {
+                    'current': leverage['effectiveness_score'],
+                    'target': self.targets.leverage_correct_min,
+                    'meets_target': leverage['effectiveness_score'] >= self.targets.leverage_correct_min
+                },
+                'too_aggressive_pct': {
+                    'current': leverage['too_aggressive_pct'] / 100,
+                    'target': self.targets.leverage_aggressive_max,
+                    'meets_target': (leverage['too_aggressive_pct'] / 100) <= self.targets.leverage_aggressive_max
+                }
+            }
+            status['metrics']['leverage'] = leverage_status
+
+            if not all(m['meets_target'] for m in leverage_status.values()):
+                status['overall_status'] = 'BELOW_TARGETS'
+
+        # Circuit breaker targets
+        cb = self.get_circuit_breaker_effectiveness()
+        if cb.get('total', 0) > 0:
+            cb_status = {
+                'effectiveness': {
+                    'current': cb['effectiveness_score'],
+                    'target': self.targets.circuit_breaker_effectiveness_min,
+                    'meets_target': cb['effectiveness_score'] >= self.targets.circuit_breaker_effectiveness_min
+                }
+            }
+            status['metrics']['circuit_breaker'] = cb_status
+
+            if not cb_status['effectiveness']['meets_target']:
+                status['overall_status'] = 'BELOW_TARGETS'
+
+        # Hysteresis targets
+        hyst = self.get_hysteresis_effectiveness()
+        if hyst.get('total', 0) > 0:
+            hyst_status = {
+                'accuracy': {
+                    'current': hyst['accuracy'],
+                    'target': self.targets.hysteresis_accuracy_min,
+                    'meets_target': hyst['accuracy'] >= self.targets.hysteresis_accuracy_min
+                }
+            }
+            status['metrics']['hysteresis'] = hyst_status
+
+            if not hyst_status['accuracy']['meets_target']:
+                status['overall_status'] = 'BELOW_TARGETS'
+
+        # Shadow trading targets
+        shadow = self.get_shadow_trading_results()
+        if shadow.get('total', 0) > 0:
+            shadow_status = {
+                'win_rate': {
+                    'current': shadow['win_rate'] / 100,
+                    'target': self.targets.shadow_win_rate_min,
+                    'meets_target': (shadow['win_rate'] / 100) >= self.targets.shadow_win_rate_min
+                },
+                'risk_check_accuracy': {
+                    'current': shadow['risk_check_accuracy'] / 100,
+                    'target': self.targets.shadow_risk_check_accuracy_min,
+                    'meets_target': (shadow['risk_check_accuracy'] / 100) >= self.targets.shadow_risk_check_accuracy_min
+                }
+            }
+            status['metrics']['shadow_trading'] = shadow_status
+
+            if not all(m['meets_target'] for m in shadow_status.values()):
+                status['overall_status'] = 'BELOW_TARGETS'
+
+        return status
+
+    # =========================================================================
+    # AUTO-TUNING (Sprint 7)
+    # =========================================================================
+
+    def auto_tune(self, dry_run: bool = True) -> Dict[str, Any]:
+        """
+        Automatically tune parameters based on validation results.
+
+        Args:
+            dry_run: If True, only return proposed changes without applying
+
+        Returns:
+            Dict with proposed/applied changes
+        """
+        changes = {
+            'timestamp': datetime.now().isoformat(),
+            'dry_run': dry_run,
+            'proposed_changes': [],
+            'applied': False
+        }
+
+        # Check alert accuracy
+        alert = self.get_alert_accuracy()
+        if alert.get('total', 0) >= 20:  # Need sufficient data
+            # High false positive rate → increase hysteresis
+            if alert['false_positive_rate'] > self.targets.alert_false_positive_max:
+                new_hysteresis = min(self.config.hysteresis_samples + 1, 5)
+                if new_hysteresis != self.config.hysteresis_samples:
+                    changes['proposed_changes'].append({
+                        'param': 'hysteresis_samples',
+                        'old': self.config.hysteresis_samples,
+                        'new': new_hysteresis,
+                        'reason': f"False positive rate {alert['false_positive_rate']*100:.1f}% > target {self.targets.alert_false_positive_max*100:.1f}%"
+                    })
+                    if not dry_run:
+                        self.config.hysteresis_samples = new_hysteresis
+
+            # High false negative rate → decrease hysteresis or lower thresholds
+            if alert['false_negative_rate'] > self.targets.alert_false_negative_max:
+                new_hysteresis = max(self.config.hysteresis_samples - 1, 2)
+                if new_hysteresis != self.config.hysteresis_samples:
+                    changes['proposed_changes'].append({
+                        'param': 'hysteresis_samples',
+                        'old': self.config.hysteresis_samples,
+                        'new': new_hysteresis,
+                        'reason': f"False negative rate {alert['false_negative_rate']*100:.1f}% > target {self.targets.alert_false_negative_max*100:.1f}%"
+                    })
+                    if not dry_run:
+                        self.config.hysteresis_samples = new_hysteresis
+
+        # Check leverage effectiveness by regime
+        for regime in self.leverage_outcomes:
+            regime_eff = self.get_leverage_effectiveness(regime)
+            if regime_eff.get('total', 0) >= 10:
+                # Too aggressive in this regime → reduce max leverage
+                if regime_eff.get('too_aggressive_pct', 0) > self.targets.leverage_aggressive_max * 100:
+                    current_limit = self.config.leverage_limits.get(regime, 10)
+                    new_limit = max(current_limit - 2, 3)
+                    if new_limit != current_limit:
+                        changes['proposed_changes'].append({
+                            'param': f'leverage_limits.{regime}',
+                            'old': current_limit,
+                            'new': new_limit,
+                            'reason': f"Too aggressive {regime_eff['too_aggressive_pct']:.1f}% in {regime}"
+                        })
+                        if not dry_run:
+                            self.config.leverage_limits[regime] = new_limit
+
+        # Check circuit breaker
+        cb = self.get_circuit_breaker_effectiveness()
+        if cb.get('total', 0) >= 10:
+            # Missing too many triggers → lower threshold
+            missed_rate = cb.get('missed_triggers', 0) / cb.get('total', 1)
+            if missed_rate > self.targets.circuit_breaker_missed_max:
+                new_losses = max(self.config.circuit_breaker_consecutive_losses - 1, 3)
+                if new_losses != self.config.circuit_breaker_consecutive_losses:
+                    changes['proposed_changes'].append({
+                        'param': 'circuit_breaker_consecutive_losses',
+                        'old': self.config.circuit_breaker_consecutive_losses,
+                        'new': new_losses,
+                        'reason': f"Missed trigger rate {missed_rate*100:.1f}% > target {self.targets.circuit_breaker_missed_max*100:.1f}%"
+                    })
+                    if not dry_run:
+                        self.config.circuit_breaker_consecutive_losses = new_losses
+
+        # Apply changes if not dry run
+        if not dry_run and changes['proposed_changes']:
+            self.config.last_tuned = datetime.now().isoformat()
+            self.config.tune_count += 1
+            self._save_config()
+            changes['applied'] = True
+            logger.info(f"Auto-tune applied {len(changes['proposed_changes'])} changes")
+
+        return changes
+
+    def get_regime_performance(self) -> Dict[str, Any]:
+        """Get detailed performance breakdown by market regime."""
+        performance = {}
+
+        for regime, definition in REGIME_DEFINITIONS.items():
+            regime_data = {
+                'definition': {
+                    'atr_range': f"{definition.atr_ratio_min}-{definition.atr_ratio_max}",
+                    'leverage_range': f"{definition.recommended_leverage_min}-{definition.recommended_leverage_max}x",
+                    'position_multiplier': definition.position_size_multiplier,
+                    'description': definition.description
+                },
+                'effectiveness': self.get_leverage_effectiveness(regime),
+                'sample_count': len(self.leverage_outcomes.get(regime, [])),
+                'avg_pnl': None
+            }
+
+            # Calculate average P&L for regime
+            pnl_list = self.leverage_pnl_by_regime.get(regime, [])
+            if pnl_list:
+                regime_data['avg_pnl'] = statistics.mean(pnl_list)
+
+            performance[regime] = regime_data
+
+        return performance
+
     def save_report(self):
         """Save validation report to file."""
         try:
@@ -632,9 +1134,26 @@ class RiskValidator:
         report = self.generate_validation_report()
 
         print("\n" + "=" * 70)
-        print("RISK MANAGEMENT VALIDATION REPORT")
+        print("RISK MANAGEMENT VALIDATION REPORT V2.0.0")
         print("=" * 70)
         print(f"Report Time: {report['timestamp']}")
+
+        # Target Status Summary
+        target_status = report.get('target_status', {})
+        overall = target_status.get('overall_status', 'UNKNOWN')
+        status_icon = "✓" if overall == 'MEETS_TARGETS' else "✗"
+        print(f"\n{status_icon} OVERALL TARGET STATUS: {overall}")
+
+        # Performance Targets
+        print("\n" + "-" * 50)
+        print("PERFORMANCE TARGETS (Sprint 7)")
+        print("-" * 50)
+        targets = report.get('performance_targets', {})
+        print(f"  Alert Precision:  >{targets.get('alert_precision_min', 0)*100:.0f}%")
+        print(f"  Alert Recall:     >{targets.get('alert_recall_min', 0)*100:.0f}%")
+        print(f"  Alert F1:         >{targets.get('alert_f1_min', 0)*100:.0f}%")
+        print(f"  Leverage Correct: >{targets.get('leverage_correct_min', 0)*100:.0f}%")
+        print(f"  Circuit Breaker:  >{targets.get('circuit_breaker_effectiveness_min', 0)*100:.0f}%")
 
         # Alert validation
         print("\n" + "-" * 50)
@@ -740,10 +1259,28 @@ if __name__ == "__main__":
     import random
 
     print("=" * 60)
-    print("RISK VALIDATOR TEST")
+    print("RISK VALIDATOR V2.0.0 TEST")
     print("=" * 60)
 
-    validator = RiskValidator()
+    # Test with explicit targets
+    targets = PerformanceTargets(
+        alert_precision_min=0.90,
+        alert_recall_min=0.85,
+        leverage_correct_min=0.80
+    )
+    validator = RiskValidator(targets=targets)
+
+    # Show regime definitions
+    print("\n--- REGIME DEFINITIONS ---")
+    for name, regime in REGIME_DEFINITIONS.items():
+        print(f"  {name}: ATR {regime.atr_ratio_min}-{regime.atr_ratio_max}, Lev {regime.recommended_leverage_min}-{regime.recommended_leverage_max}x")
+
+    # Test regime detection
+    print("\n--- REGIME DETECTION ---")
+    test_atrs = [0.5, 1.0, 1.7, 2.5, 3.5]
+    for atr in test_atrs:
+        regime = get_regime_from_atr_ratio(atr)
+        print(f"  ATR ratio {atr} -> {regime}")
 
     # Simulate alert validations
     print("\nSimulating alert validations...")
@@ -755,12 +1292,13 @@ if __name__ == "__main__":
         subsequent = value + random.uniform(-0.05, 0.05)
         validator.record_alert_validation(alert_type, triggered, value, threshold, subsequent)
 
-    # Simulate leverage validations
+    # Simulate leverage validations with proper regimes
     print("Simulating leverage validations...")
-    regimes = ['HIGH_VOLATILITY', 'TRENDING', 'NORMAL', 'RANGING']
+    regimes = ['EXTREME_VOLATILITY', 'HIGH_VOLATILITY', 'ELEVATED', 'NORMAL', 'LOW_VOLATILITY', 'TRENDING']
     for i in range(40):
         regime = random.choice(regimes)
-        recommended = {'HIGH_VOLATILITY': 4, 'TRENDING': 8, 'NORMAL': 10, 'RANGING': 10}[regime]
+        lev_min, lev_max = get_regime_leverage_range(regime)
+        recommended = (lev_min + lev_max) // 2
         used = recommended + random.randint(-2, 2)
         outcome = random.choices(['profit', 'loss', 'liquidation'], weights=[0.5, 0.45, 0.05])[0]
         validator.record_leverage_validation(
@@ -807,7 +1345,37 @@ if __name__ == "__main__":
     # Print report
     validator.print_report()
 
+    # Test target status
+    print("\n--- TARGET STATUS CHECK ---")
+    status = validator.check_target_status()
+    print(f"  Overall: {status['overall_status']}")
+    for area, metrics in status.get('metrics', {}).items():
+        print(f"  {area}:")
+        for metric, data in metrics.items():
+            icon = "✓" if data['meets_target'] else "✗"
+            print(f"    {icon} {metric}: {data['current']*100:.1f}% (target: {data['target']*100:.1f}%)")
+
+    # Test auto-tuning (dry run)
+    print("\n--- AUTO-TUNE DRY RUN ---")
+    tune_result = validator.auto_tune(dry_run=True)
+    if tune_result['proposed_changes']:
+        for change in tune_result['proposed_changes']:
+            print(f"  Would change {change['param']}: {change['old']} -> {change['new']}")
+            print(f"    Reason: {change['reason']}")
+    else:
+        print("  No changes proposed")
+
+    # Test regime performance
+    print("\n--- REGIME PERFORMANCE ---")
+    regime_perf = validator.get_regime_performance()
+    for regime, data in regime_perf.items():
+        eff = data['effectiveness']
+        if eff.get('total', 0) > 0:
+            print(f"  {regime}: {eff['correct_pct']:.1f}% correct ({eff['total']} samples)")
+
     # Save report
     validator.save_report()
 
-    print("\nRisk Validator test completed!")
+    print("\n" + "=" * 60)
+    print("Risk Validator V2.0.0 test completed!")
+    print("=" * 60)
