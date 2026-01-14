@@ -1,0 +1,1377 @@
+{
+  "90/40": {
+    "gradual_decay": {
+      "profit_captured": 20.226839144032063,
+      "capture_rate": 0.04985403865472357,
+      "avg_exit_level": 0.4353380989190961,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 10
+    },
+    "sharp_reversal": {
+      "profit_captured": 21.561135689341832,
+      "capture_rate": 0.0408143624556227,
+      "avg_exit_level": 0.42148807468619903,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 19
+    },
+    "v_shape_recovery": {
+      "profit_captured": 15.296140561210674,
+      "capture_rate": 0.032677886546314816,
+      "avg_exit_level": 0.4428431802948365,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 50
+    },
+    "multiple_peaks": {
+      "profit_captured": 86.98999908409509,
+      "capture_rate": 0.21014730442646892,
+      "avg_exit_level": 0.6107612308299568,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 50
+    },
+    "trend_continuation": {
+      "profit_captured": 2.1782123936921844,
+      "capture_rate": 0.0028314596084083542,
+      "avg_exit_level": 0.3513257452537359,
+      "stage1_triggers": 50,
+      "stage2_triggers": 37,
+      "missed_recoveries": 50
+    },
+    "choppy_profit": {
+      "profit_captured": -11.800404509709256,
+      "capture_rate": -0.07609450656012973,
+      "avg_exit_level": 0.32460278465196973,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 50
+    },
+    "_aggregate": {
+      "total_profit_captured": 134.45192236266257,
+      "avg_capture_rate": 0.04337175752190144,
+      "total_missed_recoveries": 229
+    }
+  },
+  "90/35": {
+    "gradual_decay": {
+      "profit_captured": 17.11613902820608,
+      "capture_rate": 0.042500163590670416,
+      "avg_exit_level": 0.418839326205145,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 10
+    },
+    "sharp_reversal": {
+      "profit_captured": 18.48732328357689,
+      "capture_rate": 0.03450910309305491,
+      "avg_exit_level": 0.35798745155603673,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 15
+    },
+    "v_shape_recovery": {
+      "profit_captured": 10.952361867307957,
+      "capture_rate": 0.023583385340648994,
+      "avg_exit_level": 0.4175413750923251,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 50
+    },
+    "multiple_peaks": {
+      "profit_captured": 84.86990239845477,
+      "capture_rate": 0.20465440817998837,
+      "avg_exit_level": 0.5883266194718577,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 50
+    },
+    "trend_continuation": {
+      "profit_captured": 3.5032531866737853,
+      "capture_rate": 0.004526453805675476,
+      "avg_exit_level": 0.4270170565084419,
+      "stage1_triggers": 50,
+      "stage2_triggers": 32,
+      "missed_recoveries": 50
+    },
+    "choppy_profit": {
+      "profit_captured": -9.067168675380353,
+      "capture_rate": -0.07739561297033577,
+      "avg_exit_level": 0.27547902454705525,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 50
+    },
+    "_aggregate": {
+      "total_profit_captured": 125.86181108883913,
+      "avg_capture_rate": 0.038729650173283725,
+      "total_missed_recoveries": 225
+    }
+  },
+  "90/30": {
+    "gradual_decay": {
+      "profit_captured": 12.794531481999526,
+      "capture_rate": 0.031679395869024504,
+      "avg_exit_level": 0.3868120980107784,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 14
+    },
+    "sharp_reversal": {
+      "profit_captured": 15.105805086074994,
+      "capture_rate": 0.028729320798902044,
+      "avg_exit_level": 0.32546409668055504,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 17
+    },
+    "v_shape_recovery": {
+      "profit_captured": 11.134197949879237,
+      "capture_rate": 0.02389010803199078,
+      "avg_exit_level": 0.3433267149961299,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 50
+    },
+    "multiple_peaks": {
+      "profit_captured": 81.32742913339881,
+      "capture_rate": 0.19884992798787657,
+      "avg_exit_level": 0.5654032447509788,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 50
+    },
+    "trend_continuation": {
+      "profit_captured": 3.389634097522525,
+      "capture_rate": 0.004333126409547764,
+      "avg_exit_level": 0.40413765459447754,
+      "stage1_triggers": 50,
+      "stage2_triggers": 26,
+      "missed_recoveries": 50
+    },
+    "choppy_profit": {
+      "profit_captured": -9.497829212211775,
+      "capture_rate": -0.05187388790856163,
+      "avg_exit_level": 0.2994624756346641,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 50
+    },
+    "_aggregate": {
+      "total_profit_captured": 114.25376853666333,
+      "avg_capture_rate": 0.03926799853146334,
+      "total_missed_recoveries": 231
+    }
+  },
+  "90/25": {
+    "gradual_decay": {
+      "profit_captured": 12.553800664772748,
+      "capture_rate": 0.03117687169896409,
+      "avg_exit_level": 0.40008580208200006,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 12
+    },
+    "sharp_reversal": {
+      "profit_captured": 13.362557382268815,
+      "capture_rate": 0.025531150634139178,
+      "avg_exit_level": 0.3178903935532806,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 14
+    },
+    "v_shape_recovery": {
+      "profit_captured": 9.117080088559339,
+      "capture_rate": 0.019470027756873773,
+      "avg_exit_level": 0.35836350910538073,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 50
+    },
+    "multiple_peaks": {
+      "profit_captured": 81.7647505344981,
+      "capture_rate": 0.19823515841357428,
+      "avg_exit_level": 0.5415791389145332,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 50
+    },
+    "trend_continuation": {
+      "profit_captured": 2.085087439853939,
+      "capture_rate": 0.0026233435537812103,
+      "avg_exit_level": 0.3998782374880768,
+      "stage1_triggers": 50,
+      "stage2_triggers": 26,
+      "missed_recoveries": 50
+    },
+    "choppy_profit": {
+      "profit_captured": -7.8596877173140225,
+      "capture_rate": -0.05873529551366169,
+      "avg_exit_level": 0.2778830133786275,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 50
+    },
+    "_aggregate": {
+      "total_profit_captured": 111.02358839263893,
+      "avg_capture_rate": 0.036383542757278474,
+      "total_missed_recoveries": 226
+    }
+  },
+  "90/20": {
+    "gradual_decay": {
+      "profit_captured": 11.74027184186115,
+      "capture_rate": 0.029140291984574733,
+      "avg_exit_level": 0.34231976023831884,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 7
+    },
+    "sharp_reversal": {
+      "profit_captured": 14.332342582630945,
+      "capture_rate": 0.02710542831430577,
+      "avg_exit_level": 0.325288670556168,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 9
+    },
+    "v_shape_recovery": {
+      "profit_captured": 8.374198247895304,
+      "capture_rate": 0.017857063204033557,
+      "avg_exit_level": 0.3419361694557412,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 50
+    },
+    "multiple_peaks": {
+      "profit_captured": 81.86449818159028,
+      "capture_rate": 0.1987408364790868,
+      "avg_exit_level": 0.5196896216084398,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 50
+    },
+    "trend_continuation": {
+      "profit_captured": 2.105453519157132,
+      "capture_rate": 0.002735107364357222,
+      "avg_exit_level": 0.393766454870903,
+      "stage1_triggers": 50,
+      "stage2_triggers": 20,
+      "missed_recoveries": 50
+    },
+    "choppy_profit": {
+      "profit_captured": -8.253360028731302,
+      "capture_rate": -0.06534081411437123,
+      "avg_exit_level": 0.22523467950905948,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 50
+    },
+    "_aggregate": {
+      "total_profit_captured": 110.1634043444035,
+      "avg_capture_rate": 0.03503965220533114,
+      "total_missed_recoveries": 216
+    }
+  },
+  "85/40": {
+    "gradual_decay": {
+      "profit_captured": 16.921345250317856,
+      "capture_rate": 0.041317285138728135,
+      "avg_exit_level": 0.38286717250228874,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 16
+    },
+    "sharp_reversal": {
+      "profit_captured": 16.755770596917568,
+      "capture_rate": 0.031622173802494394,
+      "avg_exit_level": 0.39083329214758755,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 25
+    },
+    "v_shape_recovery": {
+      "profit_captured": 10.830460358458676,
+      "capture_rate": 0.023398874890257697,
+      "avg_exit_level": 0.36985772216792306,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 50
+    },
+    "multiple_peaks": {
+      "profit_captured": 85.7448373522333,
+      "capture_rate": 0.2084428635865305,
+      "avg_exit_level": 0.5857897670392003,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 50
+    },
+    "trend_continuation": {
+      "profit_captured": 3.8563591259226904,
+      "capture_rate": 0.004947704369676768,
+      "avg_exit_level": 0.38704718741616434,
+      "stage1_triggers": 50,
+      "stage2_triggers": 29,
+      "missed_recoveries": 50
+    },
+    "choppy_profit": {
+      "profit_captured": -10.68319186269235,
+      "capture_rate": -0.07245024229519652,
+      "avg_exit_level": 0.3300998225072375,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 50
+    },
+    "_aggregate": {
+      "total_profit_captured": 123.42558082115775,
+      "avg_capture_rate": 0.0395464432487485,
+      "total_missed_recoveries": 241
+    }
+  },
+  "85/35": {
+    "gradual_decay": {
+      "profit_captured": 13.31036620467459,
+      "capture_rate": 0.03300056224242331,
+      "avg_exit_level": 0.37827738168425107,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 18
+    },
+    "sharp_reversal": {
+      "profit_captured": 17.234207725174855,
+      "capture_rate": 0.03302894840257988,
+      "avg_exit_level": 0.39955907573627636,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 19
+    },
+    "v_shape_recovery": {
+      "profit_captured": 11.77451577754364,
+      "capture_rate": 0.025398341627688205,
+      "avg_exit_level": 0.38206351823566576,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 50
+    },
+    "multiple_peaks": {
+      "profit_captured": 81.58578660585216,
+      "capture_rate": 0.19755366272760305,
+      "avg_exit_level": 0.5578648574194901,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 50
+    },
+    "trend_continuation": {
+      "profit_captured": 3.3539513041023743,
+      "capture_rate": 0.0041984372398205785,
+      "avg_exit_level": 0.4400570225187392,
+      "stage1_triggers": 50,
+      "stage2_triggers": 23,
+      "missed_recoveries": 50
+    },
+    "choppy_profit": {
+      "profit_captured": -10.090882757882094,
+      "capture_rate": -0.044120251558215105,
+      "avg_exit_level": 0.2255983473075025,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 50
+    },
+    "_aggregate": {
+      "total_profit_captured": 117.16794485946552,
+      "avg_capture_rate": 0.04150995011364998,
+      "total_missed_recoveries": 237
+    }
+  },
+  "85/30": {
+    "gradual_decay": {
+      "profit_captured": 17.217140356292973,
+      "capture_rate": 0.04240365231099545,
+      "avg_exit_level": 0.3910303739851944,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 4
+    },
+    "sharp_reversal": {
+      "profit_captured": 17.47479342010926,
+      "capture_rate": 0.03290292144563867,
+      "avg_exit_level": 0.37267967703899624,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 14
+    },
+    "v_shape_recovery": {
+      "profit_captured": 14.467016847097746,
+      "capture_rate": 0.03061383437893105,
+      "avg_exit_level": 0.38674693690817685,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 50
+    },
+    "multiple_peaks": {
+      "profit_captured": 79.22328433912341,
+      "capture_rate": 0.19425661861697097,
+      "avg_exit_level": 0.5374496846254062,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 50
+    },
+    "trend_continuation": {
+      "profit_captured": 1.5188101049402225,
+      "capture_rate": 0.0018779957153470025,
+      "avg_exit_level": 0.40121854021603454,
+      "stage1_triggers": 50,
+      "stage2_triggers": 20,
+      "missed_recoveries": 50
+    },
+    "choppy_profit": {
+      "profit_captured": -11.269663610787203,
+      "capture_rate": -0.09413996712756452,
+      "avg_exit_level": 0.22846223337640303,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 50
+    },
+    "_aggregate": {
+      "total_profit_captured": 118.63138145677641,
+      "avg_capture_rate": 0.034652509223386446,
+      "total_missed_recoveries": 218
+    }
+  },
+  "85/25": {
+    "gradual_decay": {
+      "profit_captured": 15.368205822661043,
+      "capture_rate": 0.037991699196594376,
+      "avg_exit_level": 0.3883123494024218,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 5
+    },
+    "sharp_reversal": {
+      "profit_captured": 12.009761562160477,
+      "capture_rate": 0.02305674736003306,
+      "avg_exit_level": 0.3501797307286508,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 17
+    },
+    "v_shape_recovery": {
+      "profit_captured": 9.246578861139783,
+      "capture_rate": 0.019772095304833433,
+      "avg_exit_level": 0.350761505359136,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 50
+    },
+    "multiple_peaks": {
+      "profit_captured": 78.98398836953818,
+      "capture_rate": 0.19385002781173685,
+      "avg_exit_level": 0.5163488191371081,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 50
+    },
+    "trend_continuation": {
+      "profit_captured": 1.676362518775273,
+      "capture_rate": 0.002090789556677248,
+      "avg_exit_level": 0.4500678090468161,
+      "stage1_triggers": 50,
+      "stage2_triggers": 25,
+      "missed_recoveries": 50
+    },
+    "choppy_profit": {
+      "profit_captured": -12.60844351137188,
+      "capture_rate": -0.06665736254954104,
+      "avg_exit_level": 0.26012253016330644,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 50
+    },
+    "_aggregate": {
+      "total_profit_captured": 104.67645362290288,
+      "avg_capture_rate": 0.03501733278005565,
+      "total_missed_recoveries": 222
+    }
+  },
+  "85/20": {
+    "gradual_decay": {
+      "profit_captured": 11.183580275388046,
+      "capture_rate": 0.027625810314218936,
+      "avg_exit_level": 0.30381403839804133,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 7
+    },
+    "sharp_reversal": {
+      "profit_captured": 12.857741539174684,
+      "capture_rate": 0.024227119438346087,
+      "avg_exit_level": 0.35816754475728757,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 12
+    },
+    "v_shape_recovery": {
+      "profit_captured": 8.80283048872326,
+      "capture_rate": 0.018737068814010563,
+      "avg_exit_level": 0.33170433646326786,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 50
+    },
+    "multiple_peaks": {
+      "profit_captured": 76.77264151306105,
+      "capture_rate": 0.18758191947607014,
+      "avg_exit_level": 0.4940035449346523,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 50
+    },
+    "trend_continuation": {
+      "profit_captured": 3.048959669130187,
+      "capture_rate": 0.0038788311981947125,
+      "avg_exit_level": 0.4380167472372742,
+      "stage1_triggers": 50,
+      "stage2_triggers": 21,
+      "missed_recoveries": 50
+    },
+    "choppy_profit": {
+      "profit_captured": -11.479113910187959,
+      "capture_rate": -0.07072631421499447,
+      "avg_exit_level": 0.2416069934145242,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 50
+    },
+    "_aggregate": {
+      "total_profit_captured": 101.18663957528926,
+      "avg_capture_rate": 0.03188740583764099,
+      "total_missed_recoveries": 219
+    }
+  },
+  "80/40": {
+    "gradual_decay": {
+      "profit_captured": 20.600760110089073,
+      "capture_rate": 0.050715054773803905,
+      "avg_exit_level": 0.42043768905470336,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 13
+    },
+    "sharp_reversal": {
+      "profit_captured": 17.142997729912103,
+      "capture_rate": 0.03243301256197845,
+      "avg_exit_level": 0.39195288180938886,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 24
+    },
+    "v_shape_recovery": {
+      "profit_captured": 15.439741015441374,
+      "capture_rate": 0.03289487609602468,
+      "avg_exit_level": 0.3755480333474044,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 50
+    },
+    "multiple_peaks": {
+      "profit_captured": 81.6691508939475,
+      "capture_rate": 0.198856299690996,
+      "avg_exit_level": 0.5601751035124118,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 50
+    },
+    "trend_continuation": {
+      "profit_captured": 2.429786993861212,
+      "capture_rate": 0.0031171882079082027,
+      "avg_exit_level": 0.3041326711203795,
+      "stage1_triggers": 50,
+      "stage2_triggers": 32,
+      "missed_recoveries": 50
+    },
+    "choppy_profit": {
+      "profit_captured": -15.047904180892912,
+      "capture_rate": -0.11089537662963346,
+      "avg_exit_level": 0.2186091830748873,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 50
+    },
+    "_aggregate": {
+      "total_profit_captured": 122.23453256235834,
+      "avg_capture_rate": 0.03452017578351296,
+      "total_missed_recoveries": 237
+    }
+  },
+  "80/35": {
+    "gradual_decay": {
+      "profit_captured": 15.011508440825832,
+      "capture_rate": 0.03731438341062541,
+      "avg_exit_level": 0.3717440082806316,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 16
+    },
+    "sharp_reversal": {
+      "profit_captured": 19.18508131143855,
+      "capture_rate": 0.03632973343919429,
+      "avg_exit_level": 0.3719278695476122,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 17
+    },
+    "v_shape_recovery": {
+      "profit_captured": 12.378237135039965,
+      "capture_rate": 0.02614382351575744,
+      "avg_exit_level": 0.37013094779508593,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 50
+    },
+    "multiple_peaks": {
+      "profit_captured": 75.8360417690916,
+      "capture_rate": 0.18417826624036715,
+      "avg_exit_level": 0.5367674567811238,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 50
+    },
+    "trend_continuation": {
+      "profit_captured": 3.0614527063731325,
+      "capture_rate": 0.003945747450221264,
+      "avg_exit_level": 0.3804202173950346,
+      "stage1_triggers": 50,
+      "stage2_triggers": 32,
+      "missed_recoveries": 50
+    },
+    "choppy_profit": {
+      "profit_captured": -12.563804040523108,
+      "capture_rate": -0.07421833435801223,
+      "avg_exit_level": 0.22110501501977967,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 50
+    },
+    "_aggregate": {
+      "total_profit_captured": 112.90851732224597,
+      "avg_capture_rate": 0.03561560328302555,
+      "total_missed_recoveries": 233
+    }
+  },
+  "80/30": {
+    "gradual_decay": {
+      "profit_captured": 17.632098570004246,
+      "capture_rate": 0.04394153770390788,
+      "avg_exit_level": 0.4039665481106371,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 6
+    },
+    "sharp_reversal": {
+      "profit_captured": 18.642332299877697,
+      "capture_rate": 0.03513182561090625,
+      "avg_exit_level": 0.32630817634804377,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 12
+    },
+    "v_shape_recovery": {
+      "profit_captured": 12.541441500610052,
+      "capture_rate": 0.026288265758023864,
+      "avg_exit_level": 0.33149548781773086,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 50
+    },
+    "multiple_peaks": {
+      "profit_captured": 77.19502673328977,
+      "capture_rate": 0.189122600906264,
+      "avg_exit_level": 0.5079318318813828,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 50
+    },
+    "trend_continuation": {
+      "profit_captured": 3.9655000125837785,
+      "capture_rate": 0.00507973370316016,
+      "avg_exit_level": 0.44376430263656025,
+      "stage1_triggers": 50,
+      "stage2_triggers": 22,
+      "missed_recoveries": 50
+    },
+    "choppy_profit": {
+      "profit_captured": -9.147658978707792,
+      "capture_rate": -0.06018396679534971,
+      "avg_exit_level": 0.20316834827424693,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 50
+    },
+    "_aggregate": {
+      "total_profit_captured": 120.82874013765775,
+      "avg_capture_rate": 0.03989666614781875,
+      "total_missed_recoveries": 218
+    }
+  },
+  "80/25": {
+    "gradual_decay": {
+      "profit_captured": 13.994848116010546,
+      "capture_rate": 0.03459863303166453,
+      "avg_exit_level": 0.33104997088185895,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 6
+    },
+    "sharp_reversal": {
+      "profit_captured": 14.547992477948654,
+      "capture_rate": 0.027088512259193988,
+      "avg_exit_level": 0.3257951899501672,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 15
+    },
+    "v_shape_recovery": {
+      "profit_captured": 11.620966555041823,
+      "capture_rate": 0.024830502289301438,
+      "avg_exit_level": 0.33516951689962854,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 50
+    },
+    "multiple_peaks": {
+      "profit_captured": 73.48096814274314,
+      "capture_rate": 0.17986714469627238,
+      "avg_exit_level": 0.49100331830289284,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 50
+    },
+    "trend_continuation": {
+      "profit_captured": 2.235731056180032,
+      "capture_rate": 0.002806792115734524,
+      "avg_exit_level": 0.3870674596160272,
+      "stage1_triggers": 50,
+      "stage2_triggers": 24,
+      "missed_recoveries": 50
+    },
+    "choppy_profit": {
+      "profit_captured": -6.407372885110313,
+      "capture_rate": -0.05270522969028299,
+      "avg_exit_level": 0.22855515996136214,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 50
+    },
+    "_aggregate": {
+      "total_profit_captured": 109.47313346281388,
+      "avg_capture_rate": 0.03608105911698064,
+      "total_missed_recoveries": 221
+    }
+  },
+  "80/20": {
+    "gradual_decay": {
+      "profit_captured": 11.312947445564328,
+      "capture_rate": 0.02814081703268022,
+      "avg_exit_level": 0.3073241434042844,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 7
+    },
+    "sharp_reversal": {
+      "profit_captured": 14.311119428199639,
+      "capture_rate": 0.0272241787649978,
+      "avg_exit_level": 0.29467037555241354,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 10
+    },
+    "v_shape_recovery": {
+      "profit_captured": 8.895781715974762,
+      "capture_rate": 0.018909597283753674,
+      "avg_exit_level": 0.29163988966434923,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 50
+    },
+    "multiple_peaks": {
+      "profit_captured": 70.42259521844086,
+      "capture_rate": 0.17150050249375404,
+      "avg_exit_level": 0.45875740483069344,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 50
+    },
+    "trend_continuation": {
+      "profit_captured": 3.6420501524876383,
+      "capture_rate": 0.004640600577938106,
+      "avg_exit_level": 0.4431559390934849,
+      "stage1_triggers": 50,
+      "stage2_triggers": 19,
+      "missed_recoveries": 50
+    },
+    "choppy_profit": {
+      "profit_captured": -15.044306121187685,
+      "capture_rate": -0.07783546708892834,
+      "avg_exit_level": 0.19909333580222102,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 50
+    },
+    "_aggregate": {
+      "total_profit_captured": 93.54018783947954,
+      "avg_capture_rate": 0.028763371510699243,
+      "total_missed_recoveries": 217
+    }
+  },
+  "75/40": {
+    "gradual_decay": {
+      "profit_captured": 21.21337475340639,
+      "capture_rate": 0.05268779782911445,
+      "avg_exit_level": 0.4132672848752758,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 8
+    },
+    "sharp_reversal": {
+      "profit_captured": 19.263789610120092,
+      "capture_rate": 0.03597571018463305,
+      "avg_exit_level": 0.3864313380812706,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 23
+    },
+    "v_shape_recovery": {
+      "profit_captured": 12.781307297200843,
+      "capture_rate": 0.027694407646522166,
+      "avg_exit_level": 0.3554919160699962,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 50
+    },
+    "multiple_peaks": {
+      "profit_captured": 78.0324380992973,
+      "capture_rate": 0.1896753337501865,
+      "avg_exit_level": 0.5374245621573635,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 50
+    },
+    "trend_continuation": {
+      "profit_captured": 3.927770267920737,
+      "capture_rate": 0.005042836909293499,
+      "avg_exit_level": 0.42838959576305297,
+      "stage1_triggers": 50,
+      "stage2_triggers": 29,
+      "missed_recoveries": 50
+    },
+    "choppy_profit": {
+      "profit_captured": -9.23353226860328,
+      "capture_rate": -0.05497816343131722,
+      "avg_exit_level": 0.2672077956052424,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 49
+    },
+    "_aggregate": {
+      "total_profit_captured": 125.98514775934208,
+      "avg_capture_rate": 0.04268298714807208,
+      "total_missed_recoveries": 230
+    }
+  },
+  "75/35": {
+    "gradual_decay": {
+      "profit_captured": 19.33482397605212,
+      "capture_rate": 0.04755212374910536,
+      "avg_exit_level": 0.34398177910971145,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 6
+    },
+    "sharp_reversal": {
+      "profit_captured": 21.409597446708855,
+      "capture_rate": 0.040329999039736907,
+      "avg_exit_level": 0.3456405283264597,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 15
+    },
+    "v_shape_recovery": {
+      "profit_captured": 11.524363456372186,
+      "capture_rate": 0.024742947097879463,
+      "avg_exit_level": 0.3555649403770604,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 50
+    },
+    "multiple_peaks": {
+      "profit_captured": 74.60589733397339,
+      "capture_rate": 0.1832914839875756,
+      "avg_exit_level": 0.5082785658393272,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 50
+    },
+    "trend_continuation": {
+      "profit_captured": 3.480030609541404,
+      "capture_rate": 0.004389339461138227,
+      "avg_exit_level": 0.40022978456759506,
+      "stage1_triggers": 50,
+      "stage2_triggers": 26,
+      "missed_recoveries": 50
+    },
+    "choppy_profit": {
+      "profit_captured": -13.98050498951883,
+      "capture_rate": -0.10084477419979496,
+      "avg_exit_level": 0.21893454104557614,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 48
+    },
+    "_aggregate": {
+      "total_profit_captured": 116.37420783312913,
+      "avg_capture_rate": 0.03324351985594011,
+      "total_missed_recoveries": 219
+    }
+  },
+  "75/30": {
+    "gradual_decay": {
+      "profit_captured": 17.111356391893555,
+      "capture_rate": 0.04228935988868023,
+      "avg_exit_level": 0.3728704038085889,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 9
+    },
+    "sharp_reversal": {
+      "profit_captured": 15.80005371089368,
+      "capture_rate": 0.02898933999330976,
+      "avg_exit_level": 0.34512570580791,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 20
+    },
+    "v_shape_recovery": {
+      "profit_captured": 14.896787013162841,
+      "capture_rate": 0.03159754665786763,
+      "avg_exit_level": 0.3873300498236995,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 50
+    },
+    "multiple_peaks": {
+      "profit_captured": 73.54615648991157,
+      "capture_rate": 0.17921202021866786,
+      "avg_exit_level": 0.4901373609409283,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 50
+    },
+    "trend_continuation": {
+      "profit_captured": 1.6960846543823647,
+      "capture_rate": 0.0021115949279713296,
+      "avg_exit_level": 0.3377035158922787,
+      "stage1_triggers": 50,
+      "stage2_triggers": 23,
+      "missed_recoveries": 50
+    },
+    "choppy_profit": {
+      "profit_captured": -8.962202849332485,
+      "capture_rate": -0.05453034922867239,
+      "avg_exit_level": 0.1726435495716502,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 50
+    },
+    "_aggregate": {
+      "total_profit_captured": 114.08823541091152,
+      "avg_capture_rate": 0.038278252076304066,
+      "total_missed_recoveries": 229
+    }
+  },
+  "75/25": {
+    "gradual_decay": {
+      "profit_captured": 16.404128426758753,
+      "capture_rate": 0.04056644853572812,
+      "avg_exit_level": 0.33817948694430017,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 6
+    },
+    "sharp_reversal": {
+      "profit_captured": 12.662839209024492,
+      "capture_rate": 0.023926998866227046,
+      "avg_exit_level": 0.3108179611333279,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 17
+    },
+    "v_shape_recovery": {
+      "profit_captured": 12.10540246616744,
+      "capture_rate": 0.02567498511486631,
+      "avg_exit_level": 0.362116649388256,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 50
+    },
+    "multiple_peaks": {
+      "profit_captured": 70.87361356459733,
+      "capture_rate": 0.173607618991171,
+      "avg_exit_level": 0.463051095923039,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 50
+    },
+    "trend_continuation": {
+      "profit_captured": 1.748711226020829,
+      "capture_rate": 0.002130652532455476,
+      "avg_exit_level": 0.4308265044004744,
+      "stage1_triggers": 50,
+      "stage2_triggers": 25,
+      "missed_recoveries": 50
+    },
+    "choppy_profit": {
+      "profit_captured": -15.746099670862968,
+      "capture_rate": -0.07567683401552344,
+      "avg_exit_level": 0.30472419099376297,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 50
+    },
+    "_aggregate": {
+      "total_profit_captured": 98.04859522170588,
+      "avg_capture_rate": 0.03170497833748742,
+      "total_missed_recoveries": 223
+    }
+  },
+  "75/20": {
+    "gradual_decay": {
+      "profit_captured": 14.59797745638995,
+      "capture_rate": 0.03611105206213322,
+      "avg_exit_level": 0.3299071813936112,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 6
+    },
+    "sharp_reversal": {
+      "profit_captured": 13.777808916281115,
+      "capture_rate": 0.026095525137443877,
+      "avg_exit_level": 0.2874530843679219,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 8
+    },
+    "v_shape_recovery": {
+      "profit_captured": 10.422370013462222,
+      "capture_rate": 0.02219963725093976,
+      "avg_exit_level": 0.281744562816802,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 50
+    },
+    "multiple_peaks": {
+      "profit_captured": 70.04450199052404,
+      "capture_rate": 0.16984117498134818,
+      "avg_exit_level": 0.44083276058932586,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 50
+    },
+    "trend_continuation": {
+      "profit_captured": 2.74324744907902,
+      "capture_rate": 0.003480541940605395,
+      "avg_exit_level": 0.4503819141369747,
+      "stage1_triggers": 50,
+      "stage2_triggers": 22,
+      "missed_recoveries": 50
+    },
+    "choppy_profit": {
+      "profit_captured": -11.22278306700794,
+      "capture_rate": -0.07322121088498727,
+      "avg_exit_level": 0.2023712724555213,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 50
+    },
+    "_aggregate": {
+      "total_profit_captured": 100.36312275872841,
+      "avg_capture_rate": 0.030751120081247186,
+      "total_missed_recoveries": 214
+    }
+  },
+  "70/40": {
+    "gradual_decay": {
+      "profit_captured": 22.103453196383754,
+      "capture_rate": 0.053580260329360786,
+      "avg_exit_level": 0.4076830175629991,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 20
+    },
+    "sharp_reversal": {
+      "profit_captured": 20.615913261237054,
+      "capture_rate": 0.038825247495455344,
+      "avg_exit_level": 0.3650727953689813,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 16
+    },
+    "v_shape_recovery": {
+      "profit_captured": 18.530406160703087,
+      "capture_rate": 0.039379167305600184,
+      "avg_exit_level": 0.3754306218467821,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 50
+    },
+    "multiple_peaks": {
+      "profit_captured": 73.66912487718422,
+      "capture_rate": 0.1778572367940388,
+      "avg_exit_level": 0.5121637023935525,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 50
+    },
+    "trend_continuation": {
+      "profit_captured": 2.365498085532796,
+      "capture_rate": 0.0029572568175560963,
+      "avg_exit_level": 0.37823475516297844,
+      "stage1_triggers": 50,
+      "stage2_triggers": 31,
+      "missed_recoveries": 50
+    },
+    "choppy_profit": {
+      "profit_captured": -11.547869241678448,
+      "capture_rate": -0.05836919362789086,
+      "avg_exit_level": 0.26899748359143394,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 50
+    },
+    "_aggregate": {
+      "total_profit_captured": 125.73652633936246,
+      "avg_capture_rate": 0.04237166251902006,
+      "total_missed_recoveries": 236
+    }
+  },
+  "70/35": {
+    "gradual_decay": {
+      "profit_captured": 20.465099042752694,
+      "capture_rate": 0.05056203368472367,
+      "avg_exit_level": 0.34559839031648065,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 9
+    },
+    "sharp_reversal": {
+      "profit_captured": 26.5272551371967,
+      "capture_rate": 0.050421790285541127,
+      "avg_exit_level": 0.3661425755982491,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 18
+    },
+    "v_shape_recovery": {
+      "profit_captured": 18.365826139725165,
+      "capture_rate": 0.039491097118610805,
+      "avg_exit_level": 0.3559362213127905,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 50
+    },
+    "multiple_peaks": {
+      "profit_captured": 70.81985409499723,
+      "capture_rate": 0.17248346230511824,
+      "avg_exit_level": 0.48479887025135154,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 50
+    },
+    "trend_continuation": {
+      "profit_captured": 2.03089193147836,
+      "capture_rate": 0.0025705978245178767,
+      "avg_exit_level": 0.3859459531908919,
+      "stage1_triggers": 50,
+      "stage2_triggers": 31,
+      "missed_recoveries": 50
+    },
+    "choppy_profit": {
+      "profit_captured": -15.387163185780583,
+      "capture_rate": -0.08903312059848296,
+      "avg_exit_level": 0.2220152083781125,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 50
+    },
+    "_aggregate": {
+      "total_profit_captured": 122.82176316036957,
+      "avg_capture_rate": 0.037749310103338124,
+      "total_missed_recoveries": 227
+    }
+  },
+  "70/30": {
+    "gradual_decay": {
+      "profit_captured": 20.443219978342775,
+      "capture_rate": 0.04979854264465938,
+      "avg_exit_level": 0.3495787910809499,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 12
+    },
+    "sharp_reversal": {
+      "profit_captured": 19.670861624481862,
+      "capture_rate": 0.03699026802597577,
+      "avg_exit_level": 0.35287556131729314,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 14
+    },
+    "v_shape_recovery": {
+      "profit_captured": 12.161246021143292,
+      "capture_rate": 0.025861060005767725,
+      "avg_exit_level": 0.3211751023580541,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 50
+    },
+    "multiple_peaks": {
+      "profit_captured": 68.19874177793837,
+      "capture_rate": 0.16751707720083794,
+      "avg_exit_level": 0.4623542547237664,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 50
+    },
+    "trend_continuation": {
+      "profit_captured": 1.6437189756356472,
+      "capture_rate": 0.0021077079067358764,
+      "avg_exit_level": 0.3907797432282493,
+      "stage1_triggers": 50,
+      "stage2_triggers": 29,
+      "missed_recoveries": 50
+    },
+    "choppy_profit": {
+      "profit_captured": -14.229901726210857,
+      "capture_rate": -0.07610810054653808,
+      "avg_exit_level": 0.18687945326677147,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 50
+    },
+    "_aggregate": {
+      "total_profit_captured": 107.88788665133109,
+      "avg_capture_rate": 0.034361092539573104,
+      "total_missed_recoveries": 226
+    }
+  },
+  "70/25": {
+    "gradual_decay": {
+      "profit_captured": 19.406259814908392,
+      "capture_rate": 0.047482625763946296,
+      "avg_exit_level": 0.3608908728797408,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 8
+    },
+    "sharp_reversal": {
+      "profit_captured": 16.415665568599607,
+      "capture_rate": 0.030798034379571973,
+      "avg_exit_level": 0.30357445531201943,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 13
+    },
+    "v_shape_recovery": {
+      "profit_captured": 14.853679480234295,
+      "capture_rate": 0.03172735233471281,
+      "avg_exit_level": 0.33237513409063774,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 50
+    },
+    "multiple_peaks": {
+      "profit_captured": 67.08865570511311,
+      "capture_rate": 0.1637015048495006,
+      "avg_exit_level": 0.44008613386257645,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 50
+    },
+    "trend_continuation": {
+      "profit_captured": 1.9830970003222053,
+      "capture_rate": 0.002475239785427408,
+      "avg_exit_level": 0.40573016174883914,
+      "stage1_triggers": 50,
+      "stage2_triggers": 21,
+      "missed_recoveries": 50
+    },
+    "choppy_profit": {
+      "profit_captured": -11.375071570041973,
+      "capture_rate": -0.07868489740386572,
+      "avg_exit_level": 0.16767295115065498,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 49
+    },
+    "_aggregate": {
+      "total_profit_captured": 108.37228599913564,
+      "avg_capture_rate": 0.03291664328488223,
+      "total_missed_recoveries": 220
+    }
+  },
+  "70/20": {
+    "gradual_decay": {
+      "profit_captured": 20.662433175280206,
+      "capture_rate": 0.050453259796030415,
+      "avg_exit_level": 0.33301829454162496,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 4
+    },
+    "sharp_reversal": {
+      "profit_captured": 16.347189891190354,
+      "capture_rate": 0.030725617480884808,
+      "avg_exit_level": 0.2898181631561398,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 8
+    },
+    "v_shape_recovery": {
+      "profit_captured": 12.448857541004754,
+      "capture_rate": 0.02662922715759422,
+      "avg_exit_level": 0.30611193960886535,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 50
+    },
+    "multiple_peaks": {
+      "profit_captured": 63.53987174543369,
+      "capture_rate": 0.15510422575708332,
+      "avg_exit_level": 0.41509654814758185,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 50
+    },
+    "trend_continuation": {
+      "profit_captured": 5.824012036030992,
+      "capture_rate": 0.007341383965364946,
+      "avg_exit_level": 0.4094381297966923,
+      "stage1_triggers": 50,
+      "stage2_triggers": 17,
+      "missed_recoveries": 50
+    },
+    "choppy_profit": {
+      "profit_captured": -8.675629085520644,
+      "capture_rate": -0.048176407035584984,
+      "avg_exit_level": 0.20550672281693047,
+      "stage1_triggers": 50,
+      "stage2_triggers": 50,
+      "missed_recoveries": 50
+    },
+    "_aggregate": {
+      "total_profit_captured": 110.14673530341936,
+      "avg_capture_rate": 0.037012884520228787,
+      "total_missed_recoveries": 212
+    }
+  }
+}

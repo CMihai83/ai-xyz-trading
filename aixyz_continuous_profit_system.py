@@ -611,7 +611,7 @@ class AIXYZContinuousProfit:
         
         # Surplus dump configuration - Single stage at 70%
         self.surplus_dump_threshold = 0.85  # 85% of peak - Stage 1 dump (50% of surplus)
-        self.surplus_dump_threshold_stage2 = 0.30  # 30% of peak - Stage 2 dump (remaining 50%)
+        self.surplus_dump_threshold_stage2 = 0.40  # 40% of peak - Stage 2 dump (remaining 50%) - optimized from 30%
         
         # System state
         self.running = False

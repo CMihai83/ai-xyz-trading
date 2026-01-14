@@ -3,7 +3,7 @@ Surplus Dump Manager - Cardinal Rule 5 Compliant
 STATUS: ✅ FIXED - NOW COMPLIANT (Fixed: 2025-09-16)
 Cardinal Rules: Rule 5 (Hierarchical Surplus Dump)
 Test Coverage: Requires live testing
-Thresholds: 85% of peak (50% dump), 30% of peak (remaining 50% dump)
+Thresholds: 85% of peak (50% dump), 40% of peak (remaining 50% dump)
 
 Implements two-stage hierarchical surplus dumping at peak percentages
 Fixed issues:
@@ -29,7 +29,7 @@ class SurplusDumpManager:
     """
     Cardinal Rule 5: Surplus Dump Logic - Two-Stage System
     - Stage 1: 50% of surplus at 85% of peak UPNL
-    - Stage 2: Remaining 50% of surplus at 30% of peak UPNL
+    - Stage 2: Remaining 50% of surplus at 40% of peak UPNL
     - After full dump: Reset averaging counter and peak tracking
     """
     
@@ -39,7 +39,7 @@ class SurplusDumpManager:
         
         # Two-stage dump thresholds as per specifications
         self.stage1_threshold = 0.85  # 85% of peak - dump 50%
-        self.stage2_threshold = 0.30  # 30% of peak - dump remaining 50%
+        self.stage2_threshold = 0.40  # 40% of peak - dump remaining 50% - optimized from 30%
         self.stage1_dump_percentage = 0.50  # First stage dumps 50%
         self.stage2_dump_percentage = 0.50  # Second stage dumps remaining 50%
         
