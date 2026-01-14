@@ -70,7 +70,9 @@ class ConfidenceTierSystem:
     }
 
     # Minimum score threshold - reject below this
-    MIN_SCORE_THRESHOLD = 0.60  # Increased for higher quality signals
+    # Sprint 12: Raised from 0.60 to 0.70 per Grok recommendation
+    # Rationale: Reduce bad entries that go -30% to -40% UPNL
+    MIN_SCORE_THRESHOLD = 0.70  # Higher quality signals only
 
     @classmethod
     def get_tier(cls, score: float) -> Tuple[ConfidenceTier, bool]:
