@@ -85,6 +85,15 @@ class HedgeGateway:
     TRAILING_STOP_DISTANCE = 0.02        # Trail 2% behind peak profit
     MOMENTUM_LOOKBACK = 14               # RSI period
 
+    # V1.2.0: Volatility Spike Detector (Grok recommendation for flash crash/black swan)
+    # Detects sudden volatility spikes to trigger emergency hedge actions
+    ATR_FAST_PERIOD = 5                  # Fast ATR for current volatility
+    ATR_SLOW_PERIOD = 20                 # Slow ATR for baseline volatility
+    VOLATILITY_SPIKE_MULTIPLIER = 2.0   # Spike detected when fast ATR > slow ATR * 2.0
+    VOLATILITY_SPIKE_HEDGE_SIZE = 0.75  # Larger hedge (75%) during volatility spikes
+    VOLATILITY_SPIKE_MIN_PROFIT = 2.00  # Lower threshold ($2) during spikes for faster protection
+    FAST_STOP_LOSS_ATR_MULT = 1.5       # Fast stop at 1.5x ATR below entry
+
     def __init__(self, exchange, enabled: bool = True, leverage: int = 10):
         """
         Initialize HedgeGateway.
@@ -129,11 +138,17 @@ class HedgeGateway:
             'surplus_dumps': 0,
             'total_hedge_pnl': 0.0,
             'momentum_filter_blocked': 0,  # Tracks blocked hedges by momentum
-            'trailing_stop_closes': 0       # Tracks trailing stop exits
+            'trailing_stop_closes': 0,      # Tracks trailing stop exits
+            'volatility_spikes_detected': 0,  # V1.2.0: Volatility spike events
+            'emergency_hedges_opened': 0,     # V1.2.0: Emergency hedges during spikes
+            'fast_stop_triggers': 0           # V1.2.0: Fast stop loss triggers
         }
 
         # Trailing stop state for profit protection hedges
         self.trailing_stops: Dict[str, Dict] = {}  # {hedge_key: {peak_profit_pct, activated}}
+
+        # V1.2.0: Volatility spike state tracking
+        self.volatility_state: Dict[str, Dict] = {}  # {symbol: {spike_active, atr_fast, atr_slow, detected_at}}
 
         # Load persisted state
         self._load_state()
@@ -166,7 +181,8 @@ class HedgeGateway:
             'gates': self.gates,
             'stats': self.stats,
             'leverage': self.leverage,  # Store leverage in state
-            'trailing_stops': self.trailing_stops  # Trailing stop state for profit hedges
+            'trailing_stops': self.trailing_stops,  # Trailing stop state for profit hedges
+            'volatility_state': self.volatility_state  # V1.2.0: Volatility spike state
         }
 
         # Try Redis first
@@ -213,6 +229,7 @@ class HedgeGateway:
             self.gates = state.get('gates', {})
             self.stats = state.get('stats', self.stats)
             self.trailing_stops = state.get('trailing_stops', {})
+            self.volatility_state = state.get('volatility_state', {})
             # Restore leverage if saved
             if 'leverage' in state:
                 self.leverage = state['leverage']
@@ -442,6 +459,159 @@ class HedgeGateway:
                 self.stats['momentum_filter_blocked'] += 1
                 return (False, f"rsi_overbought_{rsi:.1f}")
             return (True, f"rsi_ok_{rsi:.1f}")
+
+    # ============================================================================
+    # V1.2.0: VOLATILITY SPIKE DETECTOR (Grok recommendation)
+    # ============================================================================
+    # Detects sudden volatility spikes (flash crash, black swan events)
+    # Uses ATR comparison: fast ATR vs slow ATR
+    # When spike detected: use larger hedge size, lower profit threshold
+    # ============================================================================
+
+    def calculate_atr(self, symbol: str, period: int = 14) -> Optional[float]:
+        """
+        Calculate ATR (Average True Range) for a symbol.
+
+        ATR measures market volatility by decomposing the entire range
+        of an asset price for a given period.
+
+        Args:
+            symbol: Trading symbol
+            period: ATR lookback period
+
+        Returns:
+            ATR value or None if calculation fails
+        """
+        try:
+            # Fetch 1-hour candles for ATR calculation
+            ohlcv = self.exchange.fetch_ohlcv(symbol, '1h', limit=period + 1)
+            if not ohlcv or len(ohlcv) < period + 1:
+                return None
+
+            true_ranges = []
+            for i in range(1, len(ohlcv)):
+                high = ohlcv[i][2]
+                low = ohlcv[i][3]
+                prev_close = ohlcv[i-1][4]
+
+                # True Range is max of:
+                # 1. Current High - Current Low
+                # 2. |Current High - Previous Close|
+                # 3. |Current Low - Previous Close|
+                tr = max(
+                    high - low,
+                    abs(high - prev_close),
+                    abs(low - prev_close)
+                )
+                true_ranges.append(tr)
+
+            # ATR is the average of true ranges
+            atr = sum(true_ranges[-period:]) / period
+            return atr
+
+        except Exception as e:
+            print(f"  ⚠️ ATR calculation failed for {symbol}: {e}")
+            return None
+
+    def detect_volatility_spike(self, symbol: str) -> Tuple[bool, Dict]:
+        """
+        Detect if there's a volatility spike (potential flash crash/black swan).
+
+        Compares fast ATR (5 periods) to slow ATR (20 periods).
+        Spike detected when fast ATR > slow ATR * VOLATILITY_SPIKE_MULTIPLIER.
+
+        Args:
+            symbol: Trading symbol
+
+        Returns:
+            Tuple of (spike_detected: bool, spike_info: dict)
+        """
+        atr_fast = self.calculate_atr(symbol, self.ATR_FAST_PERIOD)
+        atr_slow = self.calculate_atr(symbol, self.ATR_SLOW_PERIOD)
+
+        if atr_fast is None or atr_slow is None:
+            return (False, {"reason": "atr_unavailable"})
+
+        if atr_slow == 0:
+            return (False, {"reason": "atr_slow_zero"})
+
+        # Calculate spike ratio
+        spike_ratio = atr_fast / atr_slow
+        spike_detected = spike_ratio >= self.VOLATILITY_SPIKE_MULTIPLIER
+
+        spike_info = {
+            "atr_fast": atr_fast,
+            "atr_slow": atr_slow,
+            "spike_ratio": spike_ratio,
+            "threshold": self.VOLATILITY_SPIKE_MULTIPLIER,
+            "spike_detected": spike_detected
+        }
+
+        # Update volatility state for this symbol
+        self.volatility_state[symbol] = {
+            "spike_active": spike_detected,
+            "atr_fast": atr_fast,
+            "atr_slow": atr_slow,
+            "spike_ratio": spike_ratio,
+            "detected_at": datetime.now().isoformat() if spike_detected else None
+        }
+
+        if spike_detected:
+            self.stats['volatility_spikes_detected'] += 1
+            print(f"\n  ⚡ VOLATILITY SPIKE DETECTED for {symbol}!")
+            print(f"     ATR Fast: {atr_fast:.6f} | ATR Slow: {atr_slow:.6f}")
+            print(f"     Spike Ratio: {spike_ratio:.2f}x (threshold: {self.VOLATILITY_SPIKE_MULTIPLIER}x)")
+            self._save_state()
+
+        return (spike_detected, spike_info)
+
+    def get_adjusted_hedge_params(self, symbol: str, main_peak_upnl: float) -> Dict:
+        """
+        Get hedge parameters adjusted for current volatility conditions.
+
+        During volatility spikes:
+        - Use larger hedge size (75% instead of 50%)
+        - Use lower profit threshold ($2 instead of $5)
+        - Enable fast stop loss based on ATR
+
+        Args:
+            symbol: Trading symbol
+            main_peak_upnl: Peak UPNL of main position
+
+        Returns:
+            Dict with adjusted parameters
+        """
+        # Check for volatility spike
+        spike_detected, spike_info = self.detect_volatility_spike(symbol)
+
+        if spike_detected:
+            # Emergency mode: more aggressive protection
+            return {
+                "hedge_size_pct": self.VOLATILITY_SPIKE_HEDGE_SIZE,  # 75%
+                "min_profit_threshold": self.VOLATILITY_SPIKE_MIN_PROFIT,  # $2
+                "use_fast_stop": True,
+                "fast_stop_atr_mult": self.FAST_STOP_LOSS_ATR_MULT,  # 1.5x ATR
+                "atr_value": spike_info.get("atr_fast", 0),
+                "spike_mode": True,
+                "spike_ratio": spike_info.get("spike_ratio", 0)
+            }
+        else:
+            # Normal mode: standard parameters
+            return {
+                "hedge_size_pct": self.PROFIT_PROTECTION_HEDGE_SIZE,  # 50%
+                "min_profit_threshold": self.MIN_PROFIT_FOR_HEDGE,  # $5
+                "use_fast_stop": False,
+                "fast_stop_atr_mult": 0,
+                "atr_value": spike_info.get("atr_fast", 0) if spike_info else 0,
+                "spike_mode": False,
+                "spike_ratio": spike_info.get("spike_ratio", 0) if spike_info else 0
+            }
+
+    def is_volatility_spike_active(self, symbol: str) -> bool:
+        """Check if there's an active volatility spike for a symbol."""
+        if symbol in self.volatility_state:
+            return self.volatility_state[symbol].get("spike_active", False)
+        return False
 
     def update_peak(self, main_position_key: str, current_hedge_profit: float):
         """Update peak profit tracking for gate."""
@@ -749,16 +919,29 @@ class HedgeGateway:
         if not self.enabled:
             return None
 
-        # Check minimum profit threshold
-        if main_peak_upnl < self.MIN_PROFIT_FOR_HEDGE:
-            print(f"  ⏸️ Profit protection hedge skipped: peak ${main_peak_upnl:.2f} < min ${self.MIN_PROFIT_FOR_HEDGE}")
+        # V1.2.0: Get volatility-adjusted parameters
+        adjusted_params = self.get_adjusted_hedge_params(symbol, main_peak_upnl)
+        spike_mode = adjusted_params["spike_mode"]
+        min_profit_threshold = adjusted_params["min_profit_threshold"]
+        hedge_size_pct = adjusted_params["hedge_size_pct"]
+
+        # Check minimum profit threshold (adjusted for volatility)
+        if main_peak_upnl < min_profit_threshold:
+            if spike_mode:
+                print(f"  ⏸️ Emergency hedge skipped: peak ${main_peak_upnl:.2f} < spike min ${min_profit_threshold}")
+            else:
+                print(f"  ⏸️ Profit protection hedge skipped: peak ${main_peak_upnl:.2f} < min ${min_profit_threshold}")
             return None
 
-        # STRESS TEST IMPROVEMENT: Momentum filter to avoid hedging during oversold bounces
-        momentum_ok, momentum_reason = self.check_momentum_filter(symbol, main_side)
-        if not momentum_ok:
-            print(f"  ⏸️ Profit protection hedge blocked by momentum filter: {momentum_reason}")
-            return None
+        # V1.2.0: During volatility spikes, skip momentum filter (need fast protection)
+        if not spike_mode:
+            # Normal mode: Apply momentum filter to avoid hedging during oversold bounces
+            momentum_ok, momentum_reason = self.check_momentum_filter(symbol, main_side)
+            if not momentum_ok:
+                print(f"  ⏸️ Profit protection hedge blocked by momentum filter: {momentum_reason}")
+                return None
+        else:
+            print(f"  ⚡ SPIKE MODE: Bypassing momentum filter for emergency protection")
 
         profit_hedge_key = f"profit_hedge:{main_position_key}"
 
@@ -767,8 +950,8 @@ class HedgeGateway:
             print(f"  ⚠️ Profit protection hedge already exists for {main_position_key}")
             return None
 
-        # Calculate hedge size (50% of main per Grok recommendation)
-        hedge_size = main_size * self.PROFIT_PROTECTION_HEDGE_SIZE
+        # Calculate hedge size (adjusted: 75% during spikes, 50% normal)
+        hedge_size = main_size * hedge_size_pct
         hedge_side = self.get_hedge_side(main_side)
         hedge_position_side = self.get_position_side(hedge_side)
 
@@ -779,10 +962,14 @@ class HedgeGateway:
                 'holdSide': hedge_position_side
             }
 
-            print(f"\n  🛡️ Opening PROFIT PROTECTION hedge:")
+            hedge_type = "EMERGENCY" if spike_mode else "PROFIT PROTECTION"
+            size_pct_str = f"{hedge_size_pct*100:.0f}%"
+            print(f"\n  {'⚡' if spike_mode else '🛡️'} Opening {hedge_type} hedge:")
             print(f"     Symbol: {symbol} {hedge_side.upper()}")
-            print(f"     Size: {hedge_size:.6f} (50% of main {main_size:.6f})")
+            print(f"     Size: {hedge_size:.6f} ({size_pct_str} of main {main_size:.6f})")
             print(f"     Reason: Main at 70% of peak ${main_peak_upnl:.2f}")
+            if spike_mode:
+                print(f"     ⚡ VOLATILITY SPIKE: ratio={adjusted_params['spike_ratio']:.2f}x")
 
             order = self.exchange.create_market_order(symbol, hedge_side, hedge_size, params=params)
 
@@ -802,7 +989,7 @@ class HedgeGateway:
                     'symbol': symbol,
                     'side': hedge_side,
                     'position_side': hedge_position_side,
-                    'position_type': 'profit_protection',  # Distinguishes from regular hedge
+                    'position_type': 'emergency' if spike_mode else 'profit_protection',
                     'entry_price': entry_price,
                     'size': hedge_size,
                     'remaining': 1.0,
@@ -810,14 +997,22 @@ class HedgeGateway:
                     'order_id': order.get('id'),
                     'main_position_key': main_position_key,  # Link to main position
                     'main_peak_upnl': main_peak_upnl,
-                    'main_upnl_at_hedge_open': main_peak_upnl * 0.70  # 70% of peak
+                    'main_upnl_at_hedge_open': main_peak_upnl * 0.70,  # 70% of peak
+                    # V1.2.0: Volatility spike metadata
+                    'spike_mode': spike_mode,
+                    'spike_ratio': adjusted_params.get('spike_ratio', 0),
+                    'use_fast_stop': adjusted_params.get('use_fast_stop', False),
+                    'fast_stop_atr_mult': adjusted_params.get('fast_stop_atr_mult', 0),
+                    'atr_value': adjusted_params.get('atr_value', 0)
                 }
 
                 self.stats['hedges_opened'] += 1
                 self.stats['profit_protection_hedges_opened'] = self.stats.get('profit_protection_hedges_opened', 0) + 1
+                if spike_mode:
+                    self.stats['emergency_hedges_opened'] += 1
                 self._save_state()
 
-                print(f"  ✅ Profit protection hedge opened @ ${entry_price:.6f}")
+                print(f"  ✅ {hedge_type} hedge opened @ ${entry_price:.6f}")
                 return order
 
         except Exception as e:
@@ -890,9 +1085,17 @@ class HedgeGateway:
         trailing_stop_level = trailing['peak_profit_pct'] - self.TRAILING_STOP_DISTANCE
         trailing_triggered = trailing['activated'] and hedge_pnl_pct <= trailing_stop_level
 
+        # V1.2.0: Check for spike mode and fast stop parameters
+        spike_mode = hedge.get('spike_mode', False)
+        use_fast_stop = hedge.get('use_fast_stop', False)
+        atr_value = hedge.get('atr_value', 0)
+        fast_stop_atr_mult = hedge.get('fast_stop_atr_mult', 1.5)
+
         print(f"  📊 Profit protection hedge check:")
         print(f"     Hedge PnL: ${hedge_profit:.4f} ({hedge_pnl_pct*100:.2f}%)")
         print(f"     Main UPNL: ${main_current_upnl:.4f} (peak: ${main_peak_upnl:.4f})")
+        if spike_mode:
+            print(f"     ⚡ SPIKE MODE: fast_stop={use_fast_stop}, ATR={atr_value:.6f}")
         if trailing['activated']:
             print(f"     Trailing: peak={trailing['peak_profit_pct']*100:.2f}%, stop={trailing_stop_level*100:.2f}%")
 
@@ -909,17 +1112,37 @@ class HedgeGateway:
             self._cleanup_trailing_stop(profit_hedge_key)
             return (True, "trailing_stop")
 
-        # Gate 3: Main drops to 50% of peak
+        # V1.2.0 Gate 3: FAST STOP (ATR-based, only in spike mode)
+        # During volatility spikes, use tighter ATR-based stop for faster protection
+        if use_fast_stop and atr_value > 0:
+            fast_stop_distance = atr_value * fast_stop_atr_mult
+            entry_price = hedge['entry_price']
+            # For short hedge, stop is above entry; for long hedge, stop is below entry
+            if hedge['position_side'] == 'short':
+                fast_stop_price = entry_price + fast_stop_distance
+                fast_stop_hit = current_price >= fast_stop_price
+            else:
+                fast_stop_price = entry_price - fast_stop_distance
+                fast_stop_hit = current_price <= fast_stop_price
+
+            if fast_stop_hit:
+                print(f"  ⚡ Gate 3: FAST STOP triggered (ATR-based)")
+                print(f"     Entry: ${entry_price:.6f}, Stop: ${fast_stop_price:.6f}, Current: ${current_price:.6f}")
+                self.stats['fast_stop_triggers'] += 1
+                self._cleanup_trailing_stop(profit_hedge_key)
+                return (True, "fast_stop_atr")
+
+        # Gate 4: Main drops to 50% of peak
         if main_peak_upnl > 0:
             main_pct_of_peak = main_current_upnl / main_peak_upnl
             if main_pct_of_peak <= self.PROFIT_HEDGE_MAIN_DROP_GATE:
-                print(f"  📉 Gate 3: Main at {main_pct_of_peak*100:.0f}% of peak (threshold: {self.PROFIT_HEDGE_MAIN_DROP_GATE*100:.0f}%)")
+                print(f"  📉 Gate 4: Main at {main_pct_of_peak*100:.0f}% of peak (threshold: {self.PROFIT_HEDGE_MAIN_DROP_GATE*100:.0f}%)")
                 self._cleanup_trailing_stop(profit_hedge_key)
                 return (True, "main_dropped")
 
-        # Gate 4: Stop loss at -5%
+        # Gate 5: Stop loss at -5%
         if hedge_pnl_pct <= self.PROFIT_HEDGE_STOP_LOSS:
-            print(f"  🛑 Gate 4: Hedge stop loss hit ({self.PROFIT_HEDGE_STOP_LOSS*100:.0f}%)")
+            print(f"  🛑 Gate 5: Hedge stop loss hit ({self.PROFIT_HEDGE_STOP_LOSS*100:.0f}%)")
             self._cleanup_trailing_stop(profit_hedge_key)
             return (True, "hedge_stop_loss")
 
@@ -1101,7 +1324,7 @@ class HedgeGateway:
     def print_status(self):
         """Print current hedge status."""
         stats = self.get_stats()
-        print(f"\n🛡️ Hedge Gateway Status:")
+        print(f"\n🛡️ Hedge Gateway Status (V1.2.0):")
         print(f"   Active hedges: {stats['active_hedges']}")
         print(f"   Open gates: {stats['open_gates']}")
         print(f"   Total hedge P&L: ${stats['total_hedge_pnl']:.2f}")
@@ -1112,6 +1335,9 @@ class HedgeGateway:
         print(f"   Hedges transitioned to main: {stats.get('hedges_transitioned_to_main', 0)}")
         print(f"   Momentum filter blocked: {stats.get('momentum_filter_blocked', 0)}")
         print(f"   Trailing stop closes: {stats.get('trailing_stop_closes', 0)}")
+        print(f"   ⚡ Volatility spikes detected: {stats.get('volatility_spikes_detected', 0)}")
+        print(f"   ⚡ Emergency hedges opened: {stats.get('emergency_hedges_opened', 0)}")
+        print(f"   ⚡ Fast stop triggers: {stats.get('fast_stop_triggers', 0)}")
 
 
 # Singleton instance

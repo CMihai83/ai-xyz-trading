@@ -8,8 +8,8 @@
       "avg_drawdown": 4.540516679925794
     },
     "profit_hedge": {
-      "total_pnl": 462.3783679026309,
-      "avg_pnl": 9.247567358052617,
+      "total_pnl": 463.7262193683207,
+      "avg_pnl": 9.274524387366414,
       "avg_drawdown": 4.548583871195432,
       "hedge_triggers": 50,
       "exit_reasons": {
@@ -19,7 +19,7 @@
         "trailing_stop": 7
       }
     },
-    "improvement": -3.4200416868369103,
+    "improvement": -3.1385072392823252,
     "winner": "traditional"
   },
   "rapid_pump": {
@@ -55,20 +55,20 @@
       "avg_drawdown": 48.97093728014878
     },
     "profit_hedge": {
-      "total_pnl": -781.7784855374722,
-      "avg_pnl": -15.635569710749444,
-      "avg_drawdown": 48.97093728014878,
-      "hedge_triggers": 21,
+      "total_pnl": -779.608456273258,
+      "avg_pnl": -15.592169125465158,
+      "avg_drawdown": 48.9354734262781,
+      "hedge_triggers": 22,
       "exit_reasons": {
-        "timeout": 29,
-        "hedge_stop_loss": 10,
+        "timeout": 28,
+        "hedge_stop_loss": 9,
         "hedge_profit_10pct": 6,
         "trailing_stop": 1,
-        "main_drop": 4
+        "main_drop": 6
       }
     },
-    "improvement": -0.018024953449336276,
-    "winner": "traditional"
+    "improvement": 0.259601055852619,
+    "winner": "profit_hedge"
   },
   "prolonged_uptrend": {
     "scenario": "prolonged_uptrend",
@@ -79,20 +79,21 @@
       "avg_drawdown": 10.18294808400657
     },
     "profit_hedge": {
-      "total_pnl": 491.93197366668403,
-      "avg_pnl": 9.83863947333368,
+      "total_pnl": 479.3914320150318,
+      "avg_pnl": 9.587828640300636,
       "avg_drawdown": 10.185923647591146,
       "hedge_triggers": 46,
       "exit_reasons": {
-        "hedge_stop_loss": 24,
+        "hedge_stop_loss": 23,
         "timeout": 4,
-        "main_drop": 10,
-        "trailing_stop": 9,
-        "hedge_profit_10pct": 3
+        "main_drop": 11,
+        "trailing_stop": 8,
+        "hedge_profit_10pct": 3,
+        "fast_stop_atr": 1
       }
     },
-    "improvement": 1.3551319622305904,
-    "winner": "profit_hedge"
+    "improvement": -1.2286566955936302,
+    "winner": "traditional"
   },
   "high_volatility": {
     "scenario": "high_volatility",
@@ -103,20 +104,20 @@
       "avg_drawdown": 5.0303958422391455
     },
     "profit_hedge": {
-      "total_pnl": 84.71795249239875,
-      "avg_pnl": 1.694359049847975,
-      "avg_drawdown": 5.053479869995561,
+      "total_pnl": 10.08529849397506,
+      "avg_pnl": 0.2017059698795012,
+      "avg_drawdown": 4.987874164290827,
       "hedge_triggers": 46,
       "exit_reasons": {
-        "main_drop": 20,
-        "hedge_stop_loss": 15,
-        "hedge_profit_10pct": 9,
+        "main_drop": 22,
+        "hedge_stop_loss": 14,
+        "hedge_profit_10pct": 8,
         "timeout": 4,
         "trailing_stop": 2
       }
     },
-    "improvement": 7.07699169406015,
-    "winner": "profit_hedge"
+    "improvement": -87.25295653045465,
+    "winner": "traditional"
   },
   "low_volatility": {
     "scenario": "low_volatility",
@@ -127,19 +128,20 @@
       "avg_drawdown": 7.370303270495737
     },
     "profit_hedge": {
-      "total_pnl": 17.509137334782373,
-      "avg_pnl": 0.3501827466956475,
-      "avg_drawdown": 7.370303270495737,
-      "hedge_triggers": 9,
+      "total_pnl": 27.422401818255803,
+      "avg_pnl": 0.5484480363651161,
+      "avg_drawdown": 7.363995035175735,
+      "hedge_triggers": 19,
       "exit_reasons": {
-        "timeout": 42,
-        "trailing_stop": 4,
-        "main_drop": 3,
-        "hedge_profit_10pct": 1
+        "timeout": 32,
+        "main_drop": 13,
+        "hedge_profit_10pct": 1,
+        "trailing_stop": 3,
+        "hedge_stop_loss": 1
       }
     },
-    "improvement": -12.44557023498511,
-    "winner": "traditional"
+    "improvement": 37.12570231629498,
+    "winner": "profit_hedge"
   },
   "black_swan_down": {
     "scenario": "black_swan_down",
@@ -150,19 +152,19 @@
       "avg_drawdown": 3.4709451194880034
     },
     "profit_hedge": {
-      "total_pnl": 438.5578789874412,
-      "avg_pnl": 8.771157579748824,
-      "avg_drawdown": 3.478575839172846,
-      "hedge_triggers": 49,
+      "total_pnl": 468.26072424893977,
+      "avg_pnl": 9.365214484978795,
+      "avg_drawdown": 3.378171459226512,
+      "hedge_triggers": 50,
       "exit_reasons": {
         "hedge_stop_loss": 20,
         "hedge_profit_10pct": 23,
         "trailing_stop": 6,
-        "timeout": 1
+        "main_drop": 1
       }
     },
-    "improvement": -4.691198227402966,
-    "winner": "traditional"
+    "improvement": 1.763919162453251,
+    "winner": "profit_hedge"
   },
   "black_swan_up": {
     "scenario": "black_swan_up",
@@ -173,18 +175,19 @@
       "avg_drawdown": 3.3704927353735297
     },
     "profit_hedge": {
-      "total_pnl": 1546.4567107810367,
-      "avg_pnl": 30.929134215620735,
+      "total_pnl": 1547.586157553816,
+      "avg_pnl": 30.951723151076322,
       "avg_drawdown": 3.3732826954902952,
       "hedge_triggers": 39,
       "exit_reasons": {
-        "hedge_stop_loss": 23,
+        "hedge_stop_loss": 22,
         "timeout": 11,
-        "trailing_stop": 10,
-        "hedge_profit_10pct": 6
+        "trailing_stop": 9,
+        "hedge_profit_10pct": 6,
+        "fast_stop_atr": 2
       }
     },
-    "improvement": 0.30914792088415455,
+    "improvement": 0.38240819555571165,
     "winner": "profit_hedge"
   },
   "v_shape_recovery": {
@@ -196,18 +199,18 @@
       "avg_drawdown": 4.687825690206884
     },
     "profit_hedge": {
-      "total_pnl": 353.1553632595775,
-      "avg_pnl": 7.06310726519155,
-      "avg_drawdown": 4.696187557198571,
+      "total_pnl": 319.730736457857,
+      "avg_pnl": 6.39461472915714,
+      "avg_drawdown": 4.645307501386827,
       "hedge_triggers": 50,
       "exit_reasons": {
-        "main_drop": 5,
-        "hedge_stop_loss": 8,
+        "main_drop": 6,
         "hedge_profit_10pct": 26,
+        "hedge_stop_loss": 7,
         "trailing_stop": 11
       }
     },
-    "improvement": -4.932594730678277,
+    "improvement": -13.93031322150405,
     "winner": "traditional"
   },
   "dead_cat_bounce": {
@@ -219,19 +222,19 @@
       "avg_drawdown": 6.8549605928894275
     },
     "profit_hedge": {
-      "total_pnl": 95.51709604565195,
-      "avg_pnl": 1.910341920913039,
-      "avg_drawdown": 6.863944422839421,
-      "hedge_triggers": 43,
+      "total_pnl": 119.17953237407113,
+      "avg_pnl": 2.3835906474814226,
+      "avg_drawdown": 6.732172940548123,
+      "hedge_triggers": 44,
       "exit_reasons": {
-        "timeout": 7,
+        "timeout": 6,
         "hedge_profit_10pct": 22,
         "hedge_stop_loss": 8,
         "trailing_stop": 11,
-        "main_drop": 2
+        "main_drop": 3
       }
     },
-    "improvement": -12.032052764440266,
-    "winner": "traditional"
+    "improvement": 9.760234025856516,
+    "winner": "profit_hedge"
   }
 }

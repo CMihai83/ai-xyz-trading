@@ -288,10 +288,47 @@ class ProfitProtectionHedgeStressTest:
     TRAILING_STOP_DISTANCE = 0.02    # Trail 2% behind peak profit
     MOMENTUM_RSI_OVERSOLD = 30       # Don't hedge if RSI < 30 (simulated)
 
+    # V1.2.0: Volatility Spike Detector
+    VOLATILITY_SPIKE_MULTIPLIER = 2.0  # Spike when recent vol > 2x baseline
+    VOLATILITY_SPIKE_HEDGE_SIZE = 0.75  # 75% hedge during spikes (vs 50% normal)
+    VOLATILITY_SPIKE_MIN_PROFIT = 2.00  # $2 threshold during spikes (vs $5 normal)
+    FAST_STOP_ATR_MULT = 1.5           # Fast stop at 1.5x ATR
+
     def __init__(self, leverage: int = 10, position_size_usd: float = 10.0):
         self.leverage = leverage
         self.position_size_usd = position_size_usd
         self.simulator = MarketSimulator()
+
+    def detect_volatility_spike(self, prices: np.ndarray, index: int,
+                                 fast_period: int = 5, slow_period: int = 20) -> Tuple[bool, float]:
+        """
+        Detect volatility spike using ATR-like calculation on price path.
+
+        Returns (spike_detected, spike_ratio)
+        """
+        if index < slow_period:
+            return (False, 0.0)
+
+        # Calculate "true ranges" using price changes (simplified ATR)
+        def calc_volatility(start: int, period: int) -> float:
+            ranges = []
+            for i in range(start - period + 1, start + 1):
+                if i > 0:
+                    high = max(prices[i], prices[i-1])
+                    low = min(prices[i], prices[i-1])
+                    ranges.append(high - low)
+            return np.mean(ranges) if ranges else 0
+
+        vol_fast = calc_volatility(index, fast_period)
+        vol_slow = calc_volatility(index, slow_period)
+
+        if vol_slow == 0:
+            return (False, 0.0)
+
+        spike_ratio = vol_fast / vol_slow
+        spike_detected = spike_ratio >= self.VOLATILITY_SPIKE_MULTIPLIER
+
+        return (spike_detected, spike_ratio)
 
     def calc_upnl(self, entry: float, current: float, size: float, side: str) -> Tuple[float, float]:
         """Calculate UPNL and percentage"""
@@ -375,6 +412,11 @@ class ProfitProtectionHedgeStressTest:
         # V1.1.0: Momentum filter state (simulated using price momentum)
         momentum_blocked = False
 
+        # V1.2.0: Volatility spike state
+        spike_mode = False
+        spike_ratio = 0.0
+        fast_stop_distance = 0.0
+
         for i, price in enumerate(prices):
             upnl, pct = self.calc_upnl(entry_price, price, size, side)
 
@@ -385,22 +427,43 @@ class ProfitProtectionHedgeStressTest:
                 drawdown = (peak_upnl - upnl) / peak_upnl
                 max_drawdown = max(max_drawdown, drawdown)
 
+            # V1.2.0: Detect volatility spike
+            if use_improvements and not hedge_opened:
+                detected, ratio = self.detect_volatility_spike(prices, i)
+                if detected:
+                    spike_mode = True
+                    spike_ratio = ratio
+
+            # Determine thresholds based on spike mode
+            min_profit = self.VOLATILITY_SPIKE_MIN_PROFIT if spike_mode else self.MIN_PROFIT
+            hedge_size_pct = self.VOLATILITY_SPIKE_HEDGE_SIZE if spike_mode else self.HEDGE_SIZE
+
             # Open hedge at 70% of peak
-            if peak_upnl >= self.MIN_PROFIT and not hedge_opened and upnl <= peak_upnl * self.TAKE_PROFIT_TRIGGER:
-                # V1.1.0: Momentum filter simulation
-                # Simulate RSI being oversold if price recently dropped sharply
-                if use_improvements and i >= 14:
-                    recent_prices = prices[max(0, i-14):i+1]
-                    price_change = (recent_prices[-1] - recent_prices[0]) / recent_prices[0]
-                    # If we're in a sharp downtrend (price dropped >10%), simulate oversold RSI
-                    if price_change < -0.10 and side == 'long':
-                        momentum_blocked = True
-                        continue  # Skip hedge opening, price likely to bounce
+            if peak_upnl >= min_profit and not hedge_opened and upnl <= peak_upnl * self.TAKE_PROFIT_TRIGGER:
+                # V1.2.0: During spike mode, skip momentum filter for faster protection
+                if not spike_mode:
+                    # V1.1.0: Momentum filter simulation
+                    # Simulate RSI being oversold if price recently dropped sharply
+                    if use_improvements and i >= 14:
+                        recent_prices = prices[max(0, i-14):i+1]
+                        price_change = (recent_prices[-1] - recent_prices[0]) / recent_prices[0]
+                        # If we're in a sharp downtrend (price dropped >10%), simulate oversold RSI
+                        if price_change < -0.10 and side == 'long':
+                            momentum_blocked = True
+                            continue  # Skip hedge opening, price likely to bounce
 
                 hedge_opened = True
                 hedge_entry = price
-                hedge_size = size * self.HEDGE_SIZE
+                hedge_size = size * hedge_size_pct
                 hedge_side = 'short' if side == 'long' else 'long'
+
+                # V1.2.0: Calculate fast stop distance for spike mode
+                if spike_mode and use_improvements:
+                    # Estimate ATR from recent volatility
+                    if i >= 5:
+                        recent_ranges = [abs(prices[j] - prices[j-1]) for j in range(i-4, i+1)]
+                        atr_estimate = np.mean(recent_ranges)
+                        fast_stop_distance = atr_estimate * self.FAST_STOP_ATR_MULT
 
             if hedge_opened:
                 h_upnl, h_pct = self.calc_upnl(hedge_entry, price, hedge_size, 'short' if side == 'long' else 'long')
@@ -431,7 +494,23 @@ class ProfitProtectionHedgeStressTest:
                         exit_reason = "trailing_stop"
                         break
 
-                # Gate 3: Main drops to 50% of peak
+                # V1.2.0 Gate 3: Fast stop (ATR-based, spike mode only)
+                if use_improvements and spike_mode and fast_stop_distance > 0:
+                    hedge_side_actual = 'short' if side == 'long' else 'long'
+                    if hedge_side_actual == 'short':
+                        fast_stop_price = hedge_entry + fast_stop_distance
+                        fast_stop_hit = price >= fast_stop_price
+                    else:
+                        fast_stop_price = hedge_entry - fast_stop_distance
+                        fast_stop_hit = price <= fast_stop_price
+
+                    if fast_stop_hit:
+                        final_pnl = upnl
+                        hedge_pnl = h_upnl
+                        exit_reason = "fast_stop_atr"
+                        break
+
+                # Gate 4: Main drops to 50% of peak
                 if peak_upnl > 0 and upnl <= peak_upnl * self.MAIN_DROP_GATE:
                     final_pnl = upnl
                     hedge_pnl = h_upnl
