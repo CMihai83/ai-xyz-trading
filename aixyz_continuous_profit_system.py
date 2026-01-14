@@ -3945,9 +3945,11 @@ class AIXYZContinuousProfit:
         
         peak = self.peak_upnl.get(symbol, 0)
         
-        # Minimum profit threshold: $0.50 (updated December 2025)
-        # Don't waste fees on tiny profits
-        if peak < 0.50:
+        # Minimum profit threshold: $5.00 (updated January 2026 - Grok consortium)
+        # Don't enter profit-taking zone until meaningful profit is reached
+        # This prevents premature hedging on tiny positions
+        MIN_PROFIT_FOR_TAKE_PROFIT = 5.00
+        if peak < MIN_PROFIT_FOR_TAKE_PROFIT:
             return False
 
         # Initialize should_take_profit flag
@@ -4036,7 +4038,63 @@ class AIXYZContinuousProfit:
             if should_take_profit:
                 print(f"  🎯 Fallback threshold trigger: ${upnl:.4f} <= ${threshold:.4f}")
 
-        if should_take_profit:
+        # ============================================================================
+        # PROFIT PROTECTION HEDGE SYSTEM (Grok+Claude Consortium - Jan 14, 2026)
+        # ============================================================================
+        # Instead of closing at 70% of peak, open a hedge to secure profits while
+        # keeping the original position open for potential recovery to peak.
+        # ============================================================================
+
+        if should_take_profit and self.hedge_gateway:
+            try:
+                position_side = position.get('position_side', 'long' if position['side'] in ['buy', 'long'] else 'short')
+                main_side = 'buy' if position_side == 'long' else 'sell'
+                actual_symbol = position.get('symbol', symbol)
+                leverage = position.get('leverage', 5)
+
+                # Check if profit protection hedge already exists
+                if not self.hedge_gateway.has_profit_protection_hedge(symbol):
+                    # Open profit protection hedge instead of closing
+                    print(f"\n  🛡️ PROFIT PROTECTION: Opening hedge instead of closing")
+                    print(f"     Peak UPNL: ${peak:.4f}, Current: ${upnl:.4f} ({(upnl/peak*100):.1f}% of peak)")
+
+                    hedge_result = self.hedge_gateway.open_profit_protection_hedge(
+                        symbol=actual_symbol,
+                        main_side=main_side,
+                        main_size=position['amount'],
+                        main_position_key=symbol,
+                        main_peak_upnl=peak,
+                        leverage=leverage
+                    )
+
+                    if hedge_result:
+                        print(f"  ✅ Profit protection hedge opened - main position stays open")
+                        # DON'T close the main position - let it run for potential recovery
+                        # The profit is now "locked in" via the hedge
+                        return False  # Return False to indicate position NOT closed
+                    else:
+                        print(f"  ⚠️ Could not open profit protection hedge")
+                else:
+                    # Profit protection hedge exists - check gates
+                    current_price = position.get('markPrice', 0)
+                    should_close_hedge, reason = self.hedge_gateway.check_profit_protection_gates(
+                        main_position_key=symbol,
+                        current_price=current_price,
+                        main_current_upnl=upnl,
+                        main_peak_upnl=peak
+                    )
+
+                    if should_close_hedge:
+                        print(f"  🚪 Profit hedge gate triggered: {reason}")
+                        self.hedge_gateway.close_profit_protection_hedge(symbol, reason)
+                        # Main position continues running
+
+            except Exception as e:
+                print(f"  ❌ Profit protection hedge operation failed: {e}")
+
+        # FALLBACK: Only close if no hedge gateway OR prediction/RL explicitly signals close
+        # AND this is a strong close signal (prediction-based)
+        if should_take_profit and prediction_exit_triggered:
             try:
                 # HEDGE MODE: Use tradeSide='close' with position side
                 position_side = position.get('position_side', 'long' if position['side'] in ['buy', 'long'] else 'short')
@@ -4044,7 +4102,7 @@ class AIXYZContinuousProfit:
                 close_params = self.get_hedge_order_params(position_side, is_open=False)
                 actual_symbol = position.get('symbol', symbol)
 
-                print(f"\n🎯 Taking profit on {symbol}")
+                print(f"\n🎯 Taking profit on {symbol} (Prediction EXIT signal)")
                 print(f"  UPNL: ${upnl:.4f} ({pct:.2f}%)")
 
                 # Close position with hedge mode params
@@ -4072,18 +4130,29 @@ class AIXYZContinuousProfit:
                             leverage=leverage,
                             margin_used=margin_used,
                             realized_pnl=upnl,
-                            exit_reason='profit_taking',
+                            exit_reason='profit_taking_prediction',
                             averaging_steps=self.averaging_steps.get(symbol, 0),
                             peak_upnl=peak
                         )
                     except Exception as track_err:
                         print(f"  ⚠️ Grok V2 tracking failed: {track_err}")
 
-                # HEDGE GATEWAY: Close hedge when main position closes
+                # HEDGE GATEWAY: Handle hedge transition when main position closes
+                new_main_position = None
                 if self.hedge_gateway:
-                    self.hedge_gateway.on_main_position_closed(symbol)
+                    new_main_position = self.hedge_gateway.on_main_position_closed(symbol)
+
                 del self.active_positions[symbol]
                 self.cleanup_position_tracking(symbol)  # Cancel protection orders, reset tracking
+
+                # If profit protection hedge was transitioned to main, track it
+                if new_main_position:
+                    new_symbol = new_main_position['symbol']
+                    print(f"  🔄 Transitioned hedge now tracked as main: {new_symbol}")
+                    self.active_positions[new_symbol] = new_main_position
+                    self.original_sizes[new_symbol] = new_main_position['amount']
+                    self.averaging_steps[new_symbol] = 0
+                    self.peak_upnl[new_symbol] = 0
 
                 print(f"  ✅ Profit taken: ${upnl:.4f}")
                 return True

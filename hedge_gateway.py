@@ -57,6 +57,14 @@ class HedgeGateway:
     GATE_BUFFER_PCT = 10.0   # 10% buffer for reversion detection (was 5% - too tight)
     SURPLUS_DUMP_PCT = 0.85  # Close at 85% of peak profit (was 70% - too aggressive)
 
+    # Profit Protection Hedge Configuration (Grok consortium - Jan 14, 2026)
+    # Opens hedge at 70% of peak to secure profits instead of closing position
+    PROFIT_PROTECTION_HEDGE_SIZE = 0.50  # 50% of main position (Grok recommendation)
+    PROFIT_HEDGE_PROFIT_GATE = 0.10      # Close hedge at 10% profit
+    PROFIT_HEDGE_MAIN_DROP_GATE = 0.50   # Close hedge if main drops to 50% of peak
+    PROFIT_HEDGE_STOP_LOSS = -0.05       # Stop loss at -5% on profit hedge
+    MIN_PROFIT_FOR_HEDGE = 5.00          # Minimum $5 UPNL to open profit protection hedge
+
     def __init__(self, exchange, enabled: bool = True, leverage: int = 10):
         """
         Initialize HedgeGateway.
@@ -604,20 +612,309 @@ class HedgeGateway:
             print(f"  📉 Hedge hit surplus dump threshold")
             self.full_close_hedge(main_position_key, 'surplus_dump')
 
-    def on_main_position_closed(self, main_position_key: str) -> None:
-        """
-        Called when main position is closed - hedge becomes independent.
+    # ============================================================================
+    # PROFIT PROTECTION HEDGE SYSTEM (Grok+Claude Consortium - Jan 14, 2026)
+    # ============================================================================
+    # Instead of closing at 70% of peak, open a hedge to secure profits while
+    # keeping the original position open for potential recovery to peak.
+    # ============================================================================
 
-        The hedge is NOT closed automatically. Instead, it is released from
-        hedge gateway tracking and becomes an independent position managed
-        by the main trading system.
+    def open_profit_protection_hedge(self, symbol: str, main_side: str, main_size: float,
+                                     main_position_key: str, main_peak_upnl: float,
+                                     leverage: int = 10) -> Optional[Dict]:
+        """
+        Open a profit-protection hedge when main position hits 70% of peak.
+
+        This replaces the traditional "close at 70% of peak" with a hedge that:
+        - Locks in profits while keeping main position open
+        - Can profit if market reverses (hedge gains)
+        - Allows main to recover to peak (main gains, hedge neutral)
+
+        Args:
+            symbol: Trading symbol (e.g., 'BTC/USDT:USDT')
+            main_side: Side of main position ('buy'/'sell')
+            main_size: Current size of main position
+            main_position_key: Key to track this hedge against
+            main_peak_upnl: Peak UPNL achieved by main position
+            leverage: Leverage to use
+
+        Returns:
+            Order result or None if failed
+        """
+        if not self.enabled:
+            return None
+
+        # Check minimum profit threshold
+        if main_peak_upnl < self.MIN_PROFIT_FOR_HEDGE:
+            print(f"  ⏸️ Profit protection hedge skipped: peak ${main_peak_upnl:.2f} < min ${self.MIN_PROFIT_FOR_HEDGE}")
+            return None
+
+        profit_hedge_key = f"profit_hedge:{main_position_key}"
+
+        # Don't double hedge
+        if profit_hedge_key in self.hedges:
+            print(f"  ⚠️ Profit protection hedge already exists for {main_position_key}")
+            return None
+
+        # Calculate hedge size (50% of main per Grok recommendation)
+        hedge_size = main_size * self.PROFIT_PROTECTION_HEDGE_SIZE
+        hedge_side = self.get_hedge_side(main_side)
+        hedge_position_side = self.get_position_side(hedge_side)
+
+        try:
+            params = {
+                'marginCoin': 'USDT',
+                'tradeSide': 'open',
+                'holdSide': hedge_position_side
+            }
+
+            print(f"\n  🛡️ Opening PROFIT PROTECTION hedge:")
+            print(f"     Symbol: {symbol} {hedge_side.upper()}")
+            print(f"     Size: {hedge_size:.6f} (50% of main {main_size:.6f})")
+            print(f"     Reason: Main at 70% of peak ${main_peak_upnl:.2f}")
+
+            order = self.exchange.create_market_order(symbol, hedge_side, hedge_size, params=params)
+
+            if order:
+                entry_price = order.get('average') or order.get('price') or order.get('info', {}).get('priceAvg') or 0
+                entry_price = float(entry_price) if entry_price else 0.0
+
+                if entry_price <= 0:
+                    try:
+                        ticker = self.exchange.fetch_ticker(symbol)
+                        entry_price = float(ticker.get('last', 0))
+                    except Exception as e:
+                        print(f"  ❌ Could not get valid entry price: {e}")
+                        return None
+
+                self.hedges[profit_hedge_key] = {
+                    'symbol': symbol,
+                    'side': hedge_side,
+                    'position_side': hedge_position_side,
+                    'position_type': 'profit_protection',  # Distinguishes from regular hedge
+                    'entry_price': entry_price,
+                    'size': hedge_size,
+                    'remaining': 1.0,
+                    'opened_at': datetime.now().isoformat(),
+                    'order_id': order.get('id'),
+                    'main_position_key': main_position_key,  # Link to main position
+                    'main_peak_upnl': main_peak_upnl,
+                    'main_upnl_at_hedge_open': main_peak_upnl * 0.70  # 70% of peak
+                }
+
+                self.stats['hedges_opened'] += 1
+                self.stats['profit_protection_hedges_opened'] = self.stats.get('profit_protection_hedges_opened', 0) + 1
+                self._save_state()
+
+                print(f"  ✅ Profit protection hedge opened @ ${entry_price:.6f}")
+                return order
+
+        except Exception as e:
+            print(f"  ❌ Failed to open profit protection hedge: {e}")
+
+        return None
+
+    def check_profit_protection_gates(self, main_position_key: str, current_price: float,
+                                      main_current_upnl: float, main_peak_upnl: float) -> Tuple[bool, str]:
+        """
+        Check if profit protection hedge should close.
+
+        Gates (Grok recommendations):
+        1. Hedge reaches 10% profit → Close hedge (lock in hedge gains)
+        2. Main position drops to 50% of peak → Close hedge (protection no longer needed)
+        3. Hedge hits -5% stop loss → Close hedge (cut losses)
 
         Args:
             main_position_key: Key of the main position
+            current_price: Current market price
+            main_current_upnl: Current UPNL of main position
+            main_peak_upnl: Peak UPNL of main position
+
+        Returns:
+            Tuple of (should_close: bool, reason: str)
+        """
+        profit_hedge_key = f"profit_hedge:{main_position_key}"
+
+        if profit_hedge_key not in self.hedges:
+            return (False, "no_hedge")
+
+        hedge = self.hedges[profit_hedge_key]
+        if hedge['remaining'] <= 0:
+            return (False, "hedge_closed")
+
+        # Calculate hedge P&L
+        hedge_profit = self.calculate_hedge_profit(profit_hedge_key, current_price)
+        if hedge_profit is None:
+            return (False, "calc_error")
+
+        # Calculate hedge profit percentage
+        hedge_margin = (hedge['size'] * hedge['entry_price']) / self.leverage
+        hedge_pnl_pct = (hedge_profit / hedge_margin) if hedge_margin > 0 else 0
+
+        print(f"  📊 Profit protection hedge check:")
+        print(f"     Hedge PnL: ${hedge_profit:.4f} ({hedge_pnl_pct*100:.2f}%)")
+        print(f"     Main UPNL: ${main_current_upnl:.4f} (peak: ${main_peak_upnl:.4f})")
+
+        # Gate 1: Hedge reaches 10% profit
+        if hedge_pnl_pct >= self.PROFIT_HEDGE_PROFIT_GATE:
+            print(f"  🎯 Gate 1: Hedge hit {self.PROFIT_HEDGE_PROFIT_GATE*100:.0f}% profit target!")
+            return (True, "profit_target")
+
+        # Gate 2: Main drops to 50% of peak
+        if main_peak_upnl > 0:
+            main_pct_of_peak = main_current_upnl / main_peak_upnl
+            if main_pct_of_peak <= self.PROFIT_HEDGE_MAIN_DROP_GATE:
+                print(f"  📉 Gate 2: Main at {main_pct_of_peak*100:.0f}% of peak (threshold: {self.PROFIT_HEDGE_MAIN_DROP_GATE*100:.0f}%)")
+                return (True, "main_dropped")
+
+        # Gate 3: Stop loss at -5%
+        if hedge_pnl_pct <= self.PROFIT_HEDGE_STOP_LOSS:
+            print(f"  🛑 Gate 3: Hedge stop loss hit ({self.PROFIT_HEDGE_STOP_LOSS*100:.0f}%)")
+            return (True, "stop_loss")
+
+        return (False, "hold")
+
+    def close_profit_protection_hedge(self, main_position_key: str, reason: str) -> Optional[Dict]:
+        """
+        Close the profit protection hedge.
+
+        Args:
+            main_position_key: Key of the main position
+            reason: Reason for closing (profit_target, main_dropped, stop_loss)
+
+        Returns:
+            Order result or None
+        """
+        profit_hedge_key = f"profit_hedge:{main_position_key}"
+
+        if profit_hedge_key not in self.hedges:
+            return None
+
+        hedge = self.hedges[profit_hedge_key]
+        if hedge['remaining'] <= 0:
+            return None
+
+        try:
+            close_amount = hedge['size'] * hedge['remaining']
+            close_side = hedge['side']
+            position_side = hedge['position_side']
+
+            params = {
+                'marginCoin': 'USDT',
+                'tradeSide': 'close',
+                'holdSide': position_side
+            }
+
+            print(f"  🔻 Closing profit protection hedge ({reason}): {hedge['symbol']} {close_amount:.6f}")
+            order = self.exchange.create_market_order(
+                hedge['symbol'], close_side, close_amount, params=params
+            )
+
+            if order:
+                realized_pnl = float(order.get('info', {}).get('realizedPnl', 0))
+                self.stats['total_hedge_pnl'] += realized_pnl
+                self.stats['hedges_closed'] += 1
+                self.stats['profit_protection_hedges_closed'] = self.stats.get('profit_protection_hedges_closed', 0) + 1
+
+                # Clean up
+                del self.hedges[profit_hedge_key]
+                self._save_state()
+
+                print(f"  ✅ Profit protection hedge closed ({reason}): realized=${realized_pnl:.2f}")
+                return order
+
+        except Exception as e:
+            print(f"  ❌ Failed to close profit protection hedge: {e}")
+
+        return None
+
+    def transition_profit_hedge_to_main(self, main_position_key: str) -> Optional[Dict]:
+        """
+        Transition profit protection hedge to become a main position.
+
+        Called when the original main position closes. The hedge is released
+        from hedge tracking and returned as position data for the main system
+        to track as a new main position.
+
+        Args:
+            main_position_key: Key of the original main position
+
+        Returns:
+            Position data dict for the new main position, or None
+        """
+        profit_hedge_key = f"profit_hedge:{main_position_key}"
+
+        if profit_hedge_key not in self.hedges:
+            return None
+
+        hedge = self.hedges[profit_hedge_key]
+        if hedge['remaining'] <= 0:
+            del self.hedges[profit_hedge_key]
+            self._save_state()
+            return None
+
+        # Prepare position data for main system
+        new_main_position = {
+            'symbol': hedge['symbol'],
+            'side': hedge['side'],
+            'position_side': hedge['position_side'],
+            'entry_price': hedge['entry_price'],
+            'amount': hedge['size'] * hedge['remaining'],
+            'size': hedge['size'] * hedge['remaining'],
+            'opened_at': hedge['opened_at'],
+            'transitioned_from': 'profit_protection_hedge',
+            'original_main_key': main_position_key
+        }
+
+        print(f"\n  🔄 TRANSITIONING profit hedge to main position:")
+        print(f"     Symbol: {hedge['symbol']}")
+        print(f"     Side: {hedge['position_side'].upper()}")
+        print(f"     Size: {new_main_position['amount']:.6f}")
+        print(f"     Entry: ${hedge['entry_price']:.6f}")
+
+        # Remove from hedge tracking
+        del self.hedges[profit_hedge_key]
+        self.stats['hedges_transitioned_to_main'] = self.stats.get('hedges_transitioned_to_main', 0) + 1
+        self._save_state()
+
+        return new_main_position
+
+    def has_profit_protection_hedge(self, main_position_key: str) -> bool:
+        """Check if main position has an active profit protection hedge."""
+        profit_hedge_key = f"profit_hedge:{main_position_key}"
+        if profit_hedge_key in self.hedges:
+            return self.hedges[profit_hedge_key]['remaining'] > 0
+        return False
+
+    def on_main_position_closed(self, main_position_key: str) -> Optional[Dict]:
+        """
+        Called when main position is closed - handle hedge transition.
+
+        For profit protection hedges: Transition to become new main position.
+        For regular hedges: Release as independent position.
+
+        Args:
+            main_position_key: Key of the main position
+
+        Returns:
+            New main position data if profit hedge was transitioned, else None
         """
         if not self.enabled:
-            return
+            return None
 
+        # PRIORITY: Check for profit protection hedge first - transition to main
+        new_main_position = self.transition_profit_hedge_to_main(main_position_key)
+        if new_main_position:
+            print(f"  ✅ Profit protection hedge transitioned to main position")
+            # Also clean up any regular hedges
+            if main_position_key in self.hedges:
+                del self.hedges[main_position_key]
+            if main_position_key in self.gates:
+                del self.gates[main_position_key]
+            self._save_state()
+            return new_main_position
+
+        # Handle regular entry hedges (release as independent)
         if main_position_key in self.hedges:
             hedge = self.hedges[main_position_key]
             if hedge['remaining'] > 0:
@@ -634,6 +931,7 @@ class HedgeGateway:
             del self.gates[main_position_key]
 
         self._save_state()
+        return None
 
     def get_stats(self) -> Dict:
         """Get hedge gateway statistics."""
@@ -652,6 +950,9 @@ class HedgeGateway:
         print(f"   Total hedge P&L: ${stats['total_hedge_pnl']:.2f}")
         print(f"   Reversion closes: {stats['reversion_closes']}")
         print(f"   Surplus dumps: {stats['surplus_dumps']}")
+        print(f"   Profit protection hedges opened: {stats.get('profit_protection_hedges_opened', 0)}")
+        print(f"   Profit protection hedges closed: {stats.get('profit_protection_hedges_closed', 0)}")
+        print(f"   Hedges transitioned to main: {stats.get('hedges_transitioned_to_main', 0)}")
 
 
 # Singleton instance
