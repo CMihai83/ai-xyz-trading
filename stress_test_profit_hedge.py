@@ -16,14 +16,20 @@ Scenarios:
 9. Dead Cat Bounce - Drop, small recovery, then continued drop
 
 Author: Claude + Grok Consortium
-Version: 1.2.5
+Version: 1.2.6
 Date: January 14, 2026
+
+V1.2.6 Changes:
+- DISABLED MAIN_DROP_REQUIRES_HEDGE_LOSS (just shifted exits to hedge_stop_loss)
+- DISABLED RECOVERY_DETECTION (just shifted exits to hedge_stop_loss)
+- Conclusion: v_shape_recovery (-56.7%) is unfixable like dead_cat_bounce (-827%)
+- Both scenarios are fundamentally adversarial to the hedge strategy
+- Accept these as known weaknesses - overall +11.4% improvement is still positive
 
 V1.2.5 Changes:
 - DISABLED profit taking delay (caused -39.9% flash_crash regression, -87.7% black_swan_down)
 - DISABLED trailing stop delay (caused overall -6.0% vs +11.4% with delays off)
 - Conclusion: dead_cat_bounce (-827%) is unfixable without hurting other scenarios
-- Accept dead_cat_bounce loss - overall +11.4% improvement is still positive
 
 V1.2.4 Changes:
 - Added main_drop delay (30 periods) to prevent premature exits during bounces
@@ -365,6 +371,17 @@ class ProfitProtectionHedgeStressTest:
     # Keeping trailing stop instant allows quick exits when hedge peaks early
     TRAILING_STOP_DELAY_ENABLED = False  # DISABLED - hurts most scenarios
     TRAILING_STOP_DELAY_PERIODS = 30     # Not used when disabled
+
+    # V1.2.6: Main Drop Requires Hedge Loss - DISABLED (didn't fix v_shape_recovery)
+    # Testing showed this just shifts exits from main_drop to hedge_stop_loss
+    # The v_shape_recovery scenario (-56.7%) is unfixable like dead_cat_bounce (-827%)
+    MAIN_DROP_REQUIRES_HEDGE_LOSS = False  # DISABLED - no improvement
+    MAIN_DROP_HEDGE_LOSS_THRESHOLD = -0.03  # Not used when disabled
+
+    # V1.2.6: Recovery Detection - DISABLED (didn't fix v_shape_recovery)
+    # Testing showed this just shifts exits from main_drop to hedge_stop_loss
+    RECOVERY_DETECTION_ENABLED = False    # DISABLED - no improvement
+    RECOVERY_LOOKBACK_PERIODS = 5         # Not used when disabled
 
     def __init__(self, leverage: int = 10, position_size_usd: float = 10.0):
         self.leverage = leverage
@@ -736,10 +753,23 @@ class ProfitProtectionHedgeStressTest:
 
                 # Gate 4: Main drops to 50% of peak
                 # V1.2.4: Add delay before main_drop can trigger (fixes dead_cat_bounce)
+                # V1.2.6: Only trigger if hedge is also losing AND not recovering (fixes v_shape_recovery)
                 main_drop_delay_passed = (not self.MAIN_DROP_DELAY_ENABLED or
                                           periods_since_hedge >= self.MAIN_DROP_DELAY_PERIODS)
 
-                if peak_upnl > 0 and upnl <= peak_upnl * self.MAIN_DROP_GATE and main_drop_delay_passed:
+                # V1.2.6: Check if hedge is losing before allowing main_drop gate
+                hedge_loss_check_passed = (not self.MAIN_DROP_REQUIRES_HEDGE_LOSS or
+                                           hedge_pct <= self.MAIN_DROP_HEDGE_LOSS_THRESHOLD)
+
+                # V1.2.6: Recovery detection - block main_drop if price is recovering
+                recovery_detected = False
+                if self.RECOVERY_DETECTION_ENABLED and i >= self.RECOVERY_LOOKBACK_PERIODS:
+                    # Check if current price is higher than average of lookback period
+                    lookback_avg = np.mean(prices[i - self.RECOVERY_LOOKBACK_PERIODS:i])
+                    if price > lookback_avg:
+                        recovery_detected = True
+
+                if peak_upnl > 0 and upnl <= peak_upnl * self.MAIN_DROP_GATE and main_drop_delay_passed and hedge_loss_check_passed and not recovery_detected:
                     final_pnl = upnl
                     hedge_pnl = h_upnl
                     exit_reason = "main_drop"
