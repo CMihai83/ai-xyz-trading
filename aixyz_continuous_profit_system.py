@@ -46,6 +46,14 @@ except ImportError as e:
     print(f"⚠️ DynamicDeltaEngine not available: {e}")
     DYNAMIC_DELTA_ENGINE_AVAILABLE = False
 
+# Sprint 14: Pre-Trade Backtest Validator (Grok recommendation)
+try:
+    from pre_trade_backtest import PreTradeBacktester
+    PRE_TRADE_BACKTEST_AVAILABLE = True
+except ImportError as e:
+    print(f"⚠️ PreTradeBacktester not available: {e}")
+    PRE_TRADE_BACKTEST_AVAILABLE = False
+
 # V2.0.0: Prediction Model Integration
 from prediction_service import get_prediction_service
 from prediction_integration import PredictionIntegration
@@ -219,6 +227,20 @@ class AIXYZContinuousProfit:
                 self.dynamic_delta_engine = None
         else:
             self.dynamic_delta_engine = None
+
+        # Sprint 14: Pre-Trade Backtest Validator
+        if PRE_TRADE_BACKTEST_AVAILABLE:
+            try:
+                self.pre_trade_backtester = PreTradeBacktester(self.exchange)
+                print("📊 Sprint 14: PreTradeBacktester initialized - Validates trades before entry")
+                print("   - Win rate, Sharpe ratio, profit factor analysis")
+                print("   - 30-day historical backtest per symbol")
+                print("   - Parameter optimization before each trade")
+            except Exception as e:
+                print(f"⚠️ PreTradeBacktester initialization failed: {e}")
+                self.pre_trade_backtester = None
+        else:
+            self.pre_trade_backtester = None
 
         # Use Scanner v4.0 (scans ALL markets with two-stage filtering)
         self.scanner = ScannerV4(exchange=self.exchange)
@@ -620,9 +642,10 @@ class AIXYZContinuousProfit:
         # Zone thresholds - UPDATED: wider neutral zone (-15% to +5%)
         # Sprint 14: STOP LOSS DISABLED per user request
         # "Stop loss is final, positions can recover" - Instead, expand delta in extreme markets
+        # Sprint 14: Grok optimal parameters based on crypto market behavior
         self.zone_thresholds = {
-            'averaging': -0.35,  # Start averaging at -35% UPNL (optimized from -25%) - more selective
-            'profit_taking': 0.05,  # Enter surplus dump at +5% UPNL (was +50%)
+            'averaging': -0.25,  # Grok: -25% UPNL (earlier intervention, safer with leverage)
+            'profit_taking': 0.05,  # Enter surplus dump at +5% UPNL
             'stop_loss': -0.95  # Sprint 14: Moved to -95% (liquidation prevention ONLY, not stop loss)
         }
 
@@ -1867,6 +1890,30 @@ class AIXYZContinuousProfit:
             else:
                 print(f"  ✅ {filter_reason}")
 
+            # Sprint 14: Pre-Trade Backtest Validation (Grok recommendation)
+            # Run 30-day backtest before opening to validate trade viability
+            if self.pre_trade_backtester:
+                try:
+                    backtest_direction = 'long' if direction.lower() in ['buy', 'long', 'bullish'] else 'short'
+                    backtest_result = self.pre_trade_backtester.validate_trade(
+                        symbol=symbol,
+                        direction=backtest_direction,
+                        days=30,
+                        timeframe='15m'
+                    )
+                    print(f"  📊 Pre-Trade Backtest: {backtest_result.reasoning}")
+                    print(f"     Time: {backtest_result.backtest_time_ms}ms | Score: {backtest_result.score:.2f}")
+
+                    if not backtest_result.should_trade:
+                        print(f"  ❌ Entry BLOCKED by backtest: score {backtest_result.score:.2f} below threshold")
+                        return False
+
+                    # Log optimal params for reference
+                    if backtest_result.optimal_params:
+                        print(f"     Optimal params: {backtest_result.optimal_params}")
+                except Exception as e:
+                    print(f"  ⚠️ Pre-trade backtest failed (proceeding anyway): {e}")
+
             # V2.0.0: Prediction-based entry filter
             if hasattr(self, 'prediction_integration') and self.prediction_integration:
                 # Handle all direction formats: buy/long/bullish -> long, sell/short/bearish -> short, neutral -> neutral
@@ -1956,21 +2003,22 @@ class AIXYZContinuousProfit:
                                 max_correlation = abs(corr)
                                 correlated_with = active_symbol
 
-                    # Sprint 14: Correlation-based position sizing (Grok Option C)
-                    # - Skip at ρ > 0.9 (near-identical exposure)
-                    # - Reduce to 50% at ρ 0.7-0.9
-                    # - Normal 100% at ρ 0.3-0.7
+                    # Sprint 14: Correlation-based position sizing (Grok Optimized)
+                    # Grok optimal thresholds for crypto:
+                    # - Skip at ρ > 0.85 (near-identical exposure)
+                    # - Reduce to 50% at ρ 0.65-0.85
+                    # - Normal 100% at ρ < 0.65
                     # - Increase to 120% at ρ < -0.5 (negative correlation = hedge)
-                    if max_correlation > 0.9:
+                    if max_correlation > 0.85:
                         print(f"  🔗 Skipping {symbol}: extremely correlated with {correlated_with} ({max_correlation:.2f})")
-                        print(f"     ρ > 0.9 = near-identical exposure, no diversification benefit")
+                        print(f"     ρ > 0.85 = near-identical exposure, no diversification benefit")
                         return False
-                    elif max_correlation > 0.7:
+                    elif max_correlation > 0.65:
                         # Reduce position size to 50% instead of skipping
                         self.correlation_size_multiplier = 0.5
                         print(f"  🔗 High correlation with {correlated_with}: {max_correlation:.2f}")
-                        print(f"     Position size reduced to 50% (ρ 0.7-0.9 range)")
-                    elif max_correlation > 0.5:
+                        print(f"     Position size reduced to 50% (ρ 0.65-0.85 range)")
+                    elif max_correlation > 0.50:
                         self.correlation_size_multiplier = 0.75
                         print(f"  ⚠️  Moderate correlation with {correlated_with}: {max_correlation:.2f}")
                         print(f"     Position size reduced to 75%")
@@ -4297,7 +4345,8 @@ class AIXYZContinuousProfit:
             else:
                 # Fall back to traditional threshold check
                 # Category 3.3: Time-decaying profit target (+25% faster exits on stale positions)
-                base_threshold = 0.70
+                # Grok: 80% of peak captures more upside during momentum (was 70%)
+                base_threshold = 0.80
                 time_adjusted_threshold = self.get_time_adjusted_profit_target(symbol, base_threshold)
                 threshold = peak * time_adjusted_threshold
                 if upnl <= threshold:
@@ -4311,11 +4360,11 @@ class AIXYZContinuousProfit:
                     print(f"  🧠 RL Agent says HOLD (confidence: {rl_recommendation.get('confidence', 0):.2f})")
           except Exception as e:
             print(f"  ⚠️ RL Agent failed, using fallback: {e}")
-            # Calculate exit threshold: 70% of peak (updated)
-            threshold = peak * 0.70
+            # Grok: 80% of peak for trailing stop (was 70%)
+            threshold = peak * 0.80
             should_take_profit = (upnl <= threshold)
             if should_take_profit:
-                print(f"  🎯 Fallback threshold trigger: ${upnl:.4f} <= ${threshold:.4f}")
+                print(f"  🎯 Fallback threshold trigger: ${upnl:.4f} <= ${threshold:.4f} (80% of peak)")
 
         # ============================================================================
         # ORDERBOOK IMBALANCE CHECK (Grok Recommendation - Sprint 14)
@@ -4331,13 +4380,14 @@ class AIXYZContinuousProfit:
                 position_side = 'long' if position.get('side') in ['buy', 'long'] else 'short'
 
                 # For LONGS: Strong bid imbalance = potential recovery, delay exit
-                if position_side == 'long' and imbalance_ratio > 0.2:
+                # Grok: 0.3 threshold for reliable signals (was 0.2)
+                if position_side == 'long' and imbalance_ratio > 0.3:
                     print(f"  📊 Orderbook: Strong bid imbalance ({imbalance_ratio:.2f}) - DELAY exit")
                     print(f"     Bid/Ask ratio suggests potential recovery")
                     should_take_profit = False  # Override exit decision
 
                 # For SHORTS: Strong ask imbalance = potential recovery, delay exit
-                elif position_side == 'short' and imbalance_ratio < -0.2:
+                elif position_side == 'short' and imbalance_ratio < -0.3:
                     print(f"  📊 Orderbook: Strong ask imbalance ({imbalance_ratio:.2f}) - DELAY exit")
                     print(f"     Bid/Ask ratio suggests potential recovery")
                     should_take_profit = False  # Override exit decision
