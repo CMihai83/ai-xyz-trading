@@ -1,0 +1,332 @@
+{
+  "timestamp": "2026-01-14T18:50:02.818633",
+  "version": "2.0.0",
+  "target_status": {
+    "timestamp": "2026-01-14T18:50:02.818635",
+    "overall_status": "BELOW_TARGETS",
+    "metrics": {
+      "alerts": {
+        "precision": {
+          "current": 0.8666666666666667,
+          "target": 0.9,
+          "meets_target": false
+        },
+        "recall": {
+          "current": 0.37142857142857144,
+          "target": 0.85,
+          "meets_target": false
+        },
+        "f1_score": {
+          "current": 0.52,
+          "target": 0.87,
+          "meets_target": false
+        },
+        "false_positive_rate": {
+          "current": 0.13333333333333333,
+          "target": 0.1,
+          "meets_target": false
+        },
+        "false_negative_rate": {
+          "current": 0.6285714285714286,
+          "target": 0.15,
+          "meets_target": false
+        }
+      },
+      "leverage": {
+        "correct_pct": {
+          "current": 0.775,
+          "target": 0.8,
+          "meets_target": false
+        },
+        "too_aggressive_pct": {
+          "current": 0.225,
+          "target": 0.15,
+          "meets_target": false
+        }
+      },
+      "circuit_breaker": {
+        "effectiveness": {
+          "current": 0.6153846153846154,
+          "target": 0.7,
+          "meets_target": false
+        }
+      },
+      "hysteresis": {
+        "accuracy": {
+          "current": 0.6333333333333333,
+          "target": 0.8,
+          "meets_target": false
+        }
+      },
+      "shadow_trading": {
+        "win_rate": {
+          "current": 0.44,
+          "target": 0.5,
+          "meets_target": false
+        },
+        "risk_check_accuracy": {
+          "current": 0.84,
+          "target": 0.7,
+          "meets_target": true
+        }
+      }
+    }
+  },
+  "performance_targets": {
+    "alert_precision_min": 0.9,
+    "alert_recall_min": 0.85,
+    "alert_f1_min": 0.87,
+    "leverage_correct_min": 0.8,
+    "circuit_breaker_effectiveness_min": 0.7
+  },
+  "alert_validation": {
+    "overall": {
+      "true_positives": 13,
+      "false_positives": 2,
+      "true_negatives": 13,
+      "false_negatives": 22,
+      "total": 50,
+      "precision": 0.8666666666666667,
+      "recall": 0.37142857142857144,
+      "f1_score": 0.52,
+      "accuracy": 0.52,
+      "false_positive_rate": 0.13333333333333333,
+      "false_negative_rate": 0.6285714285714286,
+      "needs_tuning": true,
+      "tuning_reason": "High false negative rate - consider lowering thresholds"
+    },
+    "by_type": {
+      "averaging": {
+        "true_positives": 5,
+        "false_positives": 0,
+        "true_negatives": 5,
+        "false_negatives": 8,
+        "total": 18,
+        "precision": 1.0,
+        "recall": 0.38461538461538464,
+        "f1_score": 0.5555555555555556,
+        "accuracy": 0.5555555555555556,
+        "false_positive_rate": 0.0,
+        "false_negative_rate": 0.6153846153846154,
+        "needs_tuning": true,
+        "tuning_reason": "High false negative rate - consider lowering thresholds"
+      },
+      "drawdown": {
+        "true_positives": 3,
+        "false_positives": 1,
+        "true_negatives": 4,
+        "false_negatives": 8,
+        "total": 16,
+        "precision": 0.75,
+        "recall": 0.2727272727272727,
+        "f1_score": 0.39999999999999997,
+        "accuracy": 0.4375,
+        "false_positive_rate": 0.2,
+        "false_negative_rate": 0.7272727272727273,
+        "needs_tuning": true,
+        "tuning_reason": "High false positive rate - consider increasing hysteresis"
+      },
+      "margin": {
+        "true_positives": 5,
+        "false_positives": 1,
+        "true_negatives": 4,
+        "false_negatives": 6,
+        "total": 16,
+        "precision": 0.8333333333333334,
+        "recall": 0.45454545454545453,
+        "f1_score": 0.5882352941176471,
+        "accuracy": 0.5625,
+        "false_positive_rate": 0.2,
+        "false_negative_rate": 0.5454545454545454,
+        "needs_tuning": true,
+        "tuning_reason": "High false negative rate - consider lowering thresholds"
+      }
+    }
+  },
+  "leverage_validation": {
+    "overall": {
+      "total": 40,
+      "correct": 31,
+      "correct_pct": 77.5,
+      "too_aggressive": 9,
+      "too_aggressive_pct": 22.5,
+      "too_conservative": 0,
+      "too_conservative_pct": 0.0,
+      "effectiveness_score": 0.775,
+      "needs_adjustment": true
+    },
+    "by_regime": {
+      "TRENDING": {
+        "total": 10,
+        "correct": 8,
+        "correct_pct": 80.0,
+        "too_aggressive": 2,
+        "too_aggressive_pct": 20.0,
+        "too_conservative": 0,
+        "too_conservative_pct": 0.0,
+        "effectiveness_score": 0.8,
+        "needs_adjustment": false
+      },
+      "HIGH_VOLATILITY": {
+        "total": 7,
+        "correct": 5,
+        "correct_pct": 71.42857142857143,
+        "too_aggressive": 2,
+        "too_aggressive_pct": 28.57142857142857,
+        "too_conservative": 0,
+        "too_conservative_pct": 0.0,
+        "effectiveness_score": 0.7142857142857143,
+        "needs_adjustment": true
+      },
+      "EXTREME_VOLATILITY": {
+        "total": 5,
+        "correct": 5,
+        "correct_pct": 100.0,
+        "too_aggressive": 0,
+        "too_aggressive_pct": 0.0,
+        "too_conservative": 0,
+        "too_conservative_pct": 0.0,
+        "effectiveness_score": 1.0,
+        "needs_adjustment": false
+      },
+      "LOW_VOLATILITY": {
+        "total": 6,
+        "correct": 4,
+        "correct_pct": 66.66666666666666,
+        "too_aggressive": 2,
+        "too_aggressive_pct": 33.33333333333333,
+        "too_conservative": 0,
+        "too_conservative_pct": 0.0,
+        "effectiveness_score": 0.6666666666666666,
+        "needs_adjustment": true
+      },
+      "ELEVATED": {
+        "total": 10,
+        "correct": 8,
+        "correct_pct": 80.0,
+        "too_aggressive": 2,
+        "too_aggressive_pct": 20.0,
+        "too_conservative": 0,
+        "too_conservative_pct": 0.0,
+        "effectiveness_score": 0.8,
+        "needs_adjustment": false
+      },
+      "NORMAL": {
+        "total": 2,
+        "correct": 1,
+        "correct_pct": 50.0,
+        "too_aggressive": 1,
+        "too_aggressive_pct": 50.0,
+        "too_conservative": 0,
+        "too_conservative_pct": 0.0,
+        "effectiveness_score": 0.5,
+        "needs_adjustment": true
+      }
+    }
+  },
+  "regime_definitions": {
+    "EXTREME_VOLATILITY": {
+      "atr_range": "3.0-inf",
+      "leverage_range": "1-3x",
+      "description": "Flash crash / extreme conditions. ATR ratio >3.0. Minimal exposure."
+    },
+    "HIGH_VOLATILITY": {
+      "atr_range": "2.0-3.0",
+      "leverage_range": "3-5x",
+      "description": "High volatility regime. ATR ratio 2.0-3.0. Reduced leverage."
+    },
+    "ELEVATED": {
+      "atr_range": "1.5-2.0",
+      "leverage_range": "5-8x",
+      "description": "Elevated volatility. ATR ratio 1.5-2.0. Moderate caution."
+    },
+    "NORMAL": {
+      "atr_range": "0.8-1.5",
+      "leverage_range": "8-12x",
+      "description": "Normal market conditions. ATR ratio 0.8-1.5. Standard parameters."
+    },
+    "LOW_VOLATILITY": {
+      "atr_range": "0.0-0.8",
+      "leverage_range": "10-15x",
+      "description": "Low volatility / ranging. ATR ratio <0.8. Can use higher leverage."
+    },
+    "TRENDING": {
+      "atr_range": "1.0-2.0",
+      "leverage_range": "8-12x",
+      "description": "Clear trend detected (separate from volatility). Favorable conditions."
+    }
+  },
+  "circuit_breaker": {
+    "total": 13,
+    "triggered_correctly": 8,
+    "triggered_incorrectly": 1,
+    "missed_triggers": 4,
+    "effectiveness_score": 0.6153846153846154,
+    "needs_tuning": true
+  },
+  "hysteresis": {
+    "total": 30,
+    "correct": 19,
+    "accuracy": 0.6333333333333333,
+    "triggered_too_early": 1,
+    "triggered_too_late": 10,
+    "recommendation": "decrease_threshold"
+  },
+  "shadow_trading": {
+    "total": 25,
+    "profitable": 11,
+    "losses": 14,
+    "liquidations": 2,
+    "win_rate": 44.0,
+    "avg_pnl_pct": -2.92052478611054,
+    "avg_leverage": 6.72,
+    "risk_check_accuracy": 84.0
+  },
+  "auto_tune_config": {
+    "drawdown_alert_threshold": 0.15,
+    "margin_alert_threshold": 0.8,
+    "averaging_alert_threshold": 5,
+    "hysteresis_samples": 3,
+    "hysteresis_window_sec": 60,
+    "circuit_breaker_consecutive_losses": 5,
+    "circuit_breaker_session_loss_pct": 0.15,
+    "circuit_breaker_cooldown_min": 30,
+    "leverage_limits": {
+      "EXTREME_VOLATILITY": 3,
+      "HIGH_VOLATILITY": 5,
+      "ELEVATED": 8,
+      "NORMAL": 12,
+      "LOW_VOLATILITY": 15,
+      "TRENDING": 12
+    },
+    "last_tuned": null,
+    "tune_count": 0,
+    "change_history": []
+  },
+  "recommendations": [
+    {
+      "area": "alert_thresholds",
+      "issue": "High false negative rate - consider lowering thresholds",
+      "recommendation": "Review and adjust alert thresholds or hysteresis settings",
+      "priority": "HIGH"
+    },
+    {
+      "area": "leverage_limits",
+      "issue": "Too aggressive 22.5% of time",
+      "recommendation": "Reduce max leverage limits, especially in HIGH_VOLATILITY",
+      "priority": "HIGH"
+    },
+    {
+      "area": "circuit_breaker",
+      "issue": "Missing critical triggers",
+      "recommendation": "Lower circuit breaker thresholds for earlier activation",
+      "priority": "HIGH"
+    },
+    {
+      "area": "hysteresis",
+      "issue": "Alerts triggering too late (missing issues)",
+      "recommendation": "Decrease hysteresis_samples from 3 to 2",
+      "priority": "HIGH"
+    }
+  ]
+}

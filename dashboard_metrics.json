@@ -1,0 +1,105 @@
+{
+  "timestamp": "2026-01-14T18:53:43.869167",
+  "operations": {
+    "trade_execution": {
+      "current_avg": 126.12871123647864,
+      "p95": 350,
+      "p99": 350,
+      "target": 100,
+      "status": "GOOD",
+      "within_target_pct": 60.0
+    },
+    "alert_trigger": {
+      "current_avg": 35.52195451168801,
+      "p95": 59.788886312146836,
+      "p99": 59.788886312146836,
+      "target": 50,
+      "status": "OPTIMAL",
+      "within_target_pct": 86.66666666666667
+    },
+    "api_call": {
+      "current_avg": 150.36835325909587,
+      "p95": 251.70098029058818,
+      "p99": 253.90708234968258,
+      "target": 200,
+      "status": "OPTIMAL",
+      "within_target_pct": 83.33333333333334
+    },
+    "redis_operation": {
+      "current_avg": 4.9734128997103095,
+      "p95": 7.943476596652511,
+      "p99": 10.537253073344642,
+      "target": 10,
+      "status": "OPTIMAL",
+      "within_target_pct": 98.0
+    }
+  },
+  "alerts": [
+    {
+      "type": "P99_SPIKE",
+      "operation": "trade_execution",
+      "value": 350,
+      "threshold": 200.0,
+      "severity": "CRITICAL",
+      "message": "P99 latency spike: trade_execution at 350ms (threshold: 200ms)"
+    }
+  ],
+  "component_breakdown": {
+    "trade_execution": {
+      "operation": "trade_execution",
+      "total_avg_ms": 94.54834495704702,
+      "sample_count": 10,
+      "components": {
+        "market_data_fetch": {
+          "avg_ms": 13.642276637029791,
+          "min_ms": 0.5516626058201197,
+          "max_ms": 29.174205370727698,
+          "percentage": 14.42888994326387,
+          "samples": 10
+        },
+        "signal_generation": {
+          "avg_ms": 25.795579929211755,
+          "min_ms": 11.121985246249311,
+          "max_ms": 37.35712905557165,
+          "percentage": 27.282952378416137,
+          "samples": 10
+        },
+        "risk_assessment": {
+          "avg_ms": 9.662291825930293,
+          "min_ms": 2.175039861783234,
+          "max_ms": 16.049619274173995,
+          "percentage": 10.219419314341078,
+          "samples": 10
+        },
+        "order_preparation": {
+          "avg_ms": 5.697247338021784,
+          "min_ms": 1.7605360029402037,
+          "max_ms": 10.025535668423371,
+          "percentage": 6.025750467245115,
+          "samples": 10
+        },
+        "api_submission": {
+          "avg_ms": 25.805490710321905,
+          "min_ms": -0.770886748459283,
+          "max_ms": 53.08008152647689,
+          "percentage": 27.293434614900185,
+          "samples": 10
+        },
+        "confirmation_wait": {
+          "avg_ms": 8.565223864416211,
+          "min_ms": 0.32450805432759644,
+          "max_ms": 14.478204067937352,
+          "percentage": 9.059094443490642,
+          "samples": 10
+        },
+        "state_update": {
+          "avg_ms": 5.3802346521152895,
+          "min_ms": 4.673355708795002,
+          "max_ms": 7.113910177872329,
+          "percentage": 5.690458838342978,
+          "samples": 10
+        }
+      }
+    }
+  }
+}

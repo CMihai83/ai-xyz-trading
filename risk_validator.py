@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Risk Management Validator for AI-XYZ Trading System
-V2.0.0 - January 14, 2026
+V2.1.0 - January 14, 2026
 
 Validates risk management systems with live/shadow data:
 - Dynamic leverage trigger validation
@@ -9,6 +9,8 @@ Validates risk management systems with live/shadow data:
 - Circuit breaker effectiveness testing
 - Hysteresis tuning recommendations
 - Explicit performance targets with auto-tuning
+- ADX-based trend detection for regime differentiation
+- Auto-tune guardrails for safe parameter adjustment
 
 Sprint 6 - Grok Recommendation:
 "Conduct live or shadow trading to validate dynamic leverage triggers
@@ -19,6 +21,11 @@ Sprint 7 Enhancement (Grok):
 "Set explicit precision (>90%), recall (>85%), and F1 thresholds.
 Document regime definitions (volatility bands using ATR).
 Integrate real-time feedback from shadow trading into live risk models."
+
+Sprint 8 Enhancement (Grok):
+"Resolve ATR range overlap between NORMAL and TRENDING regimes using ADX.
+Implement strict guardrails for auto-tuning (leverage caps, human approval,
+rollback capability)."
 
 Author: Claude + Grok Consortium
 """
@@ -158,20 +165,210 @@ REGIME_DEFINITIONS = {
 }
 
 
-def get_regime_from_atr_ratio(atr_ratio: float, is_trending: bool = False) -> str:
+# =============================================================================
+# ADX-BASED TREND DETECTION (Sprint 8 - Grok Recommendation)
+# =============================================================================
+
+@dataclass
+class ADXResult:
     """
-    Determine market regime from ATR ratio.
+    ADX (Average Directional Index) calculation result.
+
+    Grok Sprint 8: "Resolve ATR range overlap between NORMAL and TRENDING
+    regimes by incorporating secondary indicators (e.g., ADX for trend strength)."
+
+    ADX Interpretation:
+    - ADX < 20: Weak/No trend (ranging market)
+    - ADX 20-25: Emerging trend
+    - ADX 25-50: Strong trend
+    - ADX 50-75: Very strong trend
+    - ADX > 75: Extremely strong trend (rare)
+    """
+    adx: float
+    plus_di: float  # +DI (positive directional indicator)
+    minus_di: float  # -DI (negative directional indicator)
+    trend_strength: str  # WEAK, EMERGING, STRONG, VERY_STRONG
+    trend_direction: str  # BULLISH, BEARISH, NEUTRAL
+
+    @property
+    def is_trending(self) -> bool:
+        """Check if market is trending (ADX >= 25)."""
+        return self.adx >= 25.0
+
+    @property
+    def is_strong_trend(self) -> bool:
+        """Check if trend is strong (ADX >= 40)."""
+        return self.adx >= 40.0
+
+
+# ADX thresholds for trend classification
+ADX_THRESHOLDS = {
+    'weak': 20.0,       # ADX < 20 = weak/no trend
+    'emerging': 25.0,   # ADX 20-25 = emerging trend
+    'strong': 40.0,     # ADX 25-40 = strong trend
+    'very_strong': 50.0 # ADX > 50 = very strong trend
+}
+
+
+def calculate_adx(highs: List[float], lows: List[float], closes: List[float],
+                  period: int = 14) -> Optional[ADXResult]:
+    """
+    Calculate ADX (Average Directional Index) for trend strength detection.
+
+    This resolves the NORMAL vs TRENDING regime overlap by using ADX
+    as a secondary indicator alongside ATR.
+
+    Args:
+        highs: List of high prices (most recent last)
+        lows: List of low prices
+        closes: List of close prices
+        period: ADX period (default 14)
+
+    Returns:
+        ADXResult with trend strength and direction
+    """
+    if len(highs) < period + 1 or len(lows) < period + 1 or len(closes) < period + 1:
+        return None
+
+    try:
+        # Calculate True Range and Directional Movement
+        tr_list = []
+        plus_dm_list = []
+        minus_dm_list = []
+
+        for i in range(1, len(highs)):
+            high = highs[i]
+            low = lows[i]
+            prev_high = highs[i - 1]
+            prev_low = lows[i - 1]
+            prev_close = closes[i - 1]
+
+            # True Range
+            tr = max(
+                high - low,
+                abs(high - prev_close),
+                abs(low - prev_close)
+            )
+            tr_list.append(tr)
+
+            # Directional Movement
+            up_move = high - prev_high
+            down_move = prev_low - low
+
+            plus_dm = up_move if up_move > down_move and up_move > 0 else 0
+            minus_dm = down_move if down_move > up_move and down_move > 0 else 0
+
+            plus_dm_list.append(plus_dm)
+            minus_dm_list.append(minus_dm)
+
+        # Smooth the values using Wilder's smoothing
+        def wilder_smooth(values: List[float], period: int) -> List[float]:
+            if len(values) < period:
+                return []
+            smoothed = [sum(values[:period])]
+            for i in range(period, len(values)):
+                smoothed.append(smoothed[-1] - (smoothed[-1] / period) + values[i])
+            return smoothed
+
+        atr_smooth = wilder_smooth(tr_list, period)
+        plus_dm_smooth = wilder_smooth(plus_dm_list, period)
+        minus_dm_smooth = wilder_smooth(minus_dm_list, period)
+
+        if not atr_smooth or not plus_dm_smooth or not minus_dm_smooth:
+            return None
+
+        # Calculate +DI and -DI
+        plus_di_list = []
+        minus_di_list = []
+        dx_list = []
+
+        for i in range(len(atr_smooth)):
+            if atr_smooth[i] > 0:
+                plus_di = (plus_dm_smooth[i] / atr_smooth[i]) * 100
+                minus_di = (minus_dm_smooth[i] / atr_smooth[i]) * 100
+            else:
+                plus_di = 0
+                minus_di = 0
+
+            plus_di_list.append(plus_di)
+            minus_di_list.append(minus_di)
+
+            # DX (Directional Index)
+            di_sum = plus_di + minus_di
+            if di_sum > 0:
+                dx = abs(plus_di - minus_di) / di_sum * 100
+            else:
+                dx = 0
+            dx_list.append(dx)
+
+        # Calculate ADX (smoothed DX)
+        adx_smooth = wilder_smooth(dx_list, period)
+
+        if not adx_smooth:
+            return None
+
+        # Get final values
+        adx = adx_smooth[-1]
+        plus_di = plus_di_list[-1]
+        minus_di = minus_di_list[-1]
+
+        # Determine trend strength
+        if adx >= ADX_THRESHOLDS['very_strong']:
+            trend_strength = 'VERY_STRONG'
+        elif adx >= ADX_THRESHOLDS['strong']:
+            trend_strength = 'STRONG'
+        elif adx >= ADX_THRESHOLDS['emerging']:
+            trend_strength = 'EMERGING'
+        else:
+            trend_strength = 'WEAK'
+
+        # Determine trend direction
+        if plus_di > minus_di and adx >= ADX_THRESHOLDS['weak']:
+            trend_direction = 'BULLISH'
+        elif minus_di > plus_di and adx >= ADX_THRESHOLDS['weak']:
+            trend_direction = 'BEARISH'
+        else:
+            trend_direction = 'NEUTRAL'
+
+        return ADXResult(
+            adx=adx,
+            plus_di=plus_di,
+            minus_di=minus_di,
+            trend_strength=trend_strength,
+            trend_direction=trend_direction
+        )
+
+    except Exception as e:
+        logger.error(f"ADX calculation error: {e}")
+        return None
+
+
+def get_regime_from_atr_ratio(atr_ratio: float, is_trending: bool = False,
+                               adx_result: Optional[ADXResult] = None) -> str:
+    """
+    Determine market regime from ATR ratio and ADX.
+
+    Sprint 8 Enhancement: Uses ADX to differentiate NORMAL vs TRENDING
+    when ATR is in the overlapping 1.0-2.0 range.
 
     Args:
         atr_ratio: Current ATR / Price ratio (e.g., 1.5 = 1.5% daily range)
-        is_trending: Whether a clear trend is detected
+        is_trending: Legacy parameter (use adx_result instead)
+        adx_result: ADX calculation result for trend detection
 
     Returns:
         Regime name string
     """
-    if is_trending and 1.0 <= atr_ratio <= 2.0:
+    # Use ADX for trend detection if available (Sprint 8 enhancement)
+    if adx_result is not None:
+        # ADX-based TRENDING detection (resolves NORMAL vs TRENDING overlap)
+        if adx_result.is_trending and 0.8 <= atr_ratio <= 2.0:
+            return 'TRENDING'
+    elif is_trending and 1.0 <= atr_ratio <= 2.0:
+        # Fallback to legacy is_trending parameter
         return 'TRENDING'
 
+    # ATR-based volatility regimes
     if atr_ratio >= 3.0:
         return 'EXTREME_VOLATILITY'
     elif atr_ratio >= 2.0:
@@ -182,6 +379,26 @@ def get_regime_from_atr_ratio(atr_ratio: float, is_trending: bool = False) -> st
         return 'NORMAL'
     else:
         return 'LOW_VOLATILITY'
+
+
+def get_regime_with_adx(atr_ratio: float, highs: List[float],
+                        lows: List[float], closes: List[float]) -> Tuple[str, Optional[ADXResult]]:
+    """
+    Get market regime using both ATR and ADX indicators.
+
+    This is the recommended function for Sprint 8+ to properly
+    differentiate between NORMAL and TRENDING regimes.
+
+    Args:
+        atr_ratio: ATR / Price ratio
+        highs, lows, closes: Price data for ADX calculation
+
+    Returns:
+        Tuple of (regime_name, adx_result)
+    """
+    adx_result = calculate_adx(highs, lows, closes)
+    regime = get_regime_from_atr_ratio(atr_ratio, adx_result=adx_result)
+    return regime, adx_result
 
 
 def get_regime_leverage_range(regime: str) -> Tuple[int, int]:
@@ -195,6 +412,48 @@ def get_regime_leverage_range(regime: str) -> Tuple[int, int]:
 # =============================================================================
 # AUTO-TUNING CONFIGURATION
 # =============================================================================
+
+@dataclass
+class AutoTuneGuardrails:
+    """
+    Sprint 8 Enhancement: Guardrails for auto-tuning to prevent dangerous changes.
+
+    Grok Sprint 8: "Implement strict guardrails for auto-tuning in 'apply mode'
+    (e.g., temporary leverage caps, mandatory human approval for changes above a threshold)."
+    """
+    # Minimum data requirements before allowing auto-tune
+    min_alert_samples: int = 50           # Need 50+ alert validations
+    min_leverage_samples: int = 30        # Need 30+ leverage validations
+    min_circuit_breaker_samples: int = 15 # Need 15+ CB events
+
+    # Cooldown between auto-tune applications
+    min_hours_between_tunes: int = 24     # At least 24 hours between tunes
+    max_tunes_per_week: int = 3           # Maximum 3 tunings per week
+
+    # Change magnitude limits (per single tune)
+    max_hysteresis_change: int = 1        # Can only change by ±1
+    max_leverage_change: int = 2          # Can only change leverage by ±2
+    max_threshold_change_pct: float = 0.10 # Can only change thresholds by 10%
+
+    # Absolute limits (cannot be exceeded even with tuning)
+    absolute_min_leverage: int = 2        # Never go below 2x leverage
+    absolute_max_leverage: int = 20       # Never exceed 20x leverage
+    absolute_min_hysteresis: int = 2      # Minimum 2 consecutive samples
+    absolute_max_hysteresis: int = 6      # Maximum 6 consecutive samples
+
+    # Severity thresholds requiring human approval
+    high_severity_leverage_change: int = 3  # Changes ≥3 need approval
+    critical_regime_changes: List[str] = field(default_factory=lambda: [
+        'EXTREME_VOLATILITY', 'HIGH_VOLATILITY'
+    ])  # Changes to these regimes always need review
+
+    # Rollback tracking
+    max_changes_before_evaluation: int = 5  # After 5 changes, force evaluation
+    rollback_window_hours: int = 72         # Can rollback within 72 hours
+
+    def to_dict(self) -> Dict:
+        return asdict(self)
+
 
 @dataclass
 class AutoTuneConfig:
@@ -226,6 +485,9 @@ class AutoTuneConfig:
     # Meta
     last_tuned: Optional[str] = None
     tune_count: int = 0
+
+    # Sprint 8: Change history for rollback
+    change_history: List[Dict] = field(default_factory=list)
 
     def to_dict(self) -> Dict:
         return asdict(self)
@@ -287,12 +549,16 @@ class RiskValidator:
     """
 
     def __init__(self, targets: Optional[PerformanceTargets] = None,
-                 config: Optional[AutoTuneConfig] = None):
+                 config: Optional[AutoTuneConfig] = None,
+                 guardrails: Optional[AutoTuneGuardrails] = None):
         # Performance targets
         self.targets = targets or PerformanceTargets()
 
         # Auto-tune configuration
         self.config = config or self._load_config()
+
+        # Sprint 8: Guardrails for safe auto-tuning
+        self.guardrails = guardrails or AutoTuneGuardrails()
 
         # Alert tracking
         self.alert_validations: List[AlertValidation] = []
@@ -999,54 +1265,230 @@ class RiskValidator:
         return status
 
     # =========================================================================
-    # AUTO-TUNING (Sprint 7)
+    # AUTO-TUNING (Sprint 7 + Sprint 8 Guardrails)
     # =========================================================================
 
-    def auto_tune(self, dry_run: bool = True) -> Dict[str, Any]:
+    def _check_guardrail_prerequisites(self) -> Tuple[bool, List[str]]:
+        """
+        Check if guardrail prerequisites are met for auto-tuning.
+
+        Returns:
+            Tuple of (can_tune: bool, blocking_reasons: List[str])
+        """
+        reasons = []
+        g = self.guardrails
+
+        # Check minimum data requirements
+        alert = self.get_alert_accuracy()
+        if alert.get('total', 0) < g.min_alert_samples:
+            reasons.append(f"Insufficient alert data: {alert.get('total', 0)}/{g.min_alert_samples}")
+
+        leverage = self.get_leverage_effectiveness()
+        if leverage.get('total', 0) < g.min_leverage_samples:
+            reasons.append(f"Insufficient leverage data: {leverage.get('total', 0)}/{g.min_leverage_samples}")
+
+        cb = self.get_circuit_breaker_effectiveness()
+        if cb.get('total', 0) < g.min_circuit_breaker_samples:
+            reasons.append(f"Insufficient circuit breaker data: {cb.get('total', 0)}/{g.min_circuit_breaker_samples}")
+
+        # Check cooldown period
+        if self.config.last_tuned:
+            try:
+                last_tune_time = datetime.fromisoformat(self.config.last_tuned)
+                hours_since_tune = (datetime.now() - last_tune_time).total_seconds() / 3600
+                if hours_since_tune < g.min_hours_between_tunes:
+                    reasons.append(f"Cooldown active: {hours_since_tune:.1f}/{g.min_hours_between_tunes} hours")
+            except (ValueError, TypeError):
+                pass  # Invalid timestamp, allow tuning
+
+        # Check weekly limit (approximate by tune count in change history)
+        recent_tunes = sum(1 for h in self.config.change_history[-10:]
+                         if h.get('timestamp'))  # Simple approximation
+        if recent_tunes >= g.max_tunes_per_week:
+            reasons.append(f"Weekly tune limit reached: {recent_tunes}/{g.max_tunes_per_week}")
+
+        # Check max changes before evaluation
+        if len(self.config.change_history) >= g.max_changes_before_evaluation:
+            reasons.append(f"Evaluation required: {len(self.config.change_history)} changes since last review")
+
+        return (len(reasons) == 0, reasons)
+
+    def _apply_guardrail_limits(self, param: str, old_value: Any, proposed_value: Any) -> Tuple[Any, str]:
+        """
+        Apply guardrail limits to a proposed change.
+
+        Returns:
+            Tuple of (adjusted_value, adjustment_reason)
+        """
+        g = self.guardrails
+        adjustment_reason = ""
+
+        # Hysteresis limits
+        if param == 'hysteresis_samples':
+            change = abs(proposed_value - old_value)
+            if change > g.max_hysteresis_change:
+                proposed_value = old_value + (g.max_hysteresis_change if proposed_value > old_value else -g.max_hysteresis_change)
+                adjustment_reason = f"Limited to ±{g.max_hysteresis_change} change"
+
+            # Absolute limits
+            if proposed_value < g.absolute_min_hysteresis:
+                proposed_value = g.absolute_min_hysteresis
+                adjustment_reason = f"Clamped to min {g.absolute_min_hysteresis}"
+            elif proposed_value > g.absolute_max_hysteresis:
+                proposed_value = g.absolute_max_hysteresis
+                adjustment_reason = f"Clamped to max {g.absolute_max_hysteresis}"
+
+        # Leverage limits
+        elif param.startswith('leverage_limits.'):
+            change = abs(proposed_value - old_value)
+            if change > g.max_leverage_change:
+                proposed_value = old_value + (g.max_leverage_change if proposed_value > old_value else -g.max_leverage_change)
+                adjustment_reason = f"Limited to ±{g.max_leverage_change} change"
+
+            # Absolute limits
+            if proposed_value < g.absolute_min_leverage:
+                proposed_value = g.absolute_min_leverage
+                adjustment_reason = f"Clamped to min {g.absolute_min_leverage}x"
+            elif proposed_value > g.absolute_max_leverage:
+                proposed_value = g.absolute_max_leverage
+                adjustment_reason = f"Clamped to max {g.absolute_max_leverage}x"
+
+        # Threshold limits (percentage-based)
+        elif 'threshold' in param.lower():
+            max_change = old_value * g.max_threshold_change_pct
+            if abs(proposed_value - old_value) > max_change:
+                proposed_value = old_value + (max_change if proposed_value > old_value else -max_change)
+                adjustment_reason = f"Limited to ±{g.max_threshold_change_pct*100:.0f}% change"
+
+        return proposed_value, adjustment_reason
+
+    def _check_requires_approval(self, param: str, old_value: Any, new_value: Any) -> Tuple[bool, str]:
+        """
+        Check if a change requires human approval per guardrails.
+
+        Returns:
+            Tuple of (requires_approval: bool, reason: str)
+        """
+        g = self.guardrails
+
+        # Check leverage changes to critical regimes
+        if param.startswith('leverage_limits.'):
+            regime = param.split('.')[-1]
+            if regime in g.critical_regime_changes:
+                return True, f"Changes to {regime} leverage require approval"
+
+            # Check magnitude
+            change = abs(new_value - old_value)
+            if change >= g.high_severity_leverage_change:
+                return True, f"Leverage change of {change} >= {g.high_severity_leverage_change}"
+
+        return False, ""
+
+    def auto_tune(self, dry_run: bool = True, force: bool = False) -> Dict[str, Any]:
         """
         Automatically tune parameters based on validation results.
 
+        Sprint 8 Enhancement: Now includes guardrails to prevent dangerous changes.
+
         Args:
             dry_run: If True, only return proposed changes without applying
+            force: If True, bypass guardrail prerequisites (USE WITH CAUTION)
 
         Returns:
-            Dict with proposed/applied changes
+            Dict with proposed/applied changes, guardrail status, and approval requirements
         """
         changes = {
             'timestamp': datetime.now().isoformat(),
             'dry_run': dry_run,
             'proposed_changes': [],
-            'applied': False
+            'applied': False,
+            'guardrails_status': {
+                'passed': False,
+                'blocking_reasons': [],
+                'forced': force
+            },
+            'requires_approval': [],
+            'adjustments_made': []
         }
+
+        # Sprint 8: Check guardrail prerequisites
+        if not force:
+            can_tune, blocking_reasons = self._check_guardrail_prerequisites()
+            changes['guardrails_status']['passed'] = can_tune
+            changes['guardrails_status']['blocking_reasons'] = blocking_reasons
+
+            if not can_tune:
+                logger.warning(f"Auto-tune blocked by guardrails: {blocking_reasons}")
+                return changes
+        else:
+            changes['guardrails_status']['passed'] = True
+            logger.warning("Auto-tune guardrails bypassed with force=True")
 
         # Check alert accuracy
         alert = self.get_alert_accuracy()
         if alert.get('total', 0) >= 20:  # Need sufficient data
             # High false positive rate → increase hysteresis
             if alert['false_positive_rate'] > self.targets.alert_false_positive_max:
-                new_hysteresis = min(self.config.hysteresis_samples + 1, 5)
-                if new_hysteresis != self.config.hysteresis_samples:
-                    changes['proposed_changes'].append({
-                        'param': 'hysteresis_samples',
-                        'old': self.config.hysteresis_samples,
-                        'new': new_hysteresis,
-                        'reason': f"False positive rate {alert['false_positive_rate']*100:.1f}% > target {self.targets.alert_false_positive_max*100:.1f}%"
-                    })
-                    if not dry_run:
-                        self.config.hysteresis_samples = new_hysteresis
+                old_val = self.config.hysteresis_samples
+                proposed_val = old_val + 1
 
-            # High false negative rate → decrease hysteresis or lower thresholds
-            if alert['false_negative_rate'] > self.targets.alert_false_negative_max:
-                new_hysteresis = max(self.config.hysteresis_samples - 1, 2)
-                if new_hysteresis != self.config.hysteresis_samples:
-                    changes['proposed_changes'].append({
+                # Apply guardrail limits
+                new_val, adjustment = self._apply_guardrail_limits(
+                    'hysteresis_samples', old_val, proposed_val
+                )
+
+                if new_val != old_val:
+                    change = {
                         'param': 'hysteresis_samples',
-                        'old': self.config.hysteresis_samples,
-                        'new': new_hysteresis,
+                        'old': old_val,
+                        'new': new_val,
+                        'reason': f"False positive rate {alert['false_positive_rate']*100:.1f}% > target {self.targets.alert_false_positive_max*100:.1f}%"
+                    }
+
+                    if adjustment:
+                        change['guardrail_adjustment'] = adjustment
+                        changes['adjustments_made'].append(adjustment)
+
+                    # Check approval requirement
+                    needs_approval, approval_reason = self._check_requires_approval(
+                        'hysteresis_samples', old_val, new_val
+                    )
+                    if needs_approval:
+                        change['requires_approval'] = True
+                        change['approval_reason'] = approval_reason
+                        changes['requires_approval'].append(change['param'])
+
+                    changes['proposed_changes'].append(change)
+
+                    if not dry_run and not needs_approval:
+                        self.config.hysteresis_samples = new_val
+
+            # High false negative rate → decrease hysteresis
+            if alert['false_negative_rate'] > self.targets.alert_false_negative_max:
+                old_val = self.config.hysteresis_samples
+                proposed_val = old_val - 1
+
+                # Apply guardrail limits
+                new_val, adjustment = self._apply_guardrail_limits(
+                    'hysteresis_samples', old_val, proposed_val
+                )
+
+                if new_val != old_val:
+                    change = {
+                        'param': 'hysteresis_samples',
+                        'old': old_val,
+                        'new': new_val,
                         'reason': f"False negative rate {alert['false_negative_rate']*100:.1f}% > target {self.targets.alert_false_negative_max*100:.1f}%"
-                    })
+                    }
+
+                    if adjustment:
+                        change['guardrail_adjustment'] = adjustment
+                        changes['adjustments_made'].append(adjustment)
+
+                    changes['proposed_changes'].append(change)
+
                     if not dry_run:
-                        self.config.hysteresis_samples = new_hysteresis
+                        self.config.hysteresis_samples = new_val
 
         # Check leverage effectiveness by regime
         for regime in self.leverage_outcomes:
@@ -1054,17 +1496,40 @@ class RiskValidator:
             if regime_eff.get('total', 0) >= 10:
                 # Too aggressive in this regime → reduce max leverage
                 if regime_eff.get('too_aggressive_pct', 0) > self.targets.leverage_aggressive_max * 100:
-                    current_limit = self.config.leverage_limits.get(regime, 10)
-                    new_limit = max(current_limit - 2, 3)
-                    if new_limit != current_limit:
-                        changes['proposed_changes'].append({
-                            'param': f'leverage_limits.{regime}',
-                            'old': current_limit,
-                            'new': new_limit,
+                    param_name = f'leverage_limits.{regime}'
+                    old_val = self.config.leverage_limits.get(regime, 10)
+                    proposed_val = old_val - 2
+
+                    # Apply guardrail limits
+                    new_val, adjustment = self._apply_guardrail_limits(
+                        param_name, old_val, proposed_val
+                    )
+
+                    if new_val != old_val:
+                        change = {
+                            'param': param_name,
+                            'old': old_val,
+                            'new': new_val,
                             'reason': f"Too aggressive {regime_eff['too_aggressive_pct']:.1f}% in {regime}"
-                        })
-                        if not dry_run:
-                            self.config.leverage_limits[regime] = new_limit
+                        }
+
+                        if adjustment:
+                            change['guardrail_adjustment'] = adjustment
+                            changes['adjustments_made'].append(adjustment)
+
+                        # Check approval requirement
+                        needs_approval, approval_reason = self._check_requires_approval(
+                            param_name, old_val, new_val
+                        )
+                        if needs_approval:
+                            change['requires_approval'] = True
+                            change['approval_reason'] = approval_reason
+                            changes['requires_approval'].append(param_name)
+
+                        changes['proposed_changes'].append(change)
+
+                        if not dry_run and not needs_approval:
+                            self.config.leverage_limits[regime] = new_val
 
         # Check circuit breaker
         cb = self.get_circuit_breaker_effectiveness()
@@ -1072,26 +1537,116 @@ class RiskValidator:
             # Missing too many triggers → lower threshold
             missed_rate = cb.get('missed_triggers', 0) / cb.get('total', 1)
             if missed_rate > self.targets.circuit_breaker_missed_max:
-                new_losses = max(self.config.circuit_breaker_consecutive_losses - 1, 3)
-                if new_losses != self.config.circuit_breaker_consecutive_losses:
-                    changes['proposed_changes'].append({
-                        'param': 'circuit_breaker_consecutive_losses',
-                        'old': self.config.circuit_breaker_consecutive_losses,
-                        'new': new_losses,
-                        'reason': f"Missed trigger rate {missed_rate*100:.1f}% > target {self.targets.circuit_breaker_missed_max*100:.1f}%"
-                    })
-                    if not dry_run:
-                        self.config.circuit_breaker_consecutive_losses = new_losses
+                old_val = self.config.circuit_breaker_consecutive_losses
+                proposed_val = old_val - 1
 
-        # Apply changes if not dry run
-        if not dry_run and changes['proposed_changes']:
+                # Apply guardrail limits
+                new_val, adjustment = self._apply_guardrail_limits(
+                    'circuit_breaker_consecutive_losses', old_val, max(proposed_val, 3)
+                )
+
+                if new_val != old_val:
+                    change = {
+                        'param': 'circuit_breaker_consecutive_losses',
+                        'old': old_val,
+                        'new': new_val,
+                        'reason': f"Missed trigger rate {missed_rate*100:.1f}% > target {self.targets.circuit_breaker_missed_max*100:.1f}%"
+                    }
+
+                    if adjustment:
+                        change['guardrail_adjustment'] = adjustment
+                        changes['adjustments_made'].append(adjustment)
+
+                    changes['proposed_changes'].append(change)
+
+                    if not dry_run:
+                        self.config.circuit_breaker_consecutive_losses = new_val
+
+        # Apply changes if not dry run and any changes don't require approval
+        applicable_changes = [c for c in changes['proposed_changes']
+                            if not c.get('requires_approval', False)]
+
+        if not dry_run and applicable_changes:
             self.config.last_tuned = datetime.now().isoformat()
             self.config.tune_count += 1
+
+            # Record in change history for rollback capability
+            self.config.change_history.append({
+                'timestamp': datetime.now().isoformat(),
+                'changes': applicable_changes,
+                'tune_count': self.config.tune_count
+            })
+
+            # Trim history to last 20 entries
+            if len(self.config.change_history) > 20:
+                self.config.change_history = self.config.change_history[-20:]
+
             self._save_config()
             changes['applied'] = True
-            logger.info(f"Auto-tune applied {len(changes['proposed_changes'])} changes")
+            logger.info(f"Auto-tune applied {len(applicable_changes)} changes (guardrails enforced)")
+
+        # Log if changes require approval
+        if changes['requires_approval']:
+            logger.warning(f"Some changes require human approval: {changes['requires_approval']}")
 
         return changes
+
+    def rollback_last_tune(self) -> Dict[str, Any]:
+        """
+        Rollback the last auto-tune operation.
+
+        Sprint 8 Feature: Allows reverting recent changes within rollback window.
+
+        Returns:
+            Dict with rollback status
+        """
+        result = {
+            'timestamp': datetime.now().isoformat(),
+            'success': False,
+            'reverted_changes': []
+        }
+
+        if not self.config.change_history:
+            result['error'] = "No change history available for rollback"
+            return result
+
+        last_change = self.config.change_history[-1]
+
+        # Check rollback window
+        try:
+            change_time = datetime.fromisoformat(last_change['timestamp'])
+            hours_since = (datetime.now() - change_time).total_seconds() / 3600
+            if hours_since > self.guardrails.rollback_window_hours:
+                result['error'] = f"Rollback window expired ({hours_since:.1f}h > {self.guardrails.rollback_window_hours}h)"
+                return result
+        except (ValueError, KeyError, TypeError):
+            pass  # Allow rollback if timestamp is invalid
+
+        # Revert each change
+        for change in last_change.get('changes', []):
+            param = change['param']
+            old_value = change['old']
+
+            if param == 'hysteresis_samples':
+                self.config.hysteresis_samples = old_value
+                result['reverted_changes'].append(param)
+            elif param.startswith('leverage_limits.'):
+                regime = param.split('.')[-1]
+                self.config.leverage_limits[regime] = old_value
+                result['reverted_changes'].append(param)
+            elif param == 'circuit_breaker_consecutive_losses':
+                self.config.circuit_breaker_consecutive_losses = old_value
+                result['reverted_changes'].append(param)
+
+        # Remove the last history entry
+        self.config.change_history.pop()
+        self.config.tune_count = max(0, self.config.tune_count - 1)
+        self._save_config()
+
+        result['success'] = True
+        logger.info(f"Rolled back {len(result['reverted_changes'])} changes")
+
+        return result
 
     def get_regime_performance(self) -> Dict[str, Any]:
         """Get detailed performance breakdown by market regime."""
@@ -1259,7 +1814,7 @@ if __name__ == "__main__":
     import random
 
     print("=" * 60)
-    print("RISK VALIDATOR V2.0.0 TEST")
+    print("RISK VALIDATOR V2.1.0 TEST")
     print("=" * 60)
 
     # Test with explicit targets
@@ -1276,11 +1831,54 @@ if __name__ == "__main__":
         print(f"  {name}: ATR {regime.atr_ratio_min}-{regime.atr_ratio_max}, Lev {regime.recommended_leverage_min}-{regime.recommended_leverage_max}x")
 
     # Test regime detection
-    print("\n--- REGIME DETECTION ---")
+    print("\n--- REGIME DETECTION (ATR only) ---")
     test_atrs = [0.5, 1.0, 1.7, 2.5, 3.5]
     for atr in test_atrs:
         regime = get_regime_from_atr_ratio(atr)
         print(f"  ATR ratio {atr} -> {regime}")
+
+    # Sprint 8: Test ADX calculation and regime detection
+    print("\n--- ADX-BASED TREND DETECTION (Sprint 8) ---")
+    # Simulate price data for ADX calculation
+    random.seed(42)  # Reproducible results
+    base_price = 100.0
+    highs, lows, closes = [], [], []
+    # Generate trending price data
+    for i in range(30):
+        trend = i * 0.5  # Uptrend
+        volatility = random.uniform(1, 3)
+        close = base_price + trend + random.uniform(-1, 1)
+        high = close + volatility
+        low = close - volatility
+        closes.append(close)
+        highs.append(high)
+        lows.append(low)
+
+    adx_result = calculate_adx(highs, lows, closes)
+    if adx_result:
+        print(f"  ADX: {adx_result.adx:.2f}")
+        print(f"  +DI: {adx_result.plus_di:.2f}, -DI: {adx_result.minus_di:.2f}")
+        print(f"  Trend Strength: {adx_result.trend_strength}")
+        print(f"  Trend Direction: {adx_result.trend_direction}")
+        print(f"  Is Trending: {adx_result.is_trending}")
+
+        # Test regime with ADX
+        regime_with_adx, adx = get_regime_with_adx(1.2, highs, lows, closes)
+        regime_without_adx = get_regime_from_atr_ratio(1.2)
+        print(f"\n  ATR 1.2 without ADX: {regime_without_adx}")
+        print(f"  ATR 1.2 with ADX:    {regime_with_adx}")
+        print(f"  (Demonstrates NORMAL vs TRENDING differentiation)")
+    else:
+        print("  ADX calculation failed (insufficient data)")
+
+    # Sprint 8: Test guardrails
+    print("\n--- AUTO-TUNE GUARDRAILS (Sprint 8) ---")
+    guardrails = validator.guardrails
+    print(f"  Min alert samples: {guardrails.min_alert_samples}")
+    print(f"  Min leverage samples: {guardrails.min_leverage_samples}")
+    print(f"  Max leverage change: ±{guardrails.max_leverage_change}")
+    print(f"  Critical regimes: {guardrails.critical_regime_changes}")
+    print(f"  Rollback window: {guardrails.rollback_window_hours} hours")
 
     # Simulate alert validations
     print("\nSimulating alert validations...")
@@ -1355,15 +1953,35 @@ if __name__ == "__main__":
             icon = "✓" if data['meets_target'] else "✗"
             print(f"    {icon} {metric}: {data['current']*100:.1f}% (target: {data['target']*100:.1f}%)")
 
-    # Test auto-tuning (dry run)
-    print("\n--- AUTO-TUNE DRY RUN ---")
+    # Test auto-tuning with guardrails (dry run)
+    print("\n--- AUTO-TUNE WITH GUARDRAILS (Sprint 8) ---")
     tune_result = validator.auto_tune(dry_run=True)
+
+    # Show guardrail status
+    gs = tune_result['guardrails_status']
+    print(f"  Guardrails passed: {gs['passed']}")
+    if gs['blocking_reasons']:
+        print(f"  Blocking reasons:")
+        for reason in gs['blocking_reasons']:
+            print(f"    - {reason}")
+
     if tune_result['proposed_changes']:
+        print(f"\n  Proposed changes:")
         for change in tune_result['proposed_changes']:
-            print(f"  Would change {change['param']}: {change['old']} -> {change['new']}")
-            print(f"    Reason: {change['reason']}")
+            approval = " [NEEDS APPROVAL]" if change.get('requires_approval') else ""
+            adjustment = f" ({change['guardrail_adjustment']})" if change.get('guardrail_adjustment') else ""
+            print(f"    {change['param']}: {change['old']} -> {change['new']}{adjustment}{approval}")
+            print(f"      Reason: {change['reason']}")
     else:
         print("  No changes proposed")
+
+    if tune_result['requires_approval']:
+        print(f"\n  Changes requiring human approval: {tune_result['requires_approval']}")
+
+    # Test with force=True to bypass guardrails
+    print("\n--- AUTO-TUNE WITH FORCE=True ---")
+    forced_result = validator.auto_tune(dry_run=True, force=True)
+    print(f"  Guardrails bypassed: {forced_result['guardrails_status']['forced']}")
 
     # Test regime performance
     print("\n--- REGIME PERFORMANCE ---")
@@ -1377,5 +1995,6 @@ if __name__ == "__main__":
     validator.save_report()
 
     print("\n" + "=" * 60)
-    print("Risk Validator V2.0.0 test completed!")
+    print("Risk Validator V2.1.0 test completed!")
+    print("Sprint 8 Features: ADX trend detection + Auto-tune guardrails")
     print("=" * 60)
