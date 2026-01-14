@@ -38,6 +38,14 @@ from enhanced_market_scanner import EnhancedMarketScanner
 from scanner_v4 import ScannerV4  # V4: All-market intelligent scanner
 from dynamic_fibonacci_delta import DynamicFibonacciDeltaService  # Dynamic delta based on volatility
 
+# Sprint 14: Dynamic Delta Engine with multi-TF S/R and regime detection
+try:
+    from dynamic_delta_engine import DynamicDeltaEngine
+    DYNAMIC_DELTA_ENGINE_AVAILABLE = True
+except ImportError as e:
+    print(f"⚠️ DynamicDeltaEngine not available: {e}")
+    DYNAMIC_DELTA_ENGINE_AVAILABLE = False
+
 # V2.0.0: Prediction Model Integration
 from prediction_service import get_prediction_service
 from prediction_integration import PredictionIntegration
@@ -197,7 +205,21 @@ class AIXYZContinuousProfit:
             print(f"❌ CRITICAL: Could not initialize AdaptiveTimeframeDeltaService: {e}")
             print("   System will create it on demand when needed")
             self.adaptive_delta_service = None
-        
+
+        # Sprint 14: Initialize DynamicDeltaEngine for multi-TF S/R and regime-aware delta
+        if DYNAMIC_DELTA_ENGINE_AVAILABLE:
+            try:
+                self.dynamic_delta_engine = DynamicDeltaEngine(self.exchange)
+                print("🎯 Sprint 14: DynamicDeltaEngine initialized - Multi-TF S/R & Regime-Aware Delta")
+                print("   - Market regime detection (trending/ranging/volatile/extreme)")
+                print("   - Multi-timeframe S/R analysis (1h, 4h, 1d)")
+                print("   - Extreme market expansion (replaces stop-loss)")
+            except Exception as e:
+                print(f"⚠️ DynamicDeltaEngine initialization failed: {e}")
+                self.dynamic_delta_engine = None
+        else:
+            self.dynamic_delta_engine = None
+
         # Use Scanner v4.0 (scans ALL markets with two-stage filtering)
         self.scanner = ScannerV4(exchange=self.exchange)
         self.use_advanced = True
@@ -596,11 +618,19 @@ class AIXYZContinuousProfit:
             print("⚠️ Dynamic Leverage Manager not available")
 
         # Zone thresholds - UPDATED: wider neutral zone (-15% to +5%)
+        # Sprint 14: STOP LOSS DISABLED per user request
+        # "Stop loss is final, positions can recover" - Instead, expand delta in extreme markets
         self.zone_thresholds = {
             'averaging': -0.35,  # Start averaging at -35% UPNL (optimized from -25%) - more selective
             'profit_taking': 0.05,  # Enter surplus dump at +5% UPNL (was +50%)
-            'stop_loss': -0.90  # -90% (safe for 15x leverage, triggers before liquidation)
+            'stop_loss': -0.95  # Sprint 14: Moved to -95% (liquidation prevention ONLY, not stop loss)
         }
+
+        # Sprint 14: Stop Loss Philosophy
+        # - DISABLED traditional stop loss (positions can recover)
+        # - ONLY liquidation prevention at -95% UPNL (exchange would liquidate anyway)
+        # - Instead of stop loss, use dynamic delta expansion in extreme markets
+        self.stop_loss_disabled = True  # Sprint 14: User preference - no stop loss
 
         # NEUTRAL ZONE UPPER BOUNDARY (dollar value)
         # Positions stay NEUTRAL until UPNL reaches this threshold
@@ -3024,11 +3054,50 @@ class AIXYZContinuousProfit:
         dynamic_threshold = self.speed_tracker.get_dynamic_threshold(
             symbol, step, base_allocations, upnl_pct
         )
-        
+
+        # Sprint 14: Use DynamicDeltaEngine for enhanced delta calculation
+        dynamic_delta_result = None
+        if self.dynamic_delta_engine:
+            try:
+                direction = 'long' if position.get('side') in ['buy', 'long'] else 'short'
+                dynamic_delta_result = self.dynamic_delta_engine.calculate_dynamic_delta(
+                    symbol=symbol,
+                    entry_price=entry_price,
+                    direction=direction,
+                    num_steps=fib_config.get('max_averaging_steps', 5)
+                )
+                print(f"  🎯 Sprint 14 Dynamic Delta: {dynamic_delta_result.delta_pct*100:.1f}%")
+                print(f"     Regime: {dynamic_delta_result.regime.regime} (ADX={dynamic_delta_result.regime.adx_value:.1f}, RSI={dynamic_delta_result.regime.rsi_value:.1f})")
+                print(f"     Consecutive candles: {dynamic_delta_result.regime.consecutive_candles}")
+                print(f"     Expansion multiplier: {dynamic_delta_result.expansion_multiplier:.2f}x")
+                print(f"     Correction probability: {dynamic_delta_result.correction_probability*100:.0f}%")
+                if dynamic_delta_result.nearest_support:
+                    print(f"     Nearest support: ${dynamic_delta_result.nearest_support.price:.6f} ({dynamic_delta_result.nearest_support.timeframe})")
+                if dynamic_delta_result.nearest_resistance:
+                    print(f"     Nearest resistance: ${dynamic_delta_result.nearest_resistance.price:.6f} ({dynamic_delta_result.nearest_resistance.timeframe})")
+            except Exception as e:
+                print(f"  ⚠️ DynamicDeltaEngine error: {e}")
+                dynamic_delta_result = None
+
         # Use dynamic threshold instead of static Fibonacci thresholds
         averaging_thresholds = fib_config.get('averaging_thresholds', [])
-        if step < len(averaging_thresholds):
-            # Override with dynamic threshold
+
+        # Sprint 14: If we have dynamic delta result, use its averaging levels
+        if dynamic_delta_result and step < len(dynamic_delta_result.averaging_levels):
+            # Convert price level to threshold percentage
+            avg_level = dynamic_delta_result.averaging_levels[step]
+            if direction == 'long':
+                price_threshold_from_engine = (entry_price - avg_level) / entry_price
+            else:
+                price_threshold_from_engine = (avg_level - entry_price) / entry_price
+
+            print(f"  🎯 Using DynamicDeltaEngine level for step {step+1}: ${avg_level:.6f} ({price_threshold_from_engine*100:.2f}%)")
+
+            # Update threshold if we have a valid one
+            if step < len(averaging_thresholds):
+                averaging_thresholds[step] = price_threshold_from_engine
+        elif step < len(averaging_thresholds):
+            # Override with speed tracker dynamic threshold
             averaging_thresholds[step] = dynamic_threshold / 100  # Convert to decimal
         
         # Get current price for UPNL calculation
@@ -4326,40 +4395,43 @@ class AIXYZContinuousProfit:
     def check_stop_loss(self, symbol: str, position: Dict, upnl: float, pct: float) -> bool:
         """
         ============================================================================
-        STOP LOSS LOGIC - EMERGENCY EXIT TO PREVENT LIQUIDATION
+        LIQUIDATION PREVENTION (Sprint 14: NOT Stop Loss)
         ============================================================================
-        Purpose: Close position when approaching liquidation danger zone
-        
-        TRIGGER POINT: -70% UPNL (Hardcoded safety threshold)
-        
-        STRATEGY:
-        1. First attempts emergency averaging at -70% UPNL
-        2. If averaging fails → Immediate position close
-        3. Acts as final safety net before -90% liquidation
-        
-        WHY -70%?
-        - Liquidation typically occurs at -90% to -95% UPNL
-        - -85% gives buffer for order execution
-        - Allows one last averaging attempt before exit
-        
+        Purpose: ONLY prevent exchange liquidation, NOT stop losses
+
+        Sprint 14 Philosophy (User Request):
+        - "Stop loss is final, positions can recover"
+        - "New positions may not compensate for stopped losses"
+        - Traditional stop loss DISABLED
+        - Only liquidation prevention at -95% UPNL
+
+        TRIGGER POINT: -95% UPNL (Exchange liquidation imminent)
+
+        WHY -95%?
+        - Exchange liquidates at -100% UPNL (margin exhausted)
+        - -95% gives minimal buffer for execution
+        - This is NOT strategy - this is survival
+
         IMPORTANT:
-        - This is NOT a regular stop loss based on steps
-        - This is EMERGENCY liquidation prevention
-        - Triggers regardless of averaging steps taken
+        - stop_loss_disabled = True (Sprint 14)
+        - Only triggers at liquidation level
+        - Positions allowed to recover at any drawdown < -95%
         ============================================================================
         """
+        # Sprint 14: Check if stop loss is disabled
+        if getattr(self, 'stop_loss_disabled', False):
+            # Only liquidation prevention mode
+            emergency_threshold = -0.95  # -95% = liquidation imminent
+        else:
+            emergency_threshold = -0.85  # Legacy: -85%
+
         # Get averaging steps taken
         steps_taken = self.averaging_steps.get(symbol, 0)
-        
+
         # Calculate margin for percentage-based stop loss
         position_value = position['entry_price'] * position['amount']
         leverage = position.get('leverage', 10)
         margin = position_value / leverage
-        
-        # CRITICAL: Emergency stop loss at -70% UPNL
-        # This is liquidation prevention, not strategy stop loss
-        # Triggers regardless of averaging steps
-        emergency_threshold = -0.85  # -85% UPNL
         
         # Calculate current UPNL percentage
         upnl_pct = (upnl / margin) if margin > 0 else pct/100
