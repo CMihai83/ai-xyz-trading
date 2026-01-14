@@ -594,16 +594,12 @@ class AIXYZContinuousProfit:
             self.dynamic_leverage_manager = None
             print("⚠️ Dynamic Leverage Manager not available")
 
-        # Zone thresholds - Sprint 12: Tighter risk management
+        # Zone thresholds - UPDATED: wider neutral zone (-15% to +5%)
         self.zone_thresholds = {
             'averaging': -0.35,  # Start averaging at -35% UPNL (optimized from -25%) - more selective
-            'profit_taking': 0.05,  # Enter surplus dump at +5% UPNL
-            'trading_stop': -0.15,  # Sprint 12: NEW - Cut losses at -15% UPNL (per Grok)
-            'stop_loss': -0.90  # Emergency stop: -90% (liquidation prevention only)
+            'profit_taking': 0.05,  # Enter surplus dump at +5% UPNL (was +50%)
+            'stop_loss': -0.90  # -90% (safe for 15x leverage, triggers before liquidation)
         }
-
-        # Sprint 12: Enable trading stop-loss (cuts losses early)
-        self.enable_trading_stop = True  # Set to False to disable -15% stop
 
         # NEUTRAL ZONE UPPER BOUNDARY (dollar value)
         # Positions stay NEUTRAL until UPNL reaches this threshold
@@ -4010,21 +4006,11 @@ class AIXYZContinuousProfit:
         
         peak = self.peak_upnl.get(symbol, 0)
         
-        # Sprint 12: Lower take profit threshold to capture smaller wins
-        # Previous: $5.00 minimum (too high for small positions)
-        # New: $0.30 minimum OR +5% of margin (whichever is smaller)
-        MIN_PROFIT_FOR_TAKE_PROFIT = 0.30  # Lowered from $5.00
-
-        # Calculate margin for percentage-based threshold
-        position_value = position.get('entry_price', 0) * position.get('amount', 0)
-        leverage = position.get('leverage', 10)
-        margin = position_value / leverage if leverage > 0 else position_value
-        profit_pct_threshold = margin * 0.05  # 5% of margin
-
-        # Use whichever is lower: absolute or percentage threshold
-        effective_threshold = min(MIN_PROFIT_FOR_TAKE_PROFIT, profit_pct_threshold) if profit_pct_threshold > 0 else MIN_PROFIT_FOR_TAKE_PROFIT
-
-        if peak < effective_threshold:
+        # Minimum profit threshold: $5.00 (backtest validated January 14, 2026)
+        # BACKTEST: $5 threshold = $291.98 PnL (+41.5% vs traditional close)
+        # KEY: $5 filters weak trends, prevents stop losses (2% vs 12% at $3)
+        MIN_PROFIT_FOR_TAKE_PROFIT = 5.00
+        if peak < MIN_PROFIT_FOR_TAKE_PROFIT:
             return False
 
         # Initialize should_take_profit flag
@@ -4236,105 +4222,7 @@ class AIXYZContinuousProfit:
                 print(f"  ❌ Take profit failed: {e}")
         
         return False
-
-    def check_trading_stop(self, symbol: str, position: Dict, upnl: float, pct: float) -> bool:
-        """
-        ============================================================================
-        TRADING STOP LOSS - Sprint 12 (Cut losses early at -15%)
-        ============================================================================
-        Purpose: Close losing positions early before they become severe losses
-
-        TRIGGER: -15% UPNL (configurable via zone_thresholds['trading_stop'])
-
-        WHY -15%?
-        - Grok recommendation: Positions frequently go -30% to -40%
-        - Cutting at -15% preserves capital for better opportunities
-        - Prevents averaging into losing positions endlessly
-
-        IMPORTANT:
-        - This is a TRADING stop, not emergency liquidation prevention
-        - Can be disabled via self.enable_trading_stop = False
-        - Only triggers for positions with 0 averaging steps (new positions)
-        ============================================================================
-        """
-        # Check if trading stop is enabled
-        if not getattr(self, 'enable_trading_stop', False):
-            return False
-
-        # Get trading stop threshold (default -15%)
-        trading_stop_threshold = self.zone_thresholds.get('trading_stop', -0.15)
-
-        # Only apply to new positions (0 averaging steps)
-        steps_taken = self.averaging_steps.get(symbol, 0)
-        if steps_taken > 0:
-            return False  # Don't stop positions that have been averaged into
-
-        # Calculate margin and UPNL percentage
-        position_value = position['entry_price'] * position['amount']
-        leverage = position.get('leverage', 10)
-        margin = position_value / leverage if leverage > 0 else position_value
-        upnl_pct = (upnl / margin) if margin > 0 else pct/100
-
-        # Check if we've hit trading stop threshold
-        if upnl_pct <= trading_stop_threshold:
-            print(f"\n📉 TRADING STOP: {symbol} at {upnl_pct*100:.1f}% UPNL (threshold: {trading_stop_threshold*100:.0f}%)")
-
-            try:
-                # Close position
-                position_side = position.get('position_side', 'long' if position['side'] in ['buy', 'long'] else 'short')
-                close_side = self.get_order_side(position_side, is_open=False)
-                close_params = self.get_hedge_order_params(position_side, is_open=False)
-                actual_symbol = position.get('symbol', symbol)
-
-                print(f"  UPNL: ${upnl:.4f} ({upnl_pct*100:.1f}%)")
-                print(f"  Action: Closing to cut losses early")
-
-                order = self.exchange.create_market_order(
-                    actual_symbol, close_side, position['amount'],
-                    params=close_params
-                )
-
-                self.total_pnl += upnl
-                self.positions_closed += 1
-
-                # Record trade result
-                if self.grok_v2:
-                    try:
-                        entry_price = position.get('entry_price', position.get('entryPrice', 0))
-                        self.grok_v2.record_trade_result(
-                            symbol=symbol,
-                            side=position.get('side', 'long'),
-                            entry_price=entry_price,
-                            exit_price=position.get('markPrice', entry_price),
-                            entry_time=position.get('opened_at', datetime.now().isoformat()),
-                            contracts=position['amount'],
-                            leverage=leverage,
-                            margin_used=margin,
-                            realized_pnl=upnl,
-                            exit_reason='trading_stop',
-                            averaging_steps=steps_taken,
-                            peak_upnl=self.peak_upnl.get(symbol, 0)
-                        )
-                    except Exception as track_err:
-                        print(f"  ⚠️ Grok V2 tracking failed: {track_err}")
-
-                # Close hedge if exists
-                if self.hedge_gateway:
-                    self.hedge_gateway.on_main_position_closed(symbol)
-
-                # Clean up
-                if symbol in self.active_positions:
-                    del self.active_positions[symbol]
-                self.cleanup_position_tracking(symbol)
-
-                print(f"  ✅ Trading stop executed - loss cut at {upnl_pct*100:.1f}%")
-                return True
-
-            except Exception as e:
-                print(f"  ❌ Trading stop failed: {e}")
-
-        return False
-
+    
     def check_stop_loss(self, symbol: str, position: Dict, upnl: float, pct: float) -> bool:
         """
         ============================================================================
@@ -5659,11 +5547,7 @@ class AIXYZContinuousProfit:
                 elif zone == 'PROFIT_TAKING':
                     self.check_take_profit(symbol, local_pos, upnl, pct)
 
-                # Sprint 12: Check trading stop first (-15% cut losses early)
-                if self.check_trading_stop(symbol, local_pos, upnl, pct):
-                    continue  # Position was closed, skip to next
-
-                # Always check emergency stop loss (-85% liquidation prevention)
+                # Always check stop loss
                 self.check_stop_loss(symbol, local_pos, upnl, pct)
 
                 # NOTE: Liquidation protection is placed ONLY when last averaging step executes
