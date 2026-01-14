@@ -122,6 +122,14 @@ except ImportError as e:
     print(f"⚠️ Hedge Gateway not available: {e}")
     HEDGE_GATEWAY_AVAILABLE = False
 
+# V1.3.0: Dynamic Parameter Manager for real-time threshold adjustments
+try:
+    from dynamic_parameter_manager import DynamicParameterManager, get_dynamic_param_manager
+    DYNAMIC_PARAMS_AVAILABLE = True
+except ImportError as e:
+    print(f"⚠️ Dynamic Parameter Manager not available: {e}")
+    DYNAMIC_PARAMS_AVAILABLE = False
+
 class AIXYZContinuousProfit:
     def __init__(self):
         # Load environment variables
@@ -552,6 +560,17 @@ class AIXYZContinuousProfit:
         else:
             self.hedge_gateway = None
             print("⚠️ Hedge Gateway not available")
+
+        # V1.3.0: Dynamic Parameter Manager for real-time volatility-based adjustments
+        if DYNAMIC_PARAMS_AVAILABLE:
+            self.dynamic_param_manager = get_dynamic_param_manager(self.exchange)
+            print("📈 Dynamic Parameter Manager enabled:")
+            print("   ⚡ Real-time volatility-based threshold adjustments")
+            print("   📊 ATR ratio regime detection (HIGH_VOL/TRENDING/RANGING/NORMAL)")
+            print("   🎯 Adjusts: averaging, surplus dump, hedge thresholds")
+        else:
+            self.dynamic_param_manager = None
+            print("⚠️ Dynamic Parameter Manager not available")
 
         # Zone thresholds - UPDATED: wider neutral zone (-15% to +5%)
         self.zone_thresholds = {
@@ -5282,6 +5301,24 @@ class AIXYZContinuousProfit:
                 market_context = self.market_intelligence.analyze_market_context(symbol)
                 adaptive_threshold = self.adaptive_threshold_engine.calculate_optimal_trigger(symbol, market_context)
                 self.zone_thresholds['averaging'] = adaptive_threshold
+
+                # V1.3.0: Dynamic Parameter Manager - adjust ALL thresholds based on volatility
+                if hasattr(self, 'dynamic_param_manager') and self.dynamic_param_manager:
+                    try:
+                        dynamic_params = self.dynamic_param_manager.calculate_dynamic_params(symbol)
+                        regime = dynamic_params.get('regime', 'NORMAL')
+
+                        # Update thresholds based on volatility regime
+                        self.zone_thresholds['averaging'] = dynamic_params.get('averaging_trigger', self.zone_thresholds['averaging'])
+                        self.surplus_dump_threshold = dynamic_params.get('surplus_dump_stage1', self.surplus_dump_threshold)
+                        self.surplus_dump_threshold_stage2 = dynamic_params.get('surplus_dump_stage2', self.surplus_dump_threshold_stage2)
+
+                        # Log regime changes (only when significant)
+                        atr_ratio = dynamic_params.get('atr_ratio', 1.0)
+                        if regime != 'NORMAL':
+                            print(f"  📈 {symbol} [{regime}] ATR:{atr_ratio:.2f}x → Avg:{self.zone_thresholds['averaging']*100:.0f}% SD1:{self.surplus_dump_threshold*100:.0f}% SD2:{self.surplus_dump_threshold_stage2*100:.0f}%")
+                    except Exception as e:
+                        pass  # Silently continue with existing thresholds
 
                 # V3: Check opportunity cost for position management
                 # Build position data with pnl and holding time
