@@ -4175,11 +4175,23 @@ class AIXYZContinuousProfit:
         
         peak = self.peak_upnl.get(symbol, 0)
         
-        # Minimum profit threshold: $5.00 (backtest validated January 14, 2026)
-        # BACKTEST: $5 threshold = $291.98 PnL (+41.5% vs traditional close)
-        # KEY: $5 filters weak trends, prevents stop losses (2% vs 12% at $3)
-        MIN_PROFIT_FOR_TAKE_PROFIT = 5.00
-        if peak < MIN_PROFIT_FOR_TAKE_PROFIT:
+        # Minimum profit threshold: Sprint 14 FIX
+        # User requirement: 25% of position margin OR $5, whichever is LOWER
+        # This ensures smaller positions can trigger profit protection
+        MIN_PROFIT_ABSOLUTE = 5.00  # $5 absolute minimum
+        MIN_PROFIT_PCT = 0.25      # 25% of margin
+
+        # Calculate margin for percentage-based threshold
+        entry_price = position.get('entry_price', position.get('entryPrice', 0))
+        amount = position.get('amount', 0)
+        leverage = position.get('leverage', 5)
+        margin = (entry_price * amount / leverage) if entry_price > 0 and leverage > 0 else 0
+        margin_based_threshold = margin * MIN_PROFIT_PCT if margin > 0 else MIN_PROFIT_ABSOLUTE
+
+        # Use the LOWER threshold to ensure smaller positions can trigger
+        effective_threshold = min(MIN_PROFIT_ABSOLUTE, margin_based_threshold)
+
+        if peak < effective_threshold:
             return False
 
         # Initialize should_take_profit flag

@@ -115,7 +115,7 @@ class HedgeGateway:
     PROFIT_HEDGE_PROFIT_GATE = 0.10      # Close hedge at 10% profit
     PROFIT_HEDGE_MAIN_DROP_GATE = 0.50   # Close hedge if main drops to 50% of peak
     PROFIT_HEDGE_STOP_LOSS = -0.03       # Sprint 13: Tightened from -5% to -3% (cut losses faster)
-    MIN_PROFIT_FOR_HEDGE = 5.00          # Minimum $5 UPNL (backtest validated)
+    MIN_PROFIT_FOR_HEDGE = 1.00          # Sprint 14: Lowered from $5 to $1 (user feedback: METIS case)
 
     # Stress Test Improvements - Momentum Filter & Trailing Stop
     MOMENTUM_RSI_OVERSOLD = 30           # Don't hedge if RSI < 30 (bounce likely)
