@@ -2,6 +2,9 @@
 """
 V3: Opportunity Cost Engine
 Calculates and optimizes for opportunity costs in real-time
+
+Sprint 14 Enhancement: Now uses shared ScannerV4 and PreTradeBacktester
+instead of its own market scanner for unified opportunity detection.
 """
 
 import ccxt
@@ -19,6 +22,14 @@ from opportunity_cost_predictor import OpportunityCostPredictor
 from correlation_matrix_analyzer import CorrelationMatrixAnalyzer
 from markowitz_optimizer import MarkowitzOptimizer
 from rl_closing_agent import RLClosingAgent
+
+# Import shared scanner and backtester (Sprint 14 unification)
+try:
+    from pre_trade_backtest import PreTradeBacktester
+    BACKTEST_AVAILABLE = True
+except ImportError:
+    BACKTEST_AVAILABLE = False
+    print("⚠️ PreTradeBacktester not available")
 
 class OpportunityCostEngine:
     """
@@ -52,6 +63,18 @@ class OpportunityCostEngine:
             'loss_aversion_ratio': 2.0,  # Loss hurts 2x more than gain feels good
             'disposition_effect': True   # Tendency to hold losers, sell winners
         }
+
+        # Sprint 14: Initialize shared backtester
+        if BACKTEST_AVAILABLE:
+            self.backtester = PreTradeBacktester(self.exchange)
+            print("✅ PreTradeBacktester integrated")
+        else:
+            self.backtester = None
+
+        # Sprint 14: Shared scanner results cache (from ScannerV4)
+        self.shared_scanner_results = None
+        self.shared_scanner_timestamp = None
+        self.scanner_results_ttl = 60  # Use scanner results for 60 seconds
 
         print("🚀 Advanced Opportunity Cost Engine initialized with AI components")
 
@@ -119,16 +142,44 @@ class OpportunityCostEngine:
             'unallocated_capital': total_capital - total_allocated_capital
         }
 
-    def scan_market_opportunities(self, max_markets=100):
+    def set_scanner_results(self, scanner_results: List[Dict]):
+        """
+        Sprint 14: Receive scanner results from ScannerV4 (shared scanner)
+
+        Args:
+            scanner_results: List of opportunities from ScannerV4.scan_market()
+        """
+        self.shared_scanner_results = scanner_results
+        self.shared_scanner_timestamp = datetime.now()
+        print(f"📊 OpportunityCostEngine: Received {len(scanner_results)} opportunities from ScannerV4")
+
+    def scan_market_opportunities(self, max_markets=100, use_backtest=True):
         """
         Scan market for high-opportunity assets
 
+        Sprint 14: Now uses shared ScannerV4 results when available,
+        and validates opportunities with PreTradeBacktester.
+
         Args:
             max_markets: Maximum number of markets to scan (top by volume)
+            use_backtest: Whether to validate with PreTradeBacktester (default True)
 
         Returns:
             dict: Market opportunities ranked by Sharpe ratio
         """
+        # Sprint 14: Use shared scanner results if available and fresh
+        if self.shared_scanner_results and self.shared_scanner_timestamp:
+            age = (datetime.now() - self.shared_scanner_timestamp).total_seconds()
+            if age < self.scanner_results_ttl:
+                print(f"  📊 Using shared ScannerV4 results ({age:.0f}s old, {len(self.shared_scanner_results)} opportunities)")
+                return self._convert_scanner_results_to_opportunities(
+                    self.shared_scanner_results,
+                    use_backtest=use_backtest
+                )
+
+        # Fallback: Own scanner (if ScannerV4 results not available)
+        print(f"  📊 Running fallback opportunity scan (ScannerV4 results not available)")
+
         # Dynamically get USDT-margined perpetual futures from Bitget, sorted by volume
         try:
             if not self.exchange.markets:
@@ -186,7 +237,7 @@ class OpportunityCostEngine:
                     sharpe_ratio = total_return / (volatility + 1e-6)
                     sortino_ratio = total_return / (returns[returns < 0].std() + 1e-6) if len(returns[returns < 0]) > 0 else 0
 
-                    opportunities[symbol] = {
+                    opp_data = {
                         'return': total_return,
                         'volatility': volatility,
                         'sharpe': sharpe_ratio,
@@ -195,6 +246,21 @@ class OpportunityCostEngine:
                         'current_price': end_price
                     }
 
+                    # Sprint 14: Validate with backtest
+                    if use_backtest and self.backtester:
+                        direction = 'long' if total_return > 0 else 'short'
+                        backtest_result = self.backtester.validate_trade(symbol, direction, days=30)
+                        opp_data['backtest_score'] = backtest_result.score
+                        opp_data['backtest_approved'] = backtest_result.should_trade
+                        opp_data['backtest_win_rate'] = backtest_result.win_rate
+                        opp_data['backtest_sharpe'] = backtest_result.sharpe_ratio
+
+                        # Only include if backtest approved
+                        if not backtest_result.should_trade:
+                            continue  # Skip this opportunity
+
+                    opportunities[symbol] = opp_data
+
             except Exception as e:
                 continue
 
@@ -202,6 +268,66 @@ class OpportunityCostEngine:
         ranked_opportunities = dict(sorted(opportunities.items(),
                                          key=lambda x: x[1]['sharpe'], reverse=True))
 
+        return ranked_opportunities
+
+    def _convert_scanner_results_to_opportunities(self, scanner_results: List[Dict], use_backtest: bool = True) -> Dict:
+        """
+        Sprint 14: Convert ScannerV4 results to opportunity cost format with backtest validation
+        """
+        opportunities = {}
+
+        for opp in scanner_results:
+            symbol = opp.get('symbol', '')
+            if not symbol:
+                continue
+
+            # Convert scanner format to opportunity cost format
+            opp_data = {
+                'return': opp.get('performance', {}).get('return_24h', opp.get('return', 0)),
+                'volatility': opp.get('volatility', opp.get('performance', {}).get('volatility', 0.05)),
+                'sharpe': opp.get('sharpe', opp.get('score', 0)),
+                'sortino': opp.get('sortino', 0),
+                'volume': opp.get('volume', opp.get('performance', {}).get('volume', 0)),
+                'current_price': opp.get('current_price', opp.get('price', 0)),
+                'scanner_score': opp.get('score', 0),
+                'scanner_signal': opp.get('signal', 'unknown'),
+                'direction': opp.get('direction', 'long')
+            }
+
+            # Sprint 14: Validate with backtest
+            if use_backtest and self.backtester:
+                direction = opp_data.get('direction', 'long')
+                try:
+                    backtest_result = self.backtester.validate_trade(symbol, direction, days=30)
+                    opp_data['backtest_score'] = backtest_result.score
+                    opp_data['backtest_approved'] = backtest_result.should_trade
+                    opp_data['backtest_win_rate'] = backtest_result.win_rate
+                    opp_data['backtest_sharpe'] = backtest_result.sharpe_ratio
+                    opp_data['backtest_profit_factor'] = backtest_result.profit_factor
+
+                    # Only include if backtest approved OR scanner score is very high (>0.85)
+                    if not backtest_result.should_trade and opp_data['scanner_score'] < 0.85:
+                        print(f"  ⛔ {symbol}: Scanner approved but backtest rejected (score: {backtest_result.score:.2f})")
+                        continue
+                    elif not backtest_result.should_trade:
+                        print(f"  ⚠️ {symbol}: Backtest rejected but scanner score high ({opp_data['scanner_score']:.2f}), including")
+                except Exception as e:
+                    opp_data['backtest_score'] = 0
+                    opp_data['backtest_approved'] = False
+                    print(f"  ⚠️ Backtest failed for {symbol}: {e}")
+
+            opportunities[symbol] = opp_data
+
+        # Rank by combined score (scanner + backtest if available)
+        def combined_score(item):
+            data = item[1]
+            scanner = data.get('scanner_score', 0)
+            backtest = data.get('backtest_score', scanner)  # Fallback to scanner if no backtest
+            return (scanner * 0.6 + backtest * 0.4)  # 60% scanner, 40% backtest
+
+        ranked_opportunities = dict(sorted(opportunities.items(), key=combined_score, reverse=True))
+
+        print(f"  ✅ Converted {len(ranked_opportunities)} opportunities with backtest validation")
         return ranked_opportunities
 
     def calculate_portfolio_performance(self, positions):

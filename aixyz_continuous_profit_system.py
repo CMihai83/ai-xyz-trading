@@ -1374,6 +1374,10 @@ class AIXYZContinuousProfit:
     def enhance_opportunities_with_opportunity_cost(self, opportunities):
         """Enhance opportunities with opportunity cost analysis"""
         try:
+            # Sprint 14: Share scanner results with opportunity cost engine (unified scanner)
+            if hasattr(self.opportunity_cost_engine, 'set_scanner_results') and opportunities:
+                self.opportunity_cost_engine.set_scanner_results(opportunities)
+
             # Get opportunity cost analysis
             total_capital = self.exchange.fetch_balance()['USDT']['total']
             opportunity_analysis = self.opportunity_cost_engine.calculate_portfolio_opportunity_cost(
