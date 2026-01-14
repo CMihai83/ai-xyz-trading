@@ -24,7 +24,7 @@ class ATRStopLoss:
 
     Strategy:
     - Calculate ATR(14) for each symbol
-    - Set stop at 1.5x ATR from entry
+    - Set stop at 3x ATR from entry (Grok V2: increased from 1.5x for crypto volatility)
     - Wider stops in high volatility = fewer whipsaws
     - Tighter stops in low volatility = better risk management
 
@@ -42,7 +42,7 @@ class ATRStopLoss:
 
         # ATR calculation parameters
         self.ATR_PERIOD = 14  # Standard ATR period
-        self.ATR_MULTIPLIER = 1.5  # 1.5x ATR for stop distance
+        self.ATR_MULTIPLIER = 3.0  # Grok V2: 3x ATR for crypto volatility (up from 1.5x)
 
         # Cache ATR values
         self.atr_cache = {}  # symbol -> {'atr': value, 'timestamp': time}

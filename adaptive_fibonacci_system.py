@@ -237,7 +237,8 @@ class AdaptiveFibonacciAveraging:
 
     # Default thresholds (used when dynamic calculation not available)
     DEFAULT_THRESHOLDS = [21, 13, 8, 5, 3]
-    DEFAULT_MULTIPLIERS = [1, 1, 2, 3, 5]
+    # Grok V2: Reduced multipliers [1, 1.5, 2, 2.5, 3] for better risk control
+    DEFAULT_MULTIPLIERS = [1, 1.5, 2, 2.5, 3]
 
     def __init__(self, total_capital: float = None):
         # Use PositionSizingConfig if not provided

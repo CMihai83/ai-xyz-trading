@@ -515,8 +515,9 @@ class AIXYZContinuousProfit:
         self.max_positions_allowed = self.max_positions  # Aligned with max_positions
         self.max_averaging_steps = 13  # Default, will be recalculated dynamically
         # Averaging multipliers based on initial $1 margin
-        # Step 1: 1x initial margin, Step 2: 2x, Step 3: 3x, Step 4: 5x, Step 5: 8x
-        self.averaging_multipliers = [1.0, 2.0, 3.0, 5.0, 8.0]  # Each step multiplies initial margin
+        # Grok V2: Reduced multipliers for better risk control [1, 1.5, 2, 2.5, 3] vs old [1, 2, 3, 5, 8]
+        # Total exposure: 10x vs old 19x - reduces capital lockup during adverse moves
+        self.averaging_multipliers = [1.0, 1.5, 2.0, 2.5, 3.0]  # Grok-optimized for risk control
         self.scan_interval = 60  # Reduced from 120 - faster opportunity capture (Scanner v4.0 optimized)
         self.monitor_interval = 3  # Reduced from 5 - faster position monitoring
         self.profit_monitor_interval = 2  # Faster monitoring when in profit (2 seconds)
@@ -811,19 +812,20 @@ class AIXYZContinuousProfit:
             # Store averaging capability for use in position management
             self.max_averaging_steps = averaging_steps_possible
             
-            # Calculate dynamic multipliers based on proper Fibonacci sequence
+            # Grok V2: Reduced multipliers for better risk control
+            # Old: [1, 2, 3, 5, 8] = 19x total → New: [1, 1.5, 2, 2.5, 3] = 10x total
             if averaging_steps_possible == 5:
-                # Full Fibonacci: 1x, 2x, 3x, 5x, 8x
-                self.averaging_multipliers = [1.0, 2.0, 3.0, 5.0, 8.0]
+                # Grok V2: Reduced from [1,2,3,5,8]=19x to [1,1.5,2,2.5,3]=10x
+                self.averaging_multipliers = [1.0, 1.5, 2.0, 2.5, 3.0]
             elif averaging_steps_possible == 4:
-                # Adjusted: 1x, 2x, 3x, 5x (total 11x)
-                self.averaging_multipliers = [1.0, 2.0, 3.0, 5.0]
+                # Grok V2: Reduced from [1,2,3,5]=11x to [1,1.5,2,2.5]=7x
+                self.averaging_multipliers = [1.0, 1.5, 2.0, 2.5]
             elif averaging_steps_possible == 3:
-                # Conservative: 1x, 2x, 3x (total 6x)
-                self.averaging_multipliers = [1.0, 2.0, 3.0]
+                # Grok V2: Reduced from [1,2,3]=6x to [1,1.5,2]=4.5x
+                self.averaging_multipliers = [1.0, 1.5, 2.0]
             elif averaging_steps_possible == 2:
-                # Minimal: 1x, 2x (total 3x)
-                self.averaging_multipliers = [1.0, 2.0]
+                # Grok V2: Reduced from [1,2]=3x to [1,1.5]=2.5x
+                self.averaging_multipliers = [1.0, 1.5]
             elif averaging_steps_possible == 1:
                 # Single: 1x only
                 self.averaging_multipliers = [1.0]
@@ -1723,7 +1725,7 @@ class AIXYZContinuousProfit:
 
         Filters:
         1. Trend Confirmation: Price > 50-period SMA (for longs) or Price < 50 SMA (for shorts)
-        2. Momentum Filter: RSI(14) between 30-70 (avoid extremes)
+        2. Momentum Filter: RSI(14) between 25-75 (Grok V2: stricter thresholds)
         3. Volatility Filter: ATR(14) < 1.5x average ATR(20) (avoid high volatility)
 
         Returns: (passed: bool, reason: str)
@@ -1770,15 +1772,15 @@ class AIXYZContinuousProfit:
                 else:
                     rsi = 100
 
-                # RSI filter: avoid extremes
-                if rsi < 30:
+                # RSI filter: avoid extremes (Grok V2: stricter 25/75 thresholds)
+                if rsi < 25:
                     if is_long:
-                        pass  # Oversold is OK for longs
+                        pass  # Strong oversold is OK for longs
                     else:
                         return False, f"RSI filter: RSI={rsi:.1f} oversold (risky for short)"
-                elif rsi > 70:
+                elif rsi > 75:
                     if not is_long:
-                        pass  # Overbought is OK for shorts
+                        pass  # Strong overbought is OK for shorts
                     else:
                         return False, f"RSI filter: RSI={rsi:.1f} overbought (risky for long)"
 
