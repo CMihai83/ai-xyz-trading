@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Position Manager CLI - Sprint 9 Implementation
-V1.0.0 - January 2026
+Position Manager CLI - Sprint 11 Implementation
+V1.2.0 - January 2026
 
 Safe position closure and profit-taking utility for AI-XYZ trading system.
 Can be run standalone or integrated with main system.
@@ -9,6 +9,8 @@ Can be run standalone or integrated with main system.
 Usage:
     python3 position_manager_cli.py --list                    # List all positions
     python3 position_manager_cli.py --close PEOPLE           # Close specific position
+    python3 position_manager_cli.py --close DYM --side long  # Close specific side (for hedged pairs)
+    python3 position_manager_cli.py --partial-close DYM --side short --percentage 0.5
     python3 position_manager_cli.py --take-profits            # Close all profitable positions
     python3 position_manager_cli.py --close-critical          # Close all CRITICAL (5-step) positions
     python3 position_manager_cli.py --dry-run --close PEOPLE  # Preview without executing
@@ -63,7 +65,7 @@ class PositionInfo:
 class PositionManagerCLI:
     """CLI tool for managing positions in AI-XYZ trading system."""
 
-    VERSION = "1.0.0"
+    VERSION = "1.2.0"
 
     def __init__(self, dry_run: bool = False):
         self.dry_run = dry_run
@@ -240,20 +242,43 @@ class PositionManagerCLI:
                 clean_sym = p.symbol.replace('/USDT:USDT', '')
                 print(f"   💰 {clean_sym}: ${p.upnl:+.4f} ({p.upnl_pct:+.2f}%)")
 
-    def close_position(self, symbol: str) -> Tuple[bool, str]:
-        """Close a specific position."""
+    def close_position(self, symbol: str, side: Optional[str] = None) -> Tuple[bool, str]:
+        """Close a specific position.
+
+        Args:
+            symbol: The trading symbol (e.g., 'DYM' or 'DYM/USDT:USDT')
+            side: Optional 'long' or 'short' to specify which position to close
+                  when there are hedged pairs (both long and short for same symbol)
+        """
         symbol = self._format_symbol(symbol)
+        base_symbol = symbol.split('/')[0]
 
         positions = self.get_positions()
         target_pos = None
+        matching_positions = []
 
+        # Find all matching positions
         for pos in positions:
-            if pos.symbol == symbol or pos.symbol.startswith(symbol.split('/')[0]):
-                target_pos = pos
-                break
+            if pos.symbol == symbol or pos.symbol.startswith(base_symbol):
+                matching_positions.append(pos)
 
-        if not target_pos:
+        # Filter by side if specified
+        if side:
+            side = side.lower()
+            matching_positions = [p for p in matching_positions if p.side == side]
+            if not matching_positions:
+                return False, f"No {side} position found for {base_symbol}"
+
+        # If multiple positions and no side specified, warn the user
+        if len(matching_positions) > 1 and not side:
+            sides = [f"{p.side} (UPNL: ${p.upnl:+.2f})" for p in matching_positions]
+            return False, (f"Multiple positions found for {base_symbol}: {', '.join(sides)}. "
+                          f"Use --side long or --side short to specify which one to close.")
+
+        if not matching_positions:
             return False, f"Position not found: {symbol}"
+
+        target_pos = matching_positions[0]
 
         clean_sym = target_pos.symbol.replace('/USDT:USDT', '')
 
@@ -389,20 +414,44 @@ class PositionManagerCLI:
         except Exception as e:
             print(f"❌ Error running recovery analysis: {e}")
 
-    def partial_close(self, symbol: str, percentage: float = 0.5) -> Tuple[bool, str]:
-        """Partially close a position by percentage (0-1)."""
+    def partial_close(self, symbol: str, percentage: float = 0.5, side: Optional[str] = None) -> Tuple[bool, str]:
+        """Partially close a position by percentage (0-1).
+
+        Args:
+            symbol: The trading symbol (e.g., 'DYM' or 'DYM/USDT:USDT')
+            percentage: Fraction to close (0-1, default 0.5 = 50%)
+            side: Optional 'long' or 'short' to specify which position to close
+                  when there are hedged pairs (both long and short for same symbol)
+        """
         symbol = self._format_symbol(symbol)
+        base_symbol = symbol.split('/')[0]
 
         positions = self.get_positions()
         target_pos = None
+        matching_positions = []
 
+        # Find all matching positions
         for pos in positions:
-            if pos.symbol == symbol or pos.symbol.startswith(symbol.split('/')[0]):
-                target_pos = pos
-                break
+            if pos.symbol == symbol or pos.symbol.startswith(base_symbol):
+                matching_positions.append(pos)
 
-        if not target_pos:
+        # Filter by side if specified
+        if side:
+            side = side.lower()
+            matching_positions = [p for p in matching_positions if p.side == side]
+            if not matching_positions:
+                return False, f"No {side} position found for {base_symbol}"
+
+        # If multiple positions and no side specified, warn the user
+        if len(matching_positions) > 1 and not side:
+            sides = [f"{p.side} (UPNL: ${p.upnl:+.2f})" for p in matching_positions]
+            return False, (f"Multiple positions found for {base_symbol}: {', '.join(sides)}. "
+                          f"Use --side long or --side short to specify which one to partial close.")
+
+        if not matching_positions:
             return False, f"Position not found: {symbol}"
+
+        target_pos = matching_positions[0]
 
         clean_sym = target_pos.symbol.replace('/USDT:USDT', '')
         close_amount = target_pos.amount * percentage
@@ -437,11 +486,13 @@ class PositionManagerCLI:
 
 
 def main():
-    parser = argparse.ArgumentParser(description='AI-XYZ Position Manager CLI V1.1.0')
+    parser = argparse.ArgumentParser(description='AI-XYZ Position Manager CLI V1.2.0')
     parser.add_argument('--list', '-l', action='store_true', help='List all positions')
     parser.add_argument('--close', '-c', type=str, help='Close specific position (symbol)')
     parser.add_argument('--partial-close', '-p', type=str, help='Partially close position (symbol)')
     parser.add_argument('--percentage', type=float, default=0.5, help='Percentage for partial close (0-1, default 0.5)')
+    parser.add_argument('--side', '-s', type=str, choices=['long', 'short'],
+                       help='Specify side for hedged pairs (long or short)')
     parser.add_argument('--take-profits', '-t', action='store_true', help='Close all profitable positions')
     parser.add_argument('--close-critical', action='store_true', help='Close all CRITICAL positions')
     parser.add_argument('--analyze', '-a', action='store_true', help='Run recovery analysis and show recommendations')
@@ -458,10 +509,10 @@ def main():
     if args.list:
         manager.list_positions()
     elif args.close:
-        success, msg = manager.close_position(args.close)
+        success, msg = manager.close_position(args.close, side=args.side)
         print(msg)
     elif args.partial_close:
-        success, msg = manager.partial_close(args.partial_close, args.percentage)
+        success, msg = manager.partial_close(args.partial_close, args.percentage, side=args.side)
         print(msg)
     elif args.take_profits:
         manager.take_profits(min_profit=args.min_profit)
