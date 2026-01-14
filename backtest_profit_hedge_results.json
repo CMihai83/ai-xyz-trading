@@ -1,0 +1,110 @@
+[
+  {
+    "traditional": {
+      "total_pnl": 1.1947148479710625,
+      "win_rate": 0.5,
+      "avg_profit_captured": -388.53167920077806,
+      "trades": 30
+    },
+    "profit_hedge": {
+      "total_pnl": 1.1947148479710625,
+      "main_pnl": 1.1947148479710625,
+      "hedge_pnl": 0.0,
+      "win_rate": 0.5,
+      "avg_profit_captured": -388.53167920077806,
+      "trades": 30,
+      "exit_reasons": {
+        "end_of_data": 30
+      }
+    },
+    "improvement_pct": 0.0,
+    "symbol": "BTC/USDT:USDT"
+  },
+  {
+    "traditional": {
+      "total_pnl": 0.9677203927053322,
+      "win_rate": 0.5,
+      "avg_profit_captured": -1143.472995334794,
+      "trades": 30
+    },
+    "profit_hedge": {
+      "total_pnl": 0.9677203927053322,
+      "main_pnl": 0.9677203927053322,
+      "hedge_pnl": 0.0,
+      "win_rate": 0.5,
+      "avg_profit_captured": -1143.472995334794,
+      "trades": 30,
+      "exit_reasons": {
+        "end_of_data": 30
+      }
+    },
+    "improvement_pct": 0.0,
+    "symbol": "ETH/USDT:USDT"
+  },
+  {
+    "traditional": {
+      "total_pnl": -7.301061444207631,
+      "win_rate": 0.5,
+      "avg_profit_captured": -3633.350598570928,
+      "trades": 30
+    },
+    "profit_hedge": {
+      "total_pnl": -6.794316458462393,
+      "main_pnl": -6.2875714727171506,
+      "hedge_pnl": -0.5067449857452422,
+      "win_rate": 0.5,
+      "avg_profit_captured": -3633.079868883573,
+      "trades": 30,
+      "exit_reasons": {
+        "hedge_profit_10pct": 2,
+        "end_of_data": 21,
+        "hedge_stop_loss": 7
+      }
+    },
+    "improvement_pct": 6.940702932273905,
+    "symbol": "SOL/USDT:USDT"
+  },
+  {
+    "traditional": {
+      "total_pnl": 0.46586723292016785,
+      "win_rate": 0.5,
+      "avg_profit_captured": -391.9254647334661,
+      "trades": 30
+    },
+    "profit_hedge": {
+      "total_pnl": 0.46586723292016785,
+      "main_pnl": 0.46586723292016785,
+      "hedge_pnl": 0.0,
+      "win_rate": 0.5,
+      "avg_profit_captured": -391.9254647334661,
+      "trades": 30,
+      "exit_reasons": {
+        "end_of_data": 30
+      }
+    },
+    "improvement_pct": 0.0,
+    "symbol": "LINK/USDT:USDT"
+  },
+  {
+    "traditional": {
+      "total_pnl": -0.946770451211997,
+      "win_rate": 0.5,
+      "avg_profit_captured": -326.9244500954276,
+      "trades": 30
+    },
+    "profit_hedge": {
+      "total_pnl": -0.1898615628010758,
+      "main_pnl": 0.5670473256098476,
+      "hedge_pnl": -0.7569088884109234,
+      "win_rate": 0.5,
+      "avg_profit_captured": -326.5476713365329,
+      "trades": 30,
+      "exit_reasons": {
+        "end_of_data": 28,
+        "hedge_stop_loss": 2
+      }
+    },
+    "improvement_pct": 79.94639962009515,
+    "symbol": "DOGE/USDT:USDT"
+  }
+]

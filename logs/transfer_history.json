@@ -313,5 +313,26 @@
       "status": null
     },
     "success": true
+  },
+  {
+    "timestamp": "2026-01-13T14:35:33.032842",
+    "amount": 15.0,
+    "direction": "futures_to_spot",
+    "result": {
+      "info": {
+        "transferId": "1394979423971663872",
+        "clientOid": null,
+        "ts": 1768314932812
+      },
+      "id": "1394979423971663872",
+      "timestamp": 1768314932812,
+      "datetime": "2026-01-13T14:35:32.812Z",
+      "currency": "USDT",
+      "amount": null,
+      "fromAccount": null,
+      "toAccount": null,
+      "status": null
+    },
+    "success": true
   }
 ]
