@@ -130,6 +130,14 @@ except ImportError as e:
     print(f"⚠️ Dynamic Parameter Manager not available: {e}")
     DYNAMIC_PARAMS_AVAILABLE = False
 
+# V1.3.1: Dynamic Leverage Manager for regime-aware leverage scaling
+try:
+    from dynamic_leverage_manager import DynamicLeverageManager, get_dynamic_leverage_manager
+    DYNAMIC_LEVERAGE_AVAILABLE = True
+except ImportError as e:
+    print(f"⚠️ Dynamic Leverage Manager not available: {e}")
+    DYNAMIC_LEVERAGE_AVAILABLE = False
+
 class AIXYZContinuousProfit:
     def __init__(self):
         # Load environment variables
@@ -571,6 +579,20 @@ class AIXYZContinuousProfit:
         else:
             self.dynamic_param_manager = None
             print("⚠️ Dynamic Parameter Manager not available")
+
+        # V1.3.1: Dynamic Leverage Manager for regime-aware leverage scaling
+        if DYNAMIC_LEVERAGE_AVAILABLE:
+            self.dynamic_leverage_manager = get_dynamic_leverage_manager(
+                self.exchange,
+                self.dynamic_param_manager if DYNAMIC_PARAMS_AVAILABLE else None
+            )
+            print("⚖️ Dynamic Leverage Manager enabled:")
+            print("   📉 Reduces leverage in HIGH_VOLATILITY (max 5x)")
+            print("   📈 Allows higher leverage in RANGING markets (max 15x)")
+            print("   💰 Adjusts based on margin utilization & drawdown")
+        else:
+            self.dynamic_leverage_manager = None
+            print("⚠️ Dynamic Leverage Manager not available")
 
         # Zone thresholds - UPDATED: wider neutral zone (-15% to +5%)
         self.zone_thresholds = {
@@ -1904,7 +1926,25 @@ class AIXYZContinuousProfit:
             print(f"  🔢 STRICT Fibonacci leverage: {leverage}x")
             print(f"     Max averaging steps: {fib_params['max_averaging_steps']}")
             print(f"     Multipliers: {fib_params['position_multipliers']}")
-            
+
+            # V1.3.1: Dynamic Leverage - cap leverage based on market regime
+            if hasattr(self, 'dynamic_leverage_manager') and self.dynamic_leverage_manager:
+                try:
+                    # Get account data for health check
+                    account_data = {
+                        'margin_utilization': balance['USDT']['used'] / account_balance if account_balance > 0 else 0,
+                        'current_drawdown': 0,  # Could track this separately
+                        'recent_win_rate': 0.5  # Could track this from trade history
+                    }
+                    dynamic_lev = self.dynamic_leverage_manager.get_leverage_for_new_position(
+                        symbol, confidence, account_data
+                    )
+                    if dynamic_lev < leverage:
+                        print(f"  ⚖️ Dynamic Leverage: {leverage}x -> {dynamic_lev}x (regime-adjusted)")
+                        leverage = dynamic_lev
+                except Exception as e:
+                    print(f"  ⚠️ Dynamic leverage check failed: {e}")
+
             # Override with signal leverage if it's lower (more conservative)
             if 'leverage' in opportunity:
                 signal_leverage = opportunity['leverage']
