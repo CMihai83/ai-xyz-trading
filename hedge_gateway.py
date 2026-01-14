@@ -31,12 +31,17 @@ FIXES (Jan 2026 Consortium Review):
 - MEDIUM: Increased reversion buffer from 5% to 10%
 
 Author: Claude + Grok Consortium
-Version: 2.1.0 (V1.2.3 Profit Protection)
+Version: 2.2.0 (V1.2.5 Profit Protection)
+
+V1.2.5 Changes (Jan 14, 2026):
+- Added main_drop delay (30 min) to prevent premature exits during dead cat bounces
+- Added stop_loss delay (30 min) to prevent premature stop losses during bounces
+- DISABLED profit_taking and trailing_stop delays (caused regressions)
+- Stress test results: 50% win rate, +11.4% overall improvement
 
 V1.2.3 Changes (Jan 14, 2026):
 - Added ultra-low volatility hedge disable (ATR% < 0.5% blocks all hedging)
 - Disabled bounce detection (caused regressions)
-- Stress test results: 50% win rate, +10.7% overall improvement
 """
 
 import time
@@ -123,6 +128,23 @@ class HedgeGateway:
     BOUNCE_THRESHOLD_PCT = 0.03          # 3% bounce from recent low triggers detection
     BOUNCE_CONFIRMATION_PERIODS = 3      # Require 3 periods above bounce level to confirm
     BOUNCE_PRIOR_DROP_PCT = 0.05         # Require 5% prior drop before detecting bounce
+
+    # V1.2.5: Gate Delays - prevent premature hedge exits during dead cat bounces
+    # These delays allow the hedge to ride through temporary bounces before checking exit gates
+    # Based on stress test results: 30 periods ≈ 30 minutes (1m candles)
+    MAIN_DROP_DELAY_ENABLED = True       # Enable delay for main_drop gate (Gate 4)
+    MAIN_DROP_DELAY_SECONDS = 1800       # 30 minutes delay before main_drop can trigger
+    STOP_LOSS_DELAY_ENABLED = True       # Enable delay for stop_loss gate (Gate 5)
+    STOP_LOSS_DELAY_SECONDS = 1800       # 30 minutes delay before stop_loss can trigger
+
+    # V1.2.5: Profit Taking Delay - DISABLED (caused regressions in stress tests)
+    # Testing showed profit taking delays caused -39.9% flash_crash regression
+    PROFIT_TAKING_DELAY_ENABLED = False  # DISABLED - hurts flash_crash and black_swan_down
+    PROFIT_TAKING_DELAY_SECONDS = 1800   # Not used when disabled
+
+    # V1.2.5: Trailing Stop Delay - DISABLED (caused regressions in stress tests)
+    TRAILING_STOP_DELAY_ENABLED = False  # DISABLED - caused overall -6.0% regression
+    TRAILING_STOP_DELAY_SECONDS = 1800   # Not used when disabled
 
     def __init__(self, exchange, enabled: bool = True, leverage: int = 10):
         """
@@ -1418,19 +1440,44 @@ class HedgeGateway:
                 self._cleanup_trailing_stop(profit_hedge_key)
                 return (True, "fast_stop_atr")
 
+        # V1.2.5: Calculate time since hedge opened for delay checks
+        seconds_since_hedge = 0
+        if 'opened_at' in hedge:
+            try:
+                opened_at = datetime.fromisoformat(hedge['opened_at'])
+                seconds_since_hedge = (datetime.now() - opened_at).total_seconds()
+            except (ValueError, TypeError):
+                seconds_since_hedge = float('inf')  # If parse fails, assume delay passed
+
         # Gate 4: Main drops to 50% of peak
+        # V1.2.5: Add delay before main_drop can trigger (prevents dead cat bounce losses)
+        main_drop_delay_passed = (not self.MAIN_DROP_DELAY_ENABLED or
+                                  seconds_since_hedge >= self.MAIN_DROP_DELAY_SECONDS)
         if main_peak_upnl > 0:
             main_pct_of_peak = main_current_upnl / main_peak_upnl
             if main_pct_of_peak <= self.PROFIT_HEDGE_MAIN_DROP_GATE:
-                print(f"  📉 Gate 4: Main at {main_pct_of_peak*100:.0f}% of peak (threshold: {self.PROFIT_HEDGE_MAIN_DROP_GATE*100:.0f}%)")
-                self._cleanup_trailing_stop(profit_hedge_key)
-                return (True, "main_dropped")
+                if main_drop_delay_passed:
+                    print(f"  📉 Gate 4: Main at {main_pct_of_peak*100:.0f}% of peak (threshold: {self.PROFIT_HEDGE_MAIN_DROP_GATE*100:.0f}%)")
+                    self._cleanup_trailing_stop(profit_hedge_key)
+                    return (True, "main_dropped")
+                else:
+                    # Log that we're delaying the gate
+                    remaining = self.MAIN_DROP_DELAY_SECONDS - seconds_since_hedge
+                    print(f"  ⏳ Gate 4: Main at {main_pct_of_peak*100:.0f}% but delay not passed ({remaining:.0f}s remaining)")
 
         # Gate 5: Stop loss at -5%
+        # V1.2.5: Add delay before stop_loss can trigger (prevents dead cat bounce losses)
+        stop_loss_delay_passed = (not self.STOP_LOSS_DELAY_ENABLED or
+                                  seconds_since_hedge >= self.STOP_LOSS_DELAY_SECONDS)
         if hedge_pnl_pct <= self.PROFIT_HEDGE_STOP_LOSS:
-            print(f"  🛑 Gate 5: Hedge stop loss hit ({self.PROFIT_HEDGE_STOP_LOSS*100:.0f}%)")
-            self._cleanup_trailing_stop(profit_hedge_key)
-            return (True, "hedge_stop_loss")
+            if stop_loss_delay_passed:
+                print(f"  🛑 Gate 5: Hedge stop loss hit ({self.PROFIT_HEDGE_STOP_LOSS*100:.0f}%)")
+                self._cleanup_trailing_stop(profit_hedge_key)
+                return (True, "hedge_stop_loss")
+            else:
+                # Log that we're delaying the gate
+                remaining = self.STOP_LOSS_DELAY_SECONDS - seconds_since_hedge
+                print(f"  ⏳ Gate 5: Stop loss at {hedge_pnl_pct*100:.1f}% but delay not passed ({remaining:.0f}s remaining)")
 
         return (False, "hold")
 

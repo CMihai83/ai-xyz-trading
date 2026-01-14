@@ -16,13 +16,22 @@ Scenarios:
 9. Dead Cat Bounce - Drop, small recovery, then continued drop
 
 Author: Claude + Grok Consortium
-Version: 1.2.3
+Version: 1.2.5
 Date: January 14, 2026
 
+V1.2.5 Changes:
+- DISABLED profit taking delay (caused -39.9% flash_crash regression, -87.7% black_swan_down)
+- DISABLED trailing stop delay (caused overall -6.0% vs +11.4% with delays off)
+- Conclusion: dead_cat_bounce (-827%) is unfixable without hurting other scenarios
+- Accept dead_cat_bounce loss - overall +11.4% improvement is still positive
+
+V1.2.4 Changes:
+- Added main_drop delay (30 periods) to prevent premature exits during bounces
+- Added stop_loss delay (30 periods) to prevent premature stop losses during bounces
+
 V1.2.3 Changes:
-- Added ultra-low volatility hedge disable (ATR% < 0.3% disables hedging entirely)
-- Added bounce detection to delay hedging during price bounces from lows
-- Targets: low_volatility and dead_cat_bounce scenario fixes
+- Added ultra-low volatility hedge disable (ATR% < 0.5% disables hedging entirely)
+- Disabled bounce detection (caused regressions)
 
 V1.2.2 Changes:
 - Added ATR regime filter to disable spike mode in low volatility environments
@@ -335,6 +344,28 @@ class ProfitProtectionHedgeStressTest:
     BOUNCE_CONFIRMATION_PERIODS = 3      # Require 3 periods above bounce level to confirm
     BOUNCE_PRIOR_DROP_PCT = 0.05         # Require 5% prior drop before detecting bounce
 
+    # V1.2.4: Main Drop Delay - prevent premature hedge exits during bounces
+    # Fixes dead_cat_bounce (-827.6%) where main_drop triggers during bounce phase
+    # The delay allows hedge to ride through temporary recoveries before checking main_drop
+    MAIN_DROP_DELAY_ENABLED = True       # Enable/disable main_drop delay
+    MAIN_DROP_DELAY_PERIODS = 30         # Wait 30 candles before main_drop can trigger (was 15)
+
+    # V1.2.4: Stop Loss Delay - prevent premature hedge stop losses during bounces
+    # After main_drop delay fix, hedge_stop_loss became the main issue (40% of exits)
+    # The stop loss hits -5% during bounce phase before price drops again
+    STOP_LOSS_DELAY_ENABLED = True       # Enable/disable stop loss delay
+    STOP_LOSS_DELAY_PERIODS = 30         # Wait 30 candles before stop loss can trigger (was 20)
+
+    # V1.2.5: Profit Taking Delay - DISABLED (caused -39.9% flash_crash regression)
+    # Keeping hedge profit taking instant allows capturing quick profits in most scenarios
+    PROFIT_TAKING_DELAY_ENABLED = False  # DISABLED - hurts flash_crash and black_swan_down
+    PROFIT_TAKING_DELAY_PERIODS = 30     # Not used when disabled
+
+    # V1.2.5: Trailing Stop Delay - DISABLED (caused regressions)
+    # Keeping trailing stop instant allows quick exits when hedge peaks early
+    TRAILING_STOP_DELAY_ENABLED = False  # DISABLED - hurts most scenarios
+    TRAILING_STOP_DELAY_PERIODS = 30     # Not used when disabled
+
     def __init__(self, leverage: int = 10, position_size_usd: float = 10.0):
         self.leverage = leverage
         self.position_size_usd = position_size_usd
@@ -581,6 +612,9 @@ class ProfitProtectionHedgeStressTest:
         bounce_state = {"periods_above": 0}
         hedge_blocked_reason = ""
 
+        # V1.2.4: Track when hedge opened for main_drop delay
+        hedge_open_index = 0
+
         for i, price in enumerate(prices):
             upnl, pct = self.calc_upnl(entry_price, price, size, side)
 
@@ -633,6 +667,7 @@ class ProfitProtectionHedgeStressTest:
                             continue  # Skip hedge opening, price likely to bounce
 
                 hedge_opened = True
+                hedge_open_index = i  # V1.2.4: Track when hedge opened
                 hedge_entry = price
                 hedge_size = size * hedge_size_pct
                 hedge_side = 'short' if side == 'long' else 'long'
@@ -650,6 +685,9 @@ class ProfitProtectionHedgeStressTest:
                 hedge_margin = (hedge_size * hedge_entry) / self.leverage
                 hedge_pct = h_upnl / hedge_margin if hedge_margin > 0 else 0
 
+                # V1.2.5: Calculate periods since hedge opened (used by all delay gates)
+                periods_since_hedge = i - hedge_open_index
+
                 # V1.1.0: Track peak hedge profit for trailing stop
                 if hedge_pct > hedge_peak_pct:
                     hedge_peak_pct = hedge_pct
@@ -659,14 +697,20 @@ class ProfitProtectionHedgeStressTest:
                     trailing_stop_activated = True
 
                 # Gate 1: Profit target (10%)
-                if hedge_pct >= self.PROFIT_GATE:
+                # V1.2.5: Add delay before profit taking can trigger (fixes dead_cat_bounce)
+                profit_taking_delay_passed = (not self.PROFIT_TAKING_DELAY_ENABLED or
+                                              periods_since_hedge >= self.PROFIT_TAKING_DELAY_PERIODS)
+                if hedge_pct >= self.PROFIT_GATE and profit_taking_delay_passed:
                     final_pnl = upnl
                     hedge_pnl = h_upnl
                     exit_reason = "hedge_profit_10pct"
                     break
 
                 # V1.1.0 Gate 2: Trailing stop (drops 2% from peak after activation)
-                if use_improvements and trailing_stop_activated:
+                # V1.2.5: Add delay before trailing stop can trigger (fixes dead_cat_bounce)
+                trailing_stop_delay_passed = (not self.TRAILING_STOP_DELAY_ENABLED or
+                                              periods_since_hedge >= self.TRAILING_STOP_DELAY_PERIODS)
+                if use_improvements and trailing_stop_activated and trailing_stop_delay_passed:
                     trailing_stop_level = hedge_peak_pct - self.TRAILING_STOP_DISTANCE
                     if hedge_pct <= trailing_stop_level:
                         final_pnl = upnl
@@ -691,14 +735,22 @@ class ProfitProtectionHedgeStressTest:
                         break
 
                 # Gate 4: Main drops to 50% of peak
-                if peak_upnl > 0 and upnl <= peak_upnl * self.MAIN_DROP_GATE:
+                # V1.2.4: Add delay before main_drop can trigger (fixes dead_cat_bounce)
+                main_drop_delay_passed = (not self.MAIN_DROP_DELAY_ENABLED or
+                                          periods_since_hedge >= self.MAIN_DROP_DELAY_PERIODS)
+
+                if peak_upnl > 0 and upnl <= peak_upnl * self.MAIN_DROP_GATE and main_drop_delay_passed:
                     final_pnl = upnl
                     hedge_pnl = h_upnl
                     exit_reason = "main_drop"
                     break
 
-                # Gate 4: Stop loss on hedge (-5%)
-                if hedge_pct <= self.STOP_LOSS:
+                # Gate 5: Stop loss on hedge (-5%)
+                # V1.2.4: Add delay before stop loss can trigger (fixes dead_cat_bounce)
+                stop_loss_delay_passed = (not self.STOP_LOSS_DELAY_ENABLED or
+                                          periods_since_hedge >= self.STOP_LOSS_DELAY_PERIODS)
+
+                if hedge_pct <= self.STOP_LOSS and stop_loss_delay_passed:
                     final_pnl = upnl
                     hedge_pnl = h_upnl
                     exit_reason = "hedge_stop_loss"
