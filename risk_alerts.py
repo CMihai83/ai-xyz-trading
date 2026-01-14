@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Real-Time Risk Alerts for AI-XYZ Trading System
-V1.0.0 - January 14, 2026
+V2.0.0 - January 14, 2026
 
 Triggers alerts for critical events:
 - High drawdown (>10%, >15%, >20%)
@@ -11,10 +11,20 @@ Triggers alerts for critical events:
 - Liquidation warnings
 - System health issues
 
+V2.0.0 Enhancements (Sprint 5):
+- Hysteresis to reduce false positives (require sustained breach)
+- Customizable thresholds via config file
+- Multi-condition validation for alert confidence
+- Additional notification channels (Discord, Webhook)
+- Alert confirmation with trend analysis
+- Severity escalation tracking
+
 Notification channels:
 - Console/Log output
 - Dashboard API
 - Telegram (if configured)
+- Discord (if configured)
+- Custom Webhook
 
 Author: Claude + Grok Consortium
 """
@@ -23,14 +33,18 @@ import json
 import os
 import redis
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Callable
-from dataclasses import dataclass
+from typing import Dict, List, Optional, Callable, Tuple
+from dataclasses import dataclass, field
 from enum import Enum
+from collections import deque
 import logging
 import requests
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
+
+# Config file for customizable thresholds
+ALERT_CONFIG_FILE = '/root/ai_xyz/alert_config.json'
 
 
 class AlertSeverity(Enum):
@@ -51,6 +65,48 @@ class Alert:
     timestamp: datetime
     symbol: Optional[str] = None
     action_required: Optional[str] = None
+    # V2.0.0 - Enhanced fields
+    confidence: float = 1.0  # 0-1 confidence score
+    confirmed: bool = True   # Whether alert is confirmed (hysteresis passed)
+    trend: str = 'stable'    # 'improving', 'stable', 'worsening'
+    consecutive_breaches: int = 1  # Number of consecutive threshold breaches
+
+
+@dataclass
+class AlertConfig:
+    """Customizable alert configuration."""
+    # Drawdown thresholds (can be customized)
+    drawdown_warning: float = 0.10
+    drawdown_critical: float = 0.15
+    drawdown_emergency: float = 0.20
+
+    # Margin thresholds
+    margin_warning: float = 0.70
+    margin_critical: float = 0.85
+    margin_emergency: float = 0.95
+
+    # Averaging position thresholds
+    averaging_warning: int = 5
+    averaging_critical: int = 8
+    averaging_emergency: int = 10
+
+    # Hysteresis settings (V2.0.0)
+    hysteresis_samples: int = 3      # Require N consecutive breaches
+    hysteresis_window_sec: int = 60  # Time window for hysteresis
+
+    # Cooldown settings
+    cooldown_minutes: int = 15
+
+    # Notification channels
+    telegram_enabled: bool = True
+    discord_enabled: bool = False
+    webhook_enabled: bool = False
+    webhook_url: str = ''
+    discord_webhook_url: str = ''
+
+    # Severity settings
+    notify_on_warning: bool = False  # Only notify on CRITICAL+ by default
+    escalation_timeout_min: int = 30  # Escalate if not resolved in N minutes
 
 
 class RiskAlertManager:
@@ -84,7 +140,7 @@ class RiskAlertManager:
         AlertSeverity.EMERGENCY: 10       # 10+ positions in AVERAGING
     }
 
-    def __init__(self):
+    def __init__(self, config: AlertConfig = None):
         self.redis_host = os.getenv('REDIS_HOST', 'localhost')
         self.redis_port = int(os.getenv('REDIS_PORT', 6379))
         self.redis_client = self._connect_redis()
@@ -92,13 +148,91 @@ class RiskAlertManager:
         self.telegram_token = os.getenv('TELEGRAM_BOT_TOKEN')
         self.telegram_chat_id = os.getenv('TELEGRAM_CHAT_ID')
 
+        # V2.0.0 - Load customizable config
+        self.config = config or self._load_config()
+        self._apply_config_thresholds()
+
         self.alerts_history: List[Alert] = []
         self.last_regime = 'NORMAL'
         self.cooldowns: Dict[str, datetime] = {}
-        self.cooldown_minutes = 15  # Don't repeat same alert for 15 min
+        self.cooldown_minutes = self.config.cooldown_minutes
 
         # Alert callbacks
         self.callbacks: List[Callable[[Alert], None]] = []
+
+        # V2.0.0 - Hysteresis tracking for false positive reduction
+        self.metric_history: Dict[str, deque] = {}  # metric_name -> deque of (timestamp, value)
+        self.breach_counts: Dict[str, int] = {}     # alert_key -> consecutive breach count
+        self.last_values: Dict[str, float] = {}     # metric_name -> last value for trend detection
+        self.escalation_tracker: Dict[str, datetime] = {}  # alert_key -> first trigger time
+
+    def _load_config(self) -> AlertConfig:
+        """Load alert configuration from file or use defaults."""
+        try:
+            if os.path.exists(ALERT_CONFIG_FILE):
+                with open(ALERT_CONFIG_FILE, 'r') as f:
+                    data = json.load(f)
+                    return AlertConfig(**data)
+        except Exception as e:
+            logger.warning(f"Could not load alert config: {e}, using defaults")
+        return AlertConfig()
+
+    def save_config(self):
+        """Save current configuration to file."""
+        try:
+            config_dict = {
+                'drawdown_warning': self.config.drawdown_warning,
+                'drawdown_critical': self.config.drawdown_critical,
+                'drawdown_emergency': self.config.drawdown_emergency,
+                'margin_warning': self.config.margin_warning,
+                'margin_critical': self.config.margin_critical,
+                'margin_emergency': self.config.margin_emergency,
+                'averaging_warning': self.config.averaging_warning,
+                'averaging_critical': self.config.averaging_critical,
+                'averaging_emergency': self.config.averaging_emergency,
+                'hysteresis_samples': self.config.hysteresis_samples,
+                'hysteresis_window_sec': self.config.hysteresis_window_sec,
+                'cooldown_minutes': self.config.cooldown_minutes,
+                'telegram_enabled': self.config.telegram_enabled,
+                'discord_enabled': self.config.discord_enabled,
+                'webhook_enabled': self.config.webhook_enabled,
+                'webhook_url': self.config.webhook_url,
+                'discord_webhook_url': self.config.discord_webhook_url,
+                'notify_on_warning': self.config.notify_on_warning,
+                'escalation_timeout_min': self.config.escalation_timeout_min,
+            }
+            with open(ALERT_CONFIG_FILE, 'w') as f:
+                json.dump(config_dict, f, indent=2)
+            logger.info(f"Alert config saved to {ALERT_CONFIG_FILE}")
+        except Exception as e:
+            logger.error(f"Failed to save alert config: {e}")
+
+    def _apply_config_thresholds(self):
+        """Apply config thresholds to class thresholds."""
+        self.DRAWDOWN_THRESHOLDS = {
+            AlertSeverity.WARNING: self.config.drawdown_warning,
+            AlertSeverity.CRITICAL: self.config.drawdown_critical,
+            AlertSeverity.EMERGENCY: self.config.drawdown_emergency
+        }
+        self.MARGIN_THRESHOLDS = {
+            AlertSeverity.WARNING: self.config.margin_warning,
+            AlertSeverity.CRITICAL: self.config.margin_critical,
+            AlertSeverity.EMERGENCY: self.config.margin_emergency
+        }
+        self.AVERAGING_POSITION_THRESHOLDS = {
+            AlertSeverity.WARNING: self.config.averaging_warning,
+            AlertSeverity.CRITICAL: self.config.averaging_critical,
+            AlertSeverity.EMERGENCY: self.config.averaging_emergency
+        }
+
+    def update_config(self, **kwargs):
+        """Update configuration parameters."""
+        for key, value in kwargs.items():
+            if hasattr(self.config, key):
+                setattr(self.config, key, value)
+        self._apply_config_thresholds()
+        self.cooldown_minutes = self.config.cooldown_minutes
+        self.save_config()
 
     def _connect_redis(self) -> Optional[redis.Redis]:
         """Connect to Redis."""
@@ -130,6 +264,193 @@ class RiskAlertManager:
     def _set_cooldown(self, alert_key: str):
         """Set cooldown for an alert."""
         self.cooldowns[alert_key] = datetime.now() + timedelta(minutes=self.cooldown_minutes)
+
+    # ==========================================================================
+    # V2.0.0 - Hysteresis and Trend Detection Methods
+    # ==========================================================================
+
+    def _record_metric(self, metric_name: str, value: float):
+        """Record a metric value for hysteresis and trend analysis."""
+        now = datetime.now()
+
+        if metric_name not in self.metric_history:
+            self.metric_history[metric_name] = deque(maxlen=20)
+
+        self.metric_history[metric_name].append((now, value))
+        self.last_values[metric_name] = value
+
+    def _check_hysteresis(self, alert_key: str, is_breaching: bool) -> Tuple[bool, int]:
+        """
+        Check if alert passes hysteresis filter (sustained breach).
+
+        Returns:
+            Tuple of (passes_hysteresis, consecutive_breaches)
+        """
+        if is_breaching:
+            self.breach_counts[alert_key] = self.breach_counts.get(alert_key, 0) + 1
+        else:
+            self.breach_counts[alert_key] = 0
+
+        consecutive = self.breach_counts.get(alert_key, 0)
+        passes = consecutive >= self.config.hysteresis_samples
+
+        return passes, consecutive
+
+    def _detect_trend(self, metric_name: str) -> str:
+        """
+        Detect trend direction for a metric.
+
+        Returns:
+            'improving', 'stable', or 'worsening'
+        """
+        if metric_name not in self.metric_history:
+            return 'stable'
+
+        history = list(self.metric_history[metric_name])
+        if len(history) < 3:
+            return 'stable'
+
+        # Get recent values (last 3)
+        recent_values = [v for _, v in history[-3:]]
+
+        # Calculate trend
+        if all(recent_values[i] < recent_values[i+1] for i in range(len(recent_values)-1)):
+            return 'worsening'
+        elif all(recent_values[i] > recent_values[i+1] for i in range(len(recent_values)-1)):
+            return 'improving'
+        return 'stable'
+
+    def _calculate_confidence(self, value: float, threshold: float, trend: str,
+                             consecutive_breaches: int) -> float:
+        """
+        Calculate confidence score for an alert (0-1).
+
+        Higher confidence = more likely to be a real issue.
+        """
+        confidence = 0.5  # Base confidence
+
+        # How far past threshold
+        if threshold > 0:
+            overshoot = (value - threshold) / threshold
+            confidence += min(0.2, overshoot * 0.5)
+
+        # Trend factor
+        if trend == 'worsening':
+            confidence += 0.15
+        elif trend == 'improving':
+            confidence -= 0.15
+
+        # Consecutive breaches factor
+        if consecutive_breaches >= 5:
+            confidence += 0.2
+        elif consecutive_breaches >= 3:
+            confidence += 0.1
+
+        return max(0.1, min(1.0, confidence))
+
+    def _check_escalation(self, alert_key: str, severity: AlertSeverity) -> AlertSeverity:
+        """
+        Check if alert should be escalated due to timeout.
+
+        Returns:
+            Potentially escalated severity
+        """
+        now = datetime.now()
+
+        if alert_key not in self.escalation_tracker:
+            self.escalation_tracker[alert_key] = now
+            return severity
+
+        first_trigger = self.escalation_tracker[alert_key]
+        elapsed_min = (now - first_trigger).total_seconds() / 60
+
+        # Escalate if not resolved within timeout
+        if elapsed_min >= self.config.escalation_timeout_min:
+            if severity == AlertSeverity.WARNING:
+                logger.warning(f"Escalating {alert_key} from WARNING to CRITICAL (unresolved for {elapsed_min:.0f}min)")
+                return AlertSeverity.CRITICAL
+            elif severity == AlertSeverity.CRITICAL:
+                logger.warning(f"Escalating {alert_key} from CRITICAL to EMERGENCY (unresolved for {elapsed_min:.0f}min)")
+                return AlertSeverity.EMERGENCY
+
+        return severity
+
+    def _clear_escalation(self, alert_key: str):
+        """Clear escalation tracker when alert is resolved."""
+        if alert_key in self.escalation_tracker:
+            del self.escalation_tracker[alert_key]
+        if alert_key in self.breach_counts:
+            self.breach_counts[alert_key] = 0
+
+    # ==========================================================================
+    # V2.0.0 - Additional Notification Channels
+    # ==========================================================================
+
+    def _send_discord(self, alert: Alert):
+        """Send alert to Discord webhook."""
+        if not self.config.discord_enabled or not self.config.discord_webhook_url:
+            return
+
+        try:
+            color = {
+                AlertSeverity.INFO: 0x3498db,      # Blue
+                AlertSeverity.WARNING: 0xf39c12,   # Orange
+                AlertSeverity.CRITICAL: 0xe74c3c,  # Red
+                AlertSeverity.EMERGENCY: 0x9b59b6  # Purple
+            }.get(alert.severity, 0x95a5a6)
+
+            embed = {
+                "title": f"AI-XYZ Risk Alert - {alert.severity.value}",
+                "color": color,
+                "fields": [
+                    {"name": "Category", "value": alert.category, "inline": True},
+                    {"name": "Severity", "value": alert.severity.value, "inline": True},
+                    {"name": "Message", "value": alert.message, "inline": False},
+                ],
+                "timestamp": alert.timestamp.isoformat()
+            }
+
+            if alert.action_required:
+                embed["fields"].append({
+                    "name": "Action Required",
+                    "value": alert.action_required,
+                    "inline": False
+                })
+
+            if alert.confidence < 1.0:
+                embed["fields"].append({
+                    "name": "Confidence",
+                    "value": f"{alert.confidence*100:.0f}%",
+                    "inline": True
+                })
+
+            payload = {"embeds": [embed]}
+            requests.post(self.config.discord_webhook_url, json=payload, timeout=5)
+        except Exception as e:
+            logger.error(f"Failed to send Discord alert: {e}")
+
+    def _send_webhook(self, alert: Alert):
+        """Send alert to custom webhook."""
+        if not self.config.webhook_enabled or not self.config.webhook_url:
+            return
+
+        try:
+            payload = {
+                'severity': alert.severity.value,
+                'category': alert.category,
+                'message': alert.message,
+                'value': alert.value,
+                'threshold': alert.threshold,
+                'timestamp': alert.timestamp.isoformat(),
+                'symbol': alert.symbol,
+                'action_required': alert.action_required,
+                'confidence': alert.confidence,
+                'trend': alert.trend,
+                'consecutive_breaches': alert.consecutive_breaches
+            }
+            requests.post(self.config.webhook_url, json=payload, timeout=5)
+        except Exception as e:
+            logger.error(f"Failed to send webhook alert: {e}")
 
     def _get_position_state(self) -> Dict:
         """Get current position state."""
@@ -185,9 +506,21 @@ class RiskAlertManager:
             except Exception as e:
                 logger.error(f"Failed to store alert in Redis: {e}")
 
-        # Send to Telegram (for CRITICAL and above)
-        if alert.severity in [AlertSeverity.CRITICAL, AlertSeverity.EMERGENCY]:
+        # Send to Telegram (for CRITICAL and above, or WARNING if configured)
+        should_notify = (
+            alert.severity in [AlertSeverity.CRITICAL, AlertSeverity.EMERGENCY] or
+            (alert.severity == AlertSeverity.WARNING and self.config.notify_on_warning)
+        )
+        if should_notify and self.config.telegram_enabled:
             self._send_telegram(alert)
+
+        # V2.0.0 - Send to Discord
+        if should_notify and self.config.discord_enabled:
+            self._send_discord(alert)
+
+        # V2.0.0 - Send to custom webhook
+        if should_notify and self.config.webhook_enabled:
+            self._send_webhook(alert)
 
         # Call registered callbacks
         for callback in self.callbacks:
@@ -221,17 +554,36 @@ class RiskAlertManager:
             logger.error(f"Failed to send Telegram alert: {e}")
 
     def check_drawdown(self, current_balance: float, peak_balance: float) -> Optional[Alert]:
-        """Check for drawdown alerts."""
+        """Check for drawdown alerts with hysteresis and confidence scoring."""
         if peak_balance <= 0:
             return None
 
         drawdown = (peak_balance - current_balance) / peak_balance
 
+        # V2.0.0 - Record metric for trend analysis
+        self._record_metric('drawdown', drawdown)
+        trend = self._detect_trend('drawdown')
+
         for severity, threshold in sorted(self.DRAWDOWN_THRESHOLDS.items(),
                                          key=lambda x: x[1], reverse=True):
+            alert_key = f"drawdown_{severity.value}"
+
             if drawdown >= threshold:
-                alert_key = f"drawdown_{severity.value}"
+                # V2.0.0 - Check hysteresis (sustained breach)
+                passes_hysteresis, consecutive = self._check_hysteresis(alert_key, True)
+
                 if self._is_on_cooldown(alert_key):
+                    return None
+
+                # V2.0.0 - Check escalation
+                severity = self._check_escalation(alert_key, severity)
+
+                # V2.0.0 - Calculate confidence
+                confidence = self._calculate_confidence(drawdown, threshold, trend, consecutive)
+
+                # Only trigger if passes hysteresis OR is emergency
+                if not passes_hysteresis and severity != AlertSeverity.EMERGENCY:
+                    logger.debug(f"Drawdown alert {alert_key} waiting for hysteresis ({consecutive}/{self.config.hysteresis_samples})")
                     return None
 
                 self._set_cooldown(alert_key)
@@ -249,10 +601,18 @@ class RiskAlertManager:
                     value=drawdown,
                     threshold=threshold,
                     timestamp=datetime.now(),
-                    action_required=action
+                    action_required=action,
+                    confidence=confidence,
+                    confirmed=passes_hysteresis,
+                    trend=trend,
+                    consecutive_breaches=consecutive
                 )
                 self._trigger_alert(alert)
                 return alert
+            else:
+                # Not breaching - clear escalation tracker
+                self._check_hysteresis(alert_key, False)
+                self._clear_escalation(alert_key)
 
         return None
 

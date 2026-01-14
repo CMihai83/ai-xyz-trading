@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Position Consolidation Analyzer for AI-XYZ Trading System
-V1.0.0 - January 14, 2026
+V2.0.0 - January 14, 2026
 
 Evaluates if multiple positions can be:
 - Merged (similar assets, same direction)
@@ -12,6 +12,14 @@ Focuses on:
 - Reducing overexposure
 - Freeing up margin
 - Improving capital efficiency
+
+V2.0.0 Enhancements (Sprint 5):
+- Improved scoring for extreme averaging (10+ steps = critical)
+- Capital efficiency ranking
+- Batch consolidation suggestions
+- Time-weighted priority (longer stuck = higher priority)
+- Recovery probability estimation
+- Action urgency levels
 
 Author: Claude + Grok Consortium
 """
@@ -36,6 +44,14 @@ class ConsolidationAction(Enum):
     KEEP = "KEEP"             # No action needed
 
 
+class UrgencyLevel(Enum):
+    """V2.0.0 - Urgency levels for consolidation actions."""
+    CRITICAL = "CRITICAL"     # Act immediately (10+ steps, extreme loss)
+    HIGH = "HIGH"             # Act within hours
+    MEDIUM = "MEDIUM"         # Act within day
+    LOW = "LOW"               # Can wait, but should address
+
+
 @dataclass
 class ConsolidationRecommendation:
     """Recommendation for position consolidation."""
@@ -46,6 +62,11 @@ class ConsolidationRecommendation:
     estimated_margin_freed: float
     related_symbol: Optional[str] = None
     details: Optional[Dict] = None
+    # V2.0.0 - Enhanced fields
+    urgency: UrgencyLevel = UrgencyLevel.MEDIUM
+    recovery_probability: float = 0.5  # 0-1 probability of recovery without action
+    capital_efficiency_score: float = 0.0  # Higher = more capital tied up inefficiently
+    holding_hours: float = 0.0  # How long position has been stuck
 
 
 class PositionConsolidationAnalyzer:
@@ -201,10 +222,12 @@ class PositionConsolidationAnalyzer:
         """
         Identify worst performing positions for potential closure.
 
-        Criteria:
-        - High averaging steps (3+)
+        V2.0.0 Enhanced Criteria:
+        - Extreme averaging steps (10+ = critical, 5+ = high)
         - In AVERAGING zone
         - Large unrealized loss
+        - Capital efficiency (margin tied up vs potential)
+        - Recovery probability estimation
         """
         worst = []
 
@@ -213,28 +236,73 @@ class PositionConsolidationAnalyzer:
             steps = averaging_steps.get(symbol, 0)
             upnl = pos_data.get('unrealized_pnl', 0)
             upnl_pct = pos_data.get('upnl_pct', 0)
+            amount = pos_data.get('amount', 0)
+            entry_time = pos_data.get('entry_time', datetime.now().isoformat())
 
-            # Score based on multiple factors
+            # Calculate holding time
+            try:
+                if isinstance(entry_time, str):
+                    entry_dt = datetime.fromisoformat(entry_time.replace('Z', '+00:00'))
+                else:
+                    entry_dt = entry_time
+                holding_hours = (datetime.now() - entry_dt.replace(tzinfo=None)).total_seconds() / 3600
+            except Exception:
+                holding_hours = 0
+
+            # V2.0.0 - Enhanced scoring with extreme averaging handling
             score = 0
             reasons = []
+            urgency = UrgencyLevel.LOW
 
-            if steps >= 4:
-                score += 40
+            # Extreme averaging (10+ steps) - CRITICAL priority
+            if steps >= 10:
+                score += 80
+                urgency = UrgencyLevel.CRITICAL
+                reasons.append(f"CRITICAL: Extreme averaging ({steps} steps)")
+            elif steps >= 6:
+                score += 60
+                urgency = UrgencyLevel.HIGH
                 reasons.append(f"High averaging ({steps} steps)")
+            elif steps >= 4:
+                score += 40
+                reasons.append(f"Elevated averaging ({steps} steps)")
             elif steps >= 3:
                 score += 25
                 reasons.append(f"Moderate averaging ({steps} steps)")
 
+            # Zone-based scoring
             if zone == 'AVERAGING':
                 score += 30
                 reasons.append("In AVERAGING zone")
+                if urgency == UrgencyLevel.LOW:
+                    urgency = UrgencyLevel.MEDIUM
 
-            if upnl_pct < -30:
+            # Loss-based scoring with urgency escalation
+            if upnl_pct < -50:
+                score += 50
+                urgency = UrgencyLevel.CRITICAL
+                reasons.append(f"Severe loss ({upnl_pct:.1f}%)")
+            elif upnl_pct < -30:
                 score += 30
+                if urgency not in [UrgencyLevel.CRITICAL]:
+                    urgency = UrgencyLevel.HIGH
                 reasons.append(f"Large loss ({upnl_pct:.1f}%)")
             elif upnl_pct < -20:
                 score += 20
                 reasons.append(f"Significant loss ({upnl_pct:.1f}%)")
+
+            # V2.0.0 - Time-weighted scoring (longer stuck = higher priority)
+            if holding_hours > 72:  # 3+ days
+                score += 15
+                reasons.append(f"Stuck for {holding_hours/24:.1f} days")
+            elif holding_hours > 24:  # 1+ day
+                score += 8
+
+            # V2.0.0 - Calculate recovery probability
+            recovery_prob = self._estimate_recovery_probability(steps, upnl_pct, zone)
+
+            # V2.0.0 - Capital efficiency score (higher = worse)
+            capital_efficiency = self._calculate_capital_efficiency(amount, steps, upnl)
 
             if score >= 40:  # Threshold for consideration
                 worst.append({
@@ -244,10 +312,65 @@ class PositionConsolidationAnalyzer:
                     'averaging_steps': steps,
                     'upnl': upnl,
                     'upnl_pct': upnl_pct,
-                    'reasons': reasons
+                    'reasons': reasons,
+                    'urgency': urgency,
+                    'recovery_probability': recovery_prob,
+                    'capital_efficiency': capital_efficiency,
+                    'holding_hours': holding_hours
                 })
 
         return sorted(worst, key=lambda x: x['score'], reverse=True)
+
+    def _estimate_recovery_probability(self, steps: int, upnl_pct: float, zone: str) -> float:
+        """
+        V2.0.0 - Estimate probability of position recovering without intervention.
+
+        Lower probability = more urgent to close/reduce.
+        """
+        base_prob = 0.5
+
+        # Steps factor (more steps = lower recovery chance)
+        if steps >= 10:
+            base_prob -= 0.35
+        elif steps >= 6:
+            base_prob -= 0.25
+        elif steps >= 4:
+            base_prob -= 0.15
+        elif steps >= 2:
+            base_prob -= 0.05
+
+        # Loss factor
+        if upnl_pct < -50:
+            base_prob -= 0.30
+        elif upnl_pct < -30:
+            base_prob -= 0.20
+        elif upnl_pct < -20:
+            base_prob -= 0.10
+
+        # Zone factor
+        if zone == 'AVERAGING':
+            base_prob -= 0.10
+
+        return max(0.05, min(0.95, base_prob))
+
+    def _calculate_capital_efficiency(self, amount: float, steps: int, upnl: float) -> float:
+        """
+        V2.0.0 - Calculate capital efficiency score.
+
+        Higher score = more capital tied up inefficiently.
+        """
+        # Base: margin tied up
+        margin_used = amount * 0.1 if amount > 0 else 5.0  # ~10% margin
+
+        # Multiplier for averaging steps (capital compounds)
+        step_multiplier = 1.0 + (steps * 0.5)  # Each step adds 50% capital
+
+        # Negative UPNL means capital is working against us
+        loss_factor = 1.0
+        if upnl < 0:
+            loss_factor = 1.0 + abs(upnl) / (margin_used + 1)
+
+        return margin_used * step_multiplier * loss_factor
 
     def generate_recommendations(self) -> List[ConsolidationRecommendation]:
         """Generate consolidation recommendations."""
@@ -277,17 +400,32 @@ class PositionConsolidationAnalyzer:
             ))
             priority += 1
 
-        # 2. Check worst performers
+        # 2. Check worst performers with V2.0.0 enhanced logic
         worst = self.analyze_worst_performers(positions, zones, averaging_steps)
-        for w in worst[:5]:  # Top 5 worst
-            action = ConsolidationAction.CLOSE if w['score'] >= 60 else ConsolidationAction.REDUCE
+        for w in worst[:10]:  # Top 10 worst (increased from 5)
+            # V2.0.0 - Improved action selection based on score and recovery probability
+            if w['score'] >= 80 or w['recovery_probability'] < 0.15:
+                action = ConsolidationAction.CLOSE
+            elif w['score'] >= 60 or w['recovery_probability'] < 0.25:
+                action = ConsolidationAction.CLOSE if w.get('urgency') == UrgencyLevel.CRITICAL else ConsolidationAction.REDUCE
+            else:
+                action = ConsolidationAction.REDUCE
+
+            # V2.0.0 - Better margin estimation based on steps
+            steps = w.get('averaging_steps', 0)
+            estimated_margin = 5.0 * (1 + steps * 0.5)  # More steps = more margin tied up
+
             self.recommendations.append(ConsolidationRecommendation(
                 symbol=w['symbol'],
                 action=action,
                 reason='; '.join(w['reasons']),
                 priority=priority,
-                estimated_margin_freed=5.0,  # Approx $5 per position
-                details=w
+                estimated_margin_freed=estimated_margin,
+                details=w,
+                urgency=w.get('urgency', UrgencyLevel.MEDIUM),
+                recovery_probability=w.get('recovery_probability', 0.5),
+                capital_efficiency_score=w.get('capital_efficiency', 0.0),
+                holding_hours=w.get('holding_hours', 0.0)
             ))
             priority += 1
 
