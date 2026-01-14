@@ -16,15 +16,19 @@ Scenarios:
 9. Dead Cat Bounce - Drop, small recovery, then continued drop
 
 Author: Claude + Grok Consortium
-Version: 1.2.6
+Version: 1.2.7
 Date: January 14, 2026
+
+V1.2.7 Changes:
+- DISABLED Market Regime Filter (caused -125% black_swan_down regression)
+- 10% threshold: didn't block enough hedges, v_shape/dead_cat unchanged
+- 5% threshold: blocked too many legitimate hedges, -12.1% overall
+- Conclusion: Filter can't distinguish crash vs bounce without ML pattern detection
+- Accept v_shape (-57%) and dead_cat (-827%) as unfixable with rule-based logic
 
 V1.2.6 Changes:
 - DISABLED MAIN_DROP_REQUIRES_HEDGE_LOSS (just shifted exits to hedge_stop_loss)
 - DISABLED RECOVERY_DETECTION (just shifted exits to hedge_stop_loss)
-- Conclusion: v_shape_recovery (-56.7%) is unfixable like dead_cat_bounce (-827%)
-- Both scenarios are fundamentally adversarial to the hedge strategy
-- Accept these as known weaknesses - overall +11.4% improvement is still positive
 
 V1.2.5 Changes:
 - DISABLED profit taking delay (caused -39.9% flash_crash regression, -87.7% black_swan_down)
@@ -383,6 +387,16 @@ class ProfitProtectionHedgeStressTest:
     RECOVERY_DETECTION_ENABLED = False    # DISABLED - no improvement
     RECOVERY_LOOKBACK_PERIODS = 5         # Not used when disabled
 
+    # V1.2.7: Market Regime Filter - DISABLED (caused -125% black_swan_down regression)
+    # Testing showed:
+    # - 10% threshold: didn't block enough hedges, no improvement
+    # - 5% threshold: blocked too many legitimate hedges, -12.1% overall
+    # The filter can't distinguish between crash (hedge) vs bounce (don't hedge) without ML
+    REGIME_FILTER_ENABLED = False         # DISABLED - causes more harm than good
+    REGIME_LOOKBACK_PERIODS = 50          # Not used when disabled
+    REGIME_DROP_THRESHOLD = 0.05          # Not used when disabled
+    REGIME_RECOVERY_THRESHOLD = 0.98      # Not used when disabled
+
     def __init__(self, leverage: int = 10, position_size_usd: float = 10.0):
         self.leverage = leverage
         self.position_size_usd = position_size_usd
@@ -537,6 +551,45 @@ class ProfitProtectionHedgeStressTest:
 
         return (bounce_confirmed, bounce_pct)
 
+    def detect_post_drop_regime(self, prices: np.ndarray, index: int) -> Tuple[bool, float, float]:
+        """
+        V1.2.7: Market Regime Filter - detect post-drop bounce conditions.
+
+        Both dead_cat_bounce (-827%) and v_shape_recovery (-57%) start with a price drop.
+        During the "bounce phase", hedges open but lose money as price recovers.
+        This filter detects when we're in a post-drop regime and blocks hedging.
+
+        Returns (in_post_drop_regime, drop_pct, recovery_pct)
+        """
+        if not self.REGIME_FILTER_ENABLED:
+            return (False, 0.0, 0.0)
+
+        if index < self.REGIME_LOOKBACK_PERIODS:
+            return (False, 0.0, 0.0)
+
+        # Find the recent high in lookback window
+        lookback_start = max(0, index - self.REGIME_LOOKBACK_PERIODS)
+        lookback_prices = prices[lookback_start:index + 1]
+        recent_high = max(lookback_prices)
+        current_price = prices[index]
+
+        if recent_high <= 0:
+            return (False, 0.0, 0.0)
+
+        # Calculate drop from recent high
+        drop_pct = (recent_high - current_price) / recent_high
+
+        # Calculate recovery (how close we are to the high)
+        recovery_pct = current_price / recent_high
+
+        # We're in post-drop regime if:
+        # 1. Price has dropped more than threshold from recent high
+        # 2. Price has NOT recovered to the recovery threshold
+        in_post_drop = (drop_pct >= self.REGIME_DROP_THRESHOLD and
+                        recovery_pct < self.REGIME_RECOVERY_THRESHOLD)
+
+        return (in_post_drop, drop_pct, recovery_pct)
+
     def calc_upnl(self, entry: float, current: float, size: float, side: str) -> Tuple[float, float]:
         """Calculate UPNL and percentage"""
         if side == 'long':
@@ -668,6 +721,13 @@ class ProfitProtectionHedgeStressTest:
                     if bounce_detected:
                         hedge_blocked = True
                         hedge_blocked_reason = "bounce_detected"
+
+                # V1.2.7: Check market regime filter (post-drop bounce)
+                if not hedge_blocked:
+                    in_post_drop, drop_pct, recovery_pct = self.detect_post_drop_regime(prices, i)
+                    if in_post_drop:
+                        hedge_blocked = True
+                        hedge_blocked_reason = "post_drop_regime"
 
             # Open hedge at 70% of peak
             if peak_upnl >= min_profit and not hedge_opened and upnl <= peak_upnl * self.TAKE_PROFIT_TRIGGER and not hedge_blocked:
