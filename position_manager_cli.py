@@ -364,13 +364,87 @@ class PositionManagerCLI:
 
         return results
 
+    def analyze_recovery(self) -> None:
+        """Run position recovery optimizer and show recommendations."""
+        try:
+            from position_recovery_optimizer import PositionRecoveryOptimizer
+
+            positions = self.exchange.fetch_positions()
+            optimizer = PositionRecoveryOptimizer(self.exchange)
+            recommendations = optimizer.analyze_portfolio(
+                positions,
+                self.averaging_steps,
+                []  # No hedged symbols info in CLI
+            )
+            optimizer.print_recommendations()
+
+            # Show priority actions
+            print('\n🎯 PRIORITY ACTIONS (execute with --close <symbol>):')
+            for rec in optimizer.get_priority_actions(3):
+                clean_symbol = rec.symbol.replace('/USDT:USDT', '').replace('/USDT', '')
+                print(f'  {clean_symbol}: {rec.strategy.value} ({rec.confidence:.0%})')
+
+        except ImportError:
+            print("❌ position_recovery_optimizer.py not found")
+        except Exception as e:
+            print(f"❌ Error running recovery analysis: {e}")
+
+    def partial_close(self, symbol: str, percentage: float = 0.5) -> Tuple[bool, str]:
+        """Partially close a position by percentage (0-1)."""
+        symbol = self._format_symbol(symbol)
+
+        positions = self.get_positions()
+        target_pos = None
+
+        for pos in positions:
+            if pos.symbol == symbol or pos.symbol.startswith(symbol.split('/')[0]):
+                target_pos = pos
+                break
+
+        if not target_pos:
+            return False, f"Position not found: {symbol}"
+
+        clean_sym = target_pos.symbol.replace('/USDT:USDT', '')
+        close_amount = target_pos.amount * percentage
+
+        if self.dry_run:
+            return True, (f"[DRY RUN] Would partial close {clean_sym}: "
+                         f"{close_amount:.4f} of {target_pos.amount:.4f} contracts ({percentage:.0%})")
+
+        try:
+            position_side = target_pos.position_side
+            close_side = 'buy' if position_side == 'long' else 'sell'
+
+            close_params = {
+                'marginCoin': 'USDT',
+                'tradeSide': 'close',
+                'holdSide': position_side,
+            }
+
+            order = self.exchange.create_market_order(
+                target_pos.symbol,
+                close_side,
+                close_amount,
+                params=close_params
+            )
+
+            realized_pnl = target_pos.upnl * percentage
+            return True, (f"✅ Partial closed {clean_sym}: {close_amount:.4f} contracts ({percentage:.0%}), "
+                         f"Est. P&L: ${realized_pnl:+.4f}, Order ID: {order.get('id', 'N/A')}")
+
+        except Exception as e:
+            return False, f"❌ Failed to partial close {clean_sym}: {str(e)}"
+
 
 def main():
-    parser = argparse.ArgumentParser(description='AI-XYZ Position Manager CLI')
+    parser = argparse.ArgumentParser(description='AI-XYZ Position Manager CLI V1.1.0')
     parser.add_argument('--list', '-l', action='store_true', help='List all positions')
     parser.add_argument('--close', '-c', type=str, help='Close specific position (symbol)')
+    parser.add_argument('--partial-close', '-p', type=str, help='Partially close position (symbol)')
+    parser.add_argument('--percentage', type=float, default=0.5, help='Percentage for partial close (0-1, default 0.5)')
     parser.add_argument('--take-profits', '-t', action='store_true', help='Close all profitable positions')
     parser.add_argument('--close-critical', action='store_true', help='Close all CRITICAL positions')
+    parser.add_argument('--analyze', '-a', action='store_true', help='Run recovery analysis and show recommendations')
     parser.add_argument('--min-profit', type=float, default=0.0, help='Minimum profit threshold for take-profits')
     parser.add_argument('--dry-run', '-d', action='store_true', help='Preview without executing')
 
@@ -386,10 +460,15 @@ def main():
     elif args.close:
         success, msg = manager.close_position(args.close)
         print(msg)
+    elif args.partial_close:
+        success, msg = manager.partial_close(args.partial_close, args.percentage)
+        print(msg)
     elif args.take_profits:
         manager.take_profits(min_profit=args.min_profit)
     elif args.close_critical:
         manager.close_critical()
+    elif args.analyze:
+        manager.analyze_recovery()
     else:
         # Default: show positions
         manager.list_positions()
