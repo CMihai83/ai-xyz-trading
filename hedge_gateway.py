@@ -31,7 +31,14 @@ FIXES (Jan 2026 Consortium Review):
 - MEDIUM: Increased reversion buffer from 5% to 10%
 
 Author: Claude + Grok Consortium
-Version: 2.2.0 (V1.2.5 Profit Protection)
+Version: 2.3.0 (Profit-Only Hedging)
+
+V2.3.0 Changes (Jan 14, 2026):
+- DISABLED immediate hedge opening on position open
+- Hedges now only open when main position is profitable
+- Added IMMEDIATE_HEDGE_ENABLED flag (default: False)
+- Added PROFIT_HEDGE_ONLY flag (default: True)
+- Reduces drag on winning positions that don't need protection
 
 V1.2.5 Changes (Jan 14, 2026):
 - Added main_drop delay (30 min) to prevent premature exits during dead cat bounces
@@ -60,6 +67,10 @@ class HedgeGateway:
     """
 
     # Configuration (Grok+Claude consortium optimized - Jan 2026)
+    # V2.3.0: Delayed hedge opening - only open when main is profitable
+    IMMEDIATE_HEDGE_ENABLED = False  # DISABLED: Don't open hedge immediately on position open
+    PROFIT_HEDGE_ONLY = True         # Only open hedges when main position is profitable
+
     GATE_OPEN_STEPS = [2, 4, 5]  # Averaging steps that open gates (added step 4 for mid-range protection)
     CLOSE_AT_STEP_2 = 0.25   # Close 25% of hedge at step 2 (was 30%)
     CLOSE_AT_STEP_4 = 0.25   # Close 25% of hedge at step 4 (NEW)
@@ -307,6 +318,11 @@ class HedgeGateway:
             Order result or None if failed
         """
         if not self.enabled:
+            return None
+
+        # V2.3.0: Check if immediate hedging is disabled
+        if not self.IMMEDIATE_HEDGE_ENABLED:
+            print(f"  ℹ️ Immediate hedge disabled - will open when profitable (PROFIT_HEDGE_ONLY={self.PROFIT_HEDGE_ONLY})")
             return None
 
         # Don't double hedge
