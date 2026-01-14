@@ -164,7 +164,7 @@ class AdaptiveThresholdCalculator:
 
             # Adjust based on ATR
             if atr > 5.0:  # Very high ATR
-                averaging_start = max(-0.25, averaging_start)
+                averaging_start = max(-0.35, averaging_start)  # Updated from -0.25
             elif atr < 1.0:  # Very low ATR
                 averaging_start = min(-0.50, averaging_start)
 

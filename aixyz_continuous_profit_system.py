@@ -555,7 +555,7 @@ class AIXYZContinuousProfit:
 
         # Zone thresholds - UPDATED: wider neutral zone (-15% to +5%)
         self.zone_thresholds = {
-            'averaging': -0.25,  # Start averaging at -25% UPNL (will be overridden by AI)
+            'averaging': -0.35,  # Start averaging at -35% UPNL (optimized from -25%) - more selective
             'profit_taking': 0.05,  # Enter surplus dump at +5% UPNL (was +50%)
             'stop_loss': -0.90  # -90% (safe for 15x leverage, triggers before liquidation)
         }
@@ -3003,9 +3003,9 @@ class AIXYZContinuousProfit:
             # Get actual P&L percentage from direct API data
             current_pnl_pct = pnl_percentage  # This is already calculated above from direct API
             
-            # CRITICAL FIX: Use -15% P&L threshold for averaging
-            # Lowered from -25% to allow averaging at smaller losses
-            averaging_pnl_threshold = -25.0  # -25% P&L triggers averaging
+            # Averaging P&L threshold - optimized from -25% to -35% for more selective averaging
+            # More conservative: only average into significant dips, avoid false signals
+            averaging_pnl_threshold = -35.0  # -35% P&L triggers averaging (was -25%)
 
             print(f"  🎯 Averaging Decision:")
             print(f"     Current P&L: {current_pnl_pct:.2f}%")

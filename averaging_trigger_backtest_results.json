@@ -1,0 +1,866 @@
+{
+  "-15%": {
+    "v_shape_recovery": {
+      "averaging": {
+        "final_pnl": 18.923212549637114,
+        "max_drawdown": -36.479967064708354,
+        "avg_triggers": 3.0,
+        "recovery_rate": 1.0,
+        "avg_recovery_time": 110.39,
+        "capital_used": 25.0,
+        "efficiency": 0.7569285019854846
+      },
+      "baseline": {
+        "final_pnl": 2.4778319093449563,
+        "max_drawdown": -8.099802374297315,
+        "capital_used": 5.0,
+        "efficiency": 0.49556638186899127
+      },
+      "improvement": {
+        "pnl": 16.445380640292157,
+        "pnl_pct": 663.700413989732,
+        "drawdown": -28.38016469041104,
+        "efficiency": 0.2613621201164933
+      }
+    },
+    "continued_downtrend": {
+      "averaging": {
+        "final_pnl": -59.75286445042086,
+        "max_drawdown": -64.63404925569257,
+        "avg_triggers": 3.0,
+        "recovery_rate": 0.32,
+        "avg_recovery_time": 30.65625,
+        "capital_used": 25.0,
+        "efficiency": -2.3901145780168345
+      },
+      "baseline": {
+        "final_pnl": -12.559404420057756,
+        "max_drawdown": -13.490093835662798,
+        "capital_used": 5.0,
+        "efficiency": -2.511880884011551
+      },
+      "improvement": {
+        "pnl": -47.1934600303631,
+        "pnl_pct": -375.76192669609145,
+        "drawdown": -51.143955420029776,
+        "efficiency": 0.12176630599471672
+      }
+    },
+    "dead_cat_bounce": {
+      "averaging": {
+        "final_pnl": -53.30324680163064,
+        "max_drawdown": -54.36265249370727,
+        "avg_triggers": 3.0,
+        "recovery_rate": 0.57,
+        "avg_recovery_time": 10.368421052631579,
+        "capital_used": 25.0,
+        "efficiency": -2.1321298720652258
+      },
+      "baseline": {
+        "final_pnl": -11.301578136674175,
+        "max_drawdown": -11.504047772907043,
+        "capital_used": 5.0,
+        "efficiency": -2.260315627334835
+      },
+      "improvement": {
+        "pnl": -42.00166866495647,
+        "pnl_pct": -371.64427973699526,
+        "drawdown": -42.85860472080023,
+        "efficiency": 0.1281857552696093
+      }
+    },
+    "choppy_sideways": {
+      "averaging": {
+        "final_pnl": 7.750808143207431,
+        "max_drawdown": -18.734750568259663,
+        "avg_triggers": 3.0,
+        "recovery_rate": 1.0,
+        "avg_recovery_time": 56.75,
+        "capital_used": 25.0,
+        "efficiency": 0.31003232572829725
+      },
+      "baseline": {
+        "final_pnl": -0.00954173017561089,
+        "max_drawdown": -4.996396912515509,
+        "capital_used": 5.0,
+        "efficiency": -0.0019083460351221782
+      },
+      "improvement": {
+        "pnl": 7.760349873383042,
+        "pnl_pct": 81330.63637891228,
+        "drawdown": -13.738353655744154,
+        "efficiency": 0.31194067176341944
+      }
+    },
+    "flash_crash_recovery": {
+      "averaging": {
+        "final_pnl": 14.72878658750914,
+        "max_drawdown": -47.77600759283066,
+        "avg_triggers": 3.0,
+        "recovery_rate": 1.0,
+        "avg_recovery_time": 195.49,
+        "capital_used": 25.0,
+        "efficiency": 0.5891514635003656
+      },
+      "baseline": {
+        "final_pnl": 1.2980580191438802,
+        "max_drawdown": -10.465574010713192,
+        "capital_used": 5.0,
+        "efficiency": 0.259611603828776
+      },
+      "improvement": {
+        "pnl": 13.430728568365259,
+        "pnl_pct": 1034.6786022109666,
+        "drawdown": -37.31043358211747,
+        "efficiency": 0.3295398596715896
+      }
+    },
+    "slow_bleed": {
+      "averaging": {
+        "final_pnl": -40.01304160162074,
+        "max_drawdown": -43.37718791089898,
+        "avg_triggers": 3.0,
+        "recovery_rate": 0.66,
+        "avg_recovery_time": 51.484848484848484,
+        "capital_used": 25.0,
+        "efficiency": -1.6005216640648297
+      },
+      "baseline": {
+        "final_pnl": -8.762962945137879,
+        "max_drawdown": -9.405710649967038,
+        "capital_used": 5.0,
+        "efficiency": -1.7525925890275758
+      },
+      "improvement": {
+        "pnl": -31.250078656482863,
+        "pnl_pct": -356.61543763370514,
+        "drawdown": -33.97147726093195,
+        "efficiency": 0.1520709249627461
+      }
+    },
+    "_aggregate": {
+      "total_pnl": -111.66634557331857,
+      "avg_pnl": -18.611057595553095
+    }
+  },
+  "-20%": {
+    "v_shape_recovery": {
+      "averaging": {
+        "final_pnl": 21.15547740453504,
+        "max_drawdown": -35.007827885688435,
+        "avg_triggers": 3.0,
+        "recovery_rate": 1.0,
+        "avg_recovery_time": 134.74,
+        "capital_used": 25.0,
+        "efficiency": 0.8462190961814017
+      },
+      "baseline": {
+        "final_pnl": 2.532949453064852,
+        "max_drawdown": -8.047183634757978,
+        "capital_used": 5.0,
+        "efficiency": 0.5065898906129704
+      },
+      "improvement": {
+        "pnl": 18.62252795147019,
+        "pnl_pct": 735.2111953492421,
+        "drawdown": -26.960644250930457,
+        "efficiency": 0.33962920556843124
+      }
+    },
+    "continued_downtrend": {
+      "averaging": {
+        "final_pnl": -58.21102322052447,
+        "max_drawdown": -63.50539207323127,
+        "avg_triggers": 3.0,
+        "recovery_rate": 0.18,
+        "avg_recovery_time": 42.77777777777778,
+        "capital_used": 25.0,
+        "efficiency": -2.328440928820979
+      },
+      "baseline": {
+        "final_pnl": -12.432182459817165,
+        "max_drawdown": -13.42866108326585,
+        "capital_used": 5.0,
+        "efficiency": -2.486436491963433
+      },
+      "improvement": {
+        "pnl": -45.778840760707304,
+        "pnl_pct": -368.2285142505908,
+        "drawdown": -50.07673098996542,
+        "efficiency": 0.1579955631424541
+      }
+    },
+    "dead_cat_bounce": {
+      "averaging": {
+        "final_pnl": -51.802475770669446,
+        "max_drawdown": -53.16336067762291,
+        "avg_triggers": 3.0,
+        "recovery_rate": 0.35,
+        "avg_recovery_time": 13.114285714285714,
+        "capital_used": 25.0,
+        "efficiency": -2.0720990308267777
+      },
+      "baseline": {
+        "final_pnl": -11.221100998359347,
+        "max_drawdown": -11.477136447009807,
+        "capital_used": 5.0,
+        "efficiency": -2.2442201996718696
+      },
+      "improvement": {
+        "pnl": -40.5813747723101,
+        "pnl_pct": -361.65234390318346,
+        "drawdown": -41.68622423061311,
+        "efficiency": 0.17212116884509188
+      }
+    },
+    "choppy_sideways": {
+      "averaging": {
+        "final_pnl": 10.045841319775342,
+        "max_drawdown": -17.24872001212705,
+        "avg_triggers": 3.0,
+        "recovery_rate": 1.0,
+        "avg_recovery_time": 64.92,
+        "capital_used": 25.0,
+        "efficiency": 0.4018336527910137
+      },
+      "baseline": {
+        "final_pnl": 0.14255048593697645,
+        "max_drawdown": -4.940495753790649,
+        "capital_used": 5.0,
+        "efficiency": 0.02851009718739529
+      },
+      "improvement": {
+        "pnl": 9.903290833838366,
+        "pnl_pct": 6947.216467726914,
+        "drawdown": -12.308224258336399,
+        "efficiency": 0.3733235556036184
+      }
+    },
+    "flash_crash_recovery": {
+      "averaging": {
+        "final_pnl": 15.671376346105653,
+        "max_drawdown": -46.99834501002637,
+        "avg_triggers": 3.0,
+        "recovery_rate": 1.0,
+        "avg_recovery_time": 192.49,
+        "capital_used": 25.0,
+        "efficiency": 0.6268550538442261
+      },
+      "baseline": {
+        "final_pnl": 1.2159268999282333,
+        "max_drawdown": -10.463387848964388,
+        "capital_used": 5.0,
+        "efficiency": 0.24318537998564665
+      },
+      "improvement": {
+        "pnl": 14.45544944617742,
+        "pnl_pct": 1188.8419811281922,
+        "drawdown": -36.53495716106198,
+        "efficiency": 0.3836696738585795
+      }
+    },
+    "slow_bleed": {
+      "averaging": {
+        "final_pnl": -38.77706935492723,
+        "max_drawdown": -42.27706266319885,
+        "avg_triggers": 3.0,
+        "recovery_rate": 0.91,
+        "avg_recovery_time": 61.956043956043956,
+        "capital_used": 25.0,
+        "efficiency": -1.5510827741970892
+      },
+      "baseline": {
+        "final_pnl": -8.72904672166243,
+        "max_drawdown": -9.389379274556884,
+        "capital_used": 5.0,
+        "efficiency": -1.745809344332486
+      },
+      "improvement": {
+        "pnl": -30.0480226332648,
+        "pnl_pct": -344.23028758336415,
+        "drawdown": -32.88768338864196,
+        "efficiency": 0.19472657013539685
+      }
+    },
+    "_aggregate": {
+      "total_pnl": -101.9178732757051,
+      "avg_pnl": -16.986312212617516
+    }
+  },
+  "-25%": {
+    "v_shape_recovery": {
+      "averaging": {
+        "final_pnl": 22.532138437898837,
+        "max_drawdown": -34.1683758049048,
+        "avg_triggers": 3.0,
+        "recovery_rate": 1.0,
+        "avg_recovery_time": 180.52,
+        "capital_used": 25.0,
+        "efficiency": 0.9012855375159535
+      },
+      "baseline": {
+        "final_pnl": 2.451007591055078,
+        "max_drawdown": -8.099255079879974,
+        "capital_used": 5.0,
+        "efficiency": 0.4902015182110156
+      },
+      "improvement": {
+        "pnl": 20.08113084684376,
+        "pnl_pct": 819.301046644229,
+        "drawdown": -26.069120725024824,
+        "efficiency": 0.41108401930493793
+      }
+    },
+    "continued_downtrend": {
+      "averaging": {
+        "final_pnl": -57.907099384941475,
+        "max_drawdown": -62.65143586611145,
+        "avg_triggers": 3.0,
+        "recovery_rate": 0.19,
+        "avg_recovery_time": 71.0,
+        "capital_used": 25.0,
+        "efficiency": -2.316283975397659
+      },
+      "baseline": {
+        "final_pnl": -12.548669948156705,
+        "max_drawdown": -13.429184436343176,
+        "capital_used": 5.0,
+        "efficiency": -2.509733989631341
+      },
+      "improvement": {
+        "pnl": -45.35842943678477,
+        "pnl_pct": -361.46005611891593,
+        "drawdown": -49.22225142976827,
+        "efficiency": 0.19345001423368213
+      }
+    },
+    "dead_cat_bounce": {
+      "averaging": {
+        "final_pnl": -50.81223013099728,
+        "max_drawdown": -52.25592351728069,
+        "avg_triggers": 3.0,
+        "recovery_rate": 0.08,
+        "avg_recovery_time": 18.375,
+        "capital_used": 25.0,
+        "efficiency": -2.0324892052398913
+      },
+      "baseline": {
+        "final_pnl": -11.204317021234957,
+        "max_drawdown": -11.472862891462052,
+        "capital_used": 5.0,
+        "efficiency": -2.2408634042469915
+      },
+      "improvement": {
+        "pnl": -39.60791310976232,
+        "pnl_pct": -353.5058231099273,
+        "drawdown": -40.78306062581864,
+        "efficiency": 0.2083741990071002
+      }
+    },
+    "choppy_sideways": {
+      "averaging": {
+        "final_pnl": 11.6364427734168,
+        "max_drawdown": -16.088613827980303,
+        "avg_triggers": 3.0,
+        "recovery_rate": 1.0,
+        "avg_recovery_time": 68.68,
+        "capital_used": 25.0,
+        "efficiency": 0.465457710936672
+      },
+      "baseline": {
+        "final_pnl": 0.09439934012619078,
+        "max_drawdown": -4.99824539081185,
+        "capital_used": 5.0,
+        "efficiency": 0.018879868025238156
+      },
+      "improvement": {
+        "pnl": 11.542043433290608,
+        "pnl_pct": 12226.826392919147,
+        "drawdown": -11.090368437168454,
+        "efficiency": 0.4465778429114338
+      }
+    },
+    "flash_crash_recovery": {
+      "averaging": {
+        "final_pnl": 17.558017363701186,
+        "max_drawdown": -46.088878315199864,
+        "avg_triggers": 3.0,
+        "recovery_rate": 1.0,
+        "avg_recovery_time": 209.33,
+        "capital_used": 25.0,
+        "efficiency": 0.7023206945480475
+      },
+      "baseline": {
+        "final_pnl": 1.1824551883341594,
+        "max_drawdown": -10.507346581411866,
+        "capital_used": 5.0,
+        "efficiency": 0.23649103766683188
+      },
+      "improvement": {
+        "pnl": 16.375562175367026,
+        "pnl_pct": 1384.8780348654807,
+        "drawdown": -35.581531733788,
+        "efficiency": 0.4658296568812156
+      }
+    },
+    "slow_bleed": {
+      "averaging": {
+        "final_pnl": -37.90834338918987,
+        "max_drawdown": -41.312836165758235,
+        "avg_triggers": 3.0,
+        "recovery_rate": 0.97,
+        "avg_recovery_time": 62.45360824742268,
+        "capital_used": 25.0,
+        "efficiency": -1.5163337355675948
+      },
+      "baseline": {
+        "final_pnl": -8.789506639521946,
+        "max_drawdown": -9.423144243817307,
+        "capital_used": 5.0,
+        "efficiency": -1.7579013279043891
+      },
+      "improvement": {
+        "pnl": -29.11883674966792,
+        "pnl_pct": -331.29091249257726,
+        "drawdown": -31.88969192194093,
+        "efficiency": 0.24156759233679437
+      }
+    },
+    "_aggregate": {
+      "total_pnl": -94.9010743301118,
+      "avg_pnl": -15.816845721685299
+    }
+  },
+  "-30%": {
+    "v_shape_recovery": {
+      "averaging": {
+        "final_pnl": 25.059236598605434,
+        "max_drawdown": -32.68405022026974,
+        "avg_triggers": 3.0,
+        "recovery_rate": 1.0,
+        "avg_recovery_time": 219.88,
+        "capital_used": 25.0,
+        "efficiency": 1.0023694639442173
+      },
+      "baseline": {
+        "final_pnl": 2.5312285917076673,
+        "max_drawdown": -8.062903587785167,
+        "capital_used": 5.0,
+        "efficiency": 0.5062457183415334
+      },
+      "improvement": {
+        "pnl": 22.528008006897768,
+        "pnl_pct": 890.0029053361585,
+        "drawdown": -24.621146632484574,
+        "efficiency": 0.4961237456026839
+      }
+    },
+    "continued_downtrend": {
+      "averaging": {
+        "final_pnl": -56.815321956241036,
+        "max_drawdown": -62.01097715007095,
+        "avg_triggers": 3.0,
+        "recovery_rate": 0.32,
+        "avg_recovery_time": 80.5625,
+        "capital_used": 25.0,
+        "efficiency": -2.2726128782496415
+      },
+      "baseline": {
+        "final_pnl": -12.514721947385313,
+        "max_drawdown": -13.46617384436782,
+        "capital_used": 5.0,
+        "efficiency": -2.5029443894770624
+      },
+      "improvement": {
+        "pnl": -44.300600008855724,
+        "pnl_pct": -353.98788878494736,
+        "drawdown": -48.54480330570313,
+        "efficiency": 0.2303315112274209
+      }
+    },
+    "dead_cat_bounce": {
+      "averaging": {
+        "final_pnl": -50.174973363651205,
+        "max_drawdown": -51.55481256361022,
+        "avg_triggers": 3.0,
+        "recovery_rate": 0.11,
+        "avg_recovery_time": 21.545454545454547,
+        "capital_used": 25.0,
+        "efficiency": -2.0069989345460484
+      },
+      "baseline": {
+        "final_pnl": -11.27492676481697,
+        "max_drawdown": -11.528147173515094,
+        "capital_used": 5.0,
+        "efficiency": -2.254985352963394
+      },
+      "improvement": {
+        "pnl": -38.90004659883424,
+        "pnl_pct": -345.0137407563526,
+        "drawdown": -40.026665390095125,
+        "efficiency": 0.2479864184173457
+      }
+    },
+    "choppy_sideways": {
+      "averaging": {
+        "final_pnl": 13.593671836976574,
+        "max_drawdown": -14.259637336120011,
+        "avg_triggers": 3.0,
+        "recovery_rate": 1.0,
+        "avg_recovery_time": 71.0,
+        "capital_used": 25.0,
+        "efficiency": 0.5437468734790629
+      },
+      "baseline": {
+        "final_pnl": 0.10382028191623323,
+        "max_drawdown": -4.9403199756315495,
+        "capital_used": 5.0,
+        "efficiency": 0.020764056383246646
+      },
+      "improvement": {
+        "pnl": 13.48985155506034,
+        "pnl_pct": 12993.464577513425,
+        "drawdown": -9.319317360488462,
+        "efficiency": 0.5229828170958163
+      }
+    },
+    "flash_crash_recovery": {
+      "averaging": {
+        "final_pnl": 19.74650857935993,
+        "max_drawdown": -44.88365000006534,
+        "avg_triggers": 3.0,
+        "recovery_rate": 1.0,
+        "avg_recovery_time": 200.8,
+        "capital_used": 25.0,
+        "efficiency": 0.7898603431743971
+      },
+      "baseline": {
+        "final_pnl": 1.2282437033354512,
+        "max_drawdown": -10.482721604775676,
+        "capital_used": 5.0,
+        "efficiency": 0.24564874066709025
+      },
+      "improvement": {
+        "pnl": 18.518264876024478,
+        "pnl_pct": 1507.7028138418937,
+        "drawdown": -34.40092839528966,
+        "efficiency": 0.5442116025073069
+      }
+    },
+    "slow_bleed": {
+      "averaging": {
+        "final_pnl": -36.74501834219885,
+        "max_drawdown": -40.26980710364323,
+        "avg_triggers": 3.0,
+        "recovery_rate": 0.81,
+        "avg_recovery_time": 63.123456790123456,
+        "capital_used": 25.0,
+        "efficiency": -1.469800733687954
+      },
+      "baseline": {
+        "final_pnl": -8.792856245935283,
+        "max_drawdown": -9.440153626702353,
+        "capital_used": 5.0,
+        "efficiency": -1.7585712491870567
+      },
+      "improvement": {
+        "pnl": -27.952162096263564,
+        "pnl_pct": -317.8962707275596,
+        "drawdown": -30.829653476940877,
+        "efficiency": 0.2887705154991027
+      }
+    },
+    "_aggregate": {
+      "total_pnl": -85.33589664714916,
+      "avg_pnl": -14.222649441191527
+    }
+  },
+  "-35%": {
+    "v_shape_recovery": {
+      "averaging": {
+        "final_pnl": 27.339962640950404,
+        "max_drawdown": -31.456121270257523,
+        "avg_triggers": 3.0,
+        "recovery_rate": 1.0,
+        "avg_recovery_time": 213.58,
+        "capital_used": 25.0,
+        "efficiency": 1.0935985056380162
+      },
+      "baseline": {
+        "final_pnl": 2.555949055276346,
+        "max_drawdown": -8.079346709491016,
+        "capital_used": 5.0,
+        "efficiency": 0.5111898110552693
+      },
+      "improvement": {
+        "pnl": 24.784013585674057,
+        "pnl_pct": 969.6599208232042,
+        "drawdown": -23.376774560766506,
+        "efficiency": 0.5824086945827469
+      }
+    },
+    "continued_downtrend": {
+      "averaging": {
+        "final_pnl": -55.54320913342582,
+        "max_drawdown": -60.91521193858652,
+        "avg_triggers": 3.0,
+        "recovery_rate": 0.75,
+        "avg_recovery_time": 81.29333333333334,
+        "capital_used": 25.0,
+        "efficiency": -2.2217283653370328
+      },
+      "baseline": {
+        "final_pnl": -12.446860509763583,
+        "max_drawdown": -13.417798331335357,
+        "capital_used": 5.0,
+        "efficiency": -2.489372101952717
+      },
+      "improvement": {
+        "pnl": -43.09634862366224,
+        "pnl_pct": -346.24272192860633,
+        "drawdown": -47.49741360725117,
+        "efficiency": 0.2676437366156841
+      }
+    },
+    "dead_cat_bounce": {
+      "averaging": {
+        "final_pnl": -48.7228163001554,
+        "max_drawdown": -50.16500913830202,
+        "avg_triggers": 3.0,
+        "recovery_rate": 0.01,
+        "avg_recovery_time": 18.0,
+        "capital_used": 25.0,
+        "efficiency": -1.948912652006216
+      },
+      "baseline": {
+        "final_pnl": -11.20382658967604,
+        "max_drawdown": -11.464464732399192,
+        "capital_used": 5.0,
+        "efficiency": -2.240765317935208
+      },
+      "improvement": {
+        "pnl": -37.51898971047936,
+        "pnl_pct": -334.8765656999001,
+        "drawdown": -38.700544405902825,
+        "efficiency": 0.29185266592899195
+      }
+    },
+    "choppy_sideways": {
+      "averaging": {
+        "final_pnl": 14.888772758766317,
+        "max_drawdown": -12.69684747153325,
+        "avg_triggers": 2.97,
+        "recovery_rate": 1.0,
+        "avg_recovery_time": 72.62,
+        "capital_used": 24.7927,
+        "efficiency": 0.6005305093340506
+      },
+      "baseline": {
+        "final_pnl": 0.05330310290317669,
+        "max_drawdown": -4.922316415527802,
+        "capital_used": 5.0,
+        "efficiency": 0.010660620580635338
+      },
+      "improvement": {
+        "pnl": 14.83546965586314,
+        "pnl_pct": 27832.28151428872,
+        "drawdown": -7.774531056005448,
+        "efficiency": 0.5898698887534153
+      }
+    },
+    "flash_crash_recovery": {
+      "averaging": {
+        "final_pnl": 21.429895540139963,
+        "max_drawdown": -43.8385895977115,
+        "avg_triggers": 3.0,
+        "recovery_rate": 1.0,
+        "avg_recovery_time": 193.08,
+        "capital_used": 25.0,
+        "efficiency": 0.8571958216055985
+      },
+      "baseline": {
+        "final_pnl": 1.2117255931220263,
+        "max_drawdown": -10.471974045736104,
+        "capital_used": 5.0,
+        "efficiency": 0.24234511862440528
+      },
+      "improvement": {
+        "pnl": 20.218169947017937,
+        "pnl_pct": 1668.5436093600672,
+        "drawdown": -33.36661555197539,
+        "efficiency": 0.6148507029811932
+      }
+    },
+    "slow_bleed": {
+      "averaging": {
+        "final_pnl": -35.506591172258226,
+        "max_drawdown": -38.94876029973688,
+        "avg_triggers": 3.0,
+        "recovery_rate": 0.47,
+        "avg_recovery_time": 66.87234042553192,
+        "capital_used": 25.0,
+        "efficiency": -1.4202636468903291
+      },
+      "baseline": {
+        "final_pnl": -8.797206327719374,
+        "max_drawdown": -9.420550808640341,
+        "capital_used": 5.0,
+        "efficiency": -1.759441265543875
+      },
+      "improvement": {
+        "pnl": -26.709384844538853,
+        "pnl_pct": -303.6121224118556,
+        "drawdown": -29.52820949109654,
+        "efficiency": 0.3391776186535458
+      }
+    },
+    "_aggregate": {
+      "total_pnl": -76.11398566598277,
+      "avg_pnl": -12.685664277663795
+    }
+  },
+  "-40%": {
+    "v_shape_recovery": {
+      "averaging": {
+        "final_pnl": 29.114897061380212,
+        "max_drawdown": -30.078921527053353,
+        "avg_triggers": 3.0,
+        "recovery_rate": 1.0,
+        "avg_recovery_time": 217.04,
+        "capital_used": 25.0,
+        "efficiency": 1.1645958824552085
+      },
+      "baseline": {
+        "final_pnl": 2.5010510936773342,
+        "max_drawdown": -8.061662145527222,
+        "capital_used": 5.0,
+        "efficiency": 0.5002102187354669
+      },
+      "improvement": {
+        "pnl": 26.61384596770288,
+        "pnl_pct": 1064.1064484841102,
+        "drawdown": -22.01725938152613,
+        "efficiency": 0.6643856637197416
+      }
+    },
+    "continued_downtrend": {
+      "averaging": {
+        "final_pnl": -54.83972880873405,
+        "max_drawdown": -60.21313015188458,
+        "avg_triggers": 3.0,
+        "recovery_rate": 0.93,
+        "avg_recovery_time": 82.3010752688172,
+        "capital_used": 25.0,
+        "efficiency": -2.1935891523493622
+      },
+      "baseline": {
+        "final_pnl": -12.501863255550466,
+        "max_drawdown": -13.459453857971601,
+        "capital_used": 5.0,
+        "efficiency": -2.5003726511100934
+      },
+      "improvement": {
+        "pnl": -42.33786555318358,
+        "pnl_pct": -338.65244474168117,
+        "drawdown": -46.753676293912974,
+        "efficiency": 0.3067834987607312
+      }
+    },
+    "dead_cat_bounce": {
+      "averaging": {
+        "final_pnl": -48.00094464365819,
+        "max_drawdown": -49.17960429619723,
+        "avg_triggers": 3.0,
+        "recovery_rate": 0.02,
+        "avg_recovery_time": 29.5,
+        "capital_used": 25.0,
+        "efficiency": -1.9200377857463276
+      },
+      "baseline": {
+        "final_pnl": -11.268309245715397,
+        "max_drawdown": -11.47838911799016,
+        "capital_used": 5.0,
+        "efficiency": -2.2536618491430795
+      },
+      "improvement": {
+        "pnl": -36.732635397942786,
+        "pnl_pct": -325.98178304264957,
+        "drawdown": -37.70121517820707,
+        "efficiency": 0.333624063396752
+      }
+    },
+    "choppy_sideways": {
+      "averaging": {
+        "final_pnl": 16.111627641944615,
+        "max_drawdown": -11.52466113559146,
+        "avg_triggers": 2.95,
+        "recovery_rate": 1.0,
+        "avg_recovery_time": 74.31,
+        "capital_used": 24.6545,
+        "efficiency": 0.6534964262891
+      },
+      "baseline": {
+        "final_pnl": 0.021108330746592015,
+        "max_drawdown": -4.940775582377539,
+        "capital_used": 5.0,
+        "efficiency": 0.004221666149318403
+      },
+      "improvement": {
+        "pnl": 16.090519311198022,
+        "pnl_pct": 76228.2887470667,
+        "drawdown": -6.58388555321392,
+        "efficiency": 0.6492747601397816
+      }
+    },
+    "flash_crash_recovery": {
+      "averaging": {
+        "final_pnl": 24.370497870622202,
+        "max_drawdown": -42.26761296611033,
+        "avg_triggers": 3.0,
+        "recovery_rate": 1.0,
+        "avg_recovery_time": 185.94,
+        "capital_used": 25.0,
+        "efficiency": 0.9748199148248881
+      },
+      "baseline": {
+        "final_pnl": 1.2721834226078645,
+        "max_drawdown": -10.448647927219733,
+        "capital_used": 5.0,
+        "efficiency": 0.2544366845215729
+      },
+      "improvement": {
+        "pnl": 23.09831444801434,
+        "pnl_pct": 1815.6434078243858,
+        "drawdown": -31.818965038890596,
+        "efficiency": 0.7203832303033151
+      }
+    },
+    "slow_bleed": {
+      "averaging": {
+        "final_pnl": -33.87389134337954,
+        "max_drawdown": -37.57779070665547,
+        "avg_triggers": 3.0,
+        "recovery_rate": 0.59,
+        "avg_recovery_time": 69.94915254237289,
+        "capital_used": 25.0,
+        "efficiency": -1.3549556537351817
+      },
+      "baseline": {
+        "final_pnl": -8.714155999398077,
+        "max_drawdown": -9.37607808340751,
+        "capital_used": 5.0,
+        "efficiency": -1.7428311998796153
+      },
+      "improvement": {
+        "pnl": -25.159735343981463,
+        "pnl_pct": -288.7225721655585,
+        "drawdown": -28.20171262324796,
+        "efficiency": 0.38787554614443365
+      }
+    },
+    "_aggregate": {
+      "total_pnl": -67.11754222182475,
+      "avg_pnl": -11.186257036970792
+    }
+  }
+}
