@@ -66,12 +66,24 @@ class HedgeGateway:
     # - $3 threshold configs: ~$200 PnL, 12% stop rate (too many stops)
     # - Traditional close: $206.33 PnL (baseline)
     #
+    # STRESS TEST IMPROVEMENTS (Jan 14, 2026):
+    # - Added momentum filter to avoid hedging during oversold bounces
+    # - Added trailing stop for faster exit on V-shape recoveries
+    # - Weak scenarios: low_volatility (-19%), dead_cat_bounce (-14%), v_shape (-5%)
+    #
     # KEY INSIGHT: $5 threshold filters weak trends, preventing stop losses
     PROFIT_PROTECTION_HEDGE_SIZE = 0.50  # 50% of main position (Grok original)
     PROFIT_HEDGE_PROFIT_GATE = 0.10      # Close hedge at 10% profit
     PROFIT_HEDGE_MAIN_DROP_GATE = 0.50   # Close hedge if main drops to 50% of peak
     PROFIT_HEDGE_STOP_LOSS = -0.05       # Stop loss at -5% on profit hedge
     MIN_PROFIT_FOR_HEDGE = 5.00          # Minimum $5 UPNL (backtest validated)
+
+    # Stress Test Improvements - Momentum Filter & Trailing Stop
+    MOMENTUM_RSI_OVERSOLD = 30           # Don't hedge if RSI < 30 (bounce likely)
+    MOMENTUM_RSI_OVERBOUGHT = 70         # Don't hedge if RSI > 70 (for shorts)
+    TRAILING_STOP_ACTIVATION = 0.03      # Activate trailing stop at 3% profit
+    TRAILING_STOP_DISTANCE = 0.02        # Trail 2% behind peak profit
+    MOMENTUM_LOOKBACK = 14               # RSI period
 
     def __init__(self, exchange, enabled: bool = True, leverage: int = 10):
         """
@@ -115,8 +127,13 @@ class HedgeGateway:
             'gate_opens': 0,
             'reversion_closes': 0,
             'surplus_dumps': 0,
-            'total_hedge_pnl': 0.0
+            'total_hedge_pnl': 0.0,
+            'momentum_filter_blocked': 0,  # Tracks blocked hedges by momentum
+            'trailing_stop_closes': 0       # Tracks trailing stop exits
         }
+
+        # Trailing stop state for profit protection hedges
+        self.trailing_stops: Dict[str, Dict] = {}  # {hedge_key: {peak_profit_pct, activated}}
 
         # Load persisted state
         self._load_state()
@@ -148,7 +165,8 @@ class HedgeGateway:
             'hedges': self.hedges,
             'gates': self.gates,
             'stats': self.stats,
-            'leverage': self.leverage  # Store leverage in state
+            'leverage': self.leverage,  # Store leverage in state
+            'trailing_stops': self.trailing_stops  # Trailing stop state for profit hedges
         }
 
         # Try Redis first
@@ -194,6 +212,7 @@ class HedgeGateway:
             self.hedges = state.get('hedges', {})
             self.gates = state.get('gates', {})
             self.stats = state.get('stats', self.stats)
+            self.trailing_stops = state.get('trailing_stops', {})
             # Restore leverage if saved
             if 'leverage' in state:
                 self.leverage = state['leverage']
@@ -345,6 +364,84 @@ class HedgeGateway:
 
         # FIXED: Use actual leverage instead of hardcoded 10x
         return size * pnl_pct * self.leverage
+
+    def calculate_rsi(self, symbol: str, period: int = 14) -> Optional[float]:
+        """
+        Calculate RSI (Relative Strength Index) for a symbol.
+
+        Args:
+            symbol: Trading symbol
+            period: RSI lookback period (default 14)
+
+        Returns:
+            RSI value (0-100) or None if calculation fails
+        """
+        try:
+            # Fetch 1-hour candles for RSI calculation (more stable than 1m)
+            ohlcv = self.exchange.fetch_ohlcv(symbol, '1h', limit=period + 1)
+            if not ohlcv or len(ohlcv) < period + 1:
+                return None
+
+            # Extract closing prices
+            closes = [candle[4] for candle in ohlcv]
+
+            # Calculate price changes
+            changes = [closes[i] - closes[i-1] for i in range(1, len(closes))]
+
+            # Separate gains and losses
+            gains = [max(0, c) for c in changes]
+            losses = [abs(min(0, c)) for c in changes]
+
+            # Calculate average gain and loss
+            avg_gain = sum(gains[-period:]) / period
+            avg_loss = sum(losses[-period:]) / period
+
+            if avg_loss == 0:
+                return 100.0  # All gains, no losses
+
+            rs = avg_gain / avg_loss
+            rsi = 100.0 - (100.0 / (1.0 + rs))
+
+            return rsi
+
+        except Exception as e:
+            print(f"  ⚠️ RSI calculation failed for {symbol}: {e}")
+            return None
+
+    def check_momentum_filter(self, symbol: str, main_side: str) -> Tuple[bool, str]:
+        """
+        Check if momentum conditions allow opening a profit protection hedge.
+
+        Prevents hedging during oversold bounces (for longs) or overbought dips (for shorts).
+
+        Args:
+            symbol: Trading symbol
+            main_side: Side of main position ('buy'/'sell')
+
+        Returns:
+            Tuple of (allowed: bool, reason: str)
+        """
+        rsi = self.calculate_rsi(symbol, self.MOMENTUM_LOOKBACK)
+
+        if rsi is None:
+            # If RSI calc fails, allow hedge (be conservative)
+            return (True, "rsi_unavailable")
+
+        # For LONG main positions (hedge would be SHORT)
+        # Don't open hedge if RSI is oversold - bounce likely
+        if main_side.lower() in ['buy', 'long']:
+            if rsi < self.MOMENTUM_RSI_OVERSOLD:
+                self.stats['momentum_filter_blocked'] += 1
+                return (False, f"rsi_oversold_{rsi:.1f}")
+            return (True, f"rsi_ok_{rsi:.1f}")
+
+        # For SHORT main positions (hedge would be LONG)
+        # Don't open hedge if RSI is overbought - dip likely
+        else:
+            if rsi > self.MOMENTUM_RSI_OVERBOUGHT:
+                self.stats['momentum_filter_blocked'] += 1
+                return (False, f"rsi_overbought_{rsi:.1f}")
+            return (True, f"rsi_ok_{rsi:.1f}")
 
     def update_peak(self, main_position_key: str, current_hedge_profit: float):
         """Update peak profit tracking for gate."""
@@ -657,6 +754,12 @@ class HedgeGateway:
             print(f"  ⏸️ Profit protection hedge skipped: peak ${main_peak_upnl:.2f} < min ${self.MIN_PROFIT_FOR_HEDGE}")
             return None
 
+        # STRESS TEST IMPROVEMENT: Momentum filter to avoid hedging during oversold bounces
+        momentum_ok, momentum_reason = self.check_momentum_filter(symbol, main_side)
+        if not momentum_ok:
+            print(f"  ⏸️ Profit protection hedge blocked by momentum filter: {momentum_reason}")
+            return None
+
         profit_hedge_key = f"profit_hedge:{main_position_key}"
 
         # Don't double hedge
@@ -727,10 +830,11 @@ class HedgeGateway:
         """
         Check if profit protection hedge should close.
 
-        Gates (Grok recommendations):
+        Gates (Grok recommendations + Stress Test Improvements):
         1. Hedge reaches 10% profit → Close hedge (lock in hedge gains)
         2. Main position drops to 50% of peak → Close hedge (protection no longer needed)
         3. Hedge hits -5% stop loss → Close hedge (cut losses)
+        4. TRAILING STOP: Once hedge profits 3%, trail 2% behind peak (faster exits)
 
         Args:
             main_position_key: Key of the main position
@@ -759,28 +863,73 @@ class HedgeGateway:
         hedge_margin = (hedge['size'] * hedge['entry_price']) / self.leverage
         hedge_pnl_pct = (hedge_profit / hedge_margin) if hedge_margin > 0 else 0
 
+        # ================================================================
+        # STRESS TEST IMPROVEMENT: Trailing Stop Logic
+        # ================================================================
+        # Initialize trailing stop state if needed
+        if profit_hedge_key not in self.trailing_stops:
+            self.trailing_stops[profit_hedge_key] = {
+                'peak_profit_pct': 0.0,
+                'activated': False
+            }
+
+        trailing = self.trailing_stops[profit_hedge_key]
+
+        # Update peak profit
+        if hedge_pnl_pct > trailing['peak_profit_pct']:
+            trailing['peak_profit_pct'] = hedge_pnl_pct
+            self._save_state()
+
+        # Activate trailing stop when profit reaches threshold
+        if not trailing['activated'] and hedge_pnl_pct >= self.TRAILING_STOP_ACTIVATION:
+            trailing['activated'] = True
+            print(f"  📍 Trailing stop ACTIVATED at {hedge_pnl_pct*100:.2f}% profit")
+            self._save_state()
+
+        # Check trailing stop trigger (only if activated)
+        trailing_stop_level = trailing['peak_profit_pct'] - self.TRAILING_STOP_DISTANCE
+        trailing_triggered = trailing['activated'] and hedge_pnl_pct <= trailing_stop_level
+
         print(f"  📊 Profit protection hedge check:")
         print(f"     Hedge PnL: ${hedge_profit:.4f} ({hedge_pnl_pct*100:.2f}%)")
         print(f"     Main UPNL: ${main_current_upnl:.4f} (peak: ${main_peak_upnl:.4f})")
+        if trailing['activated']:
+            print(f"     Trailing: peak={trailing['peak_profit_pct']*100:.2f}%, stop={trailing_stop_level*100:.2f}%")
 
         # Gate 1: Hedge reaches 10% profit
         if hedge_pnl_pct >= self.PROFIT_HEDGE_PROFIT_GATE:
             print(f"  🎯 Gate 1: Hedge hit {self.PROFIT_HEDGE_PROFIT_GATE*100:.0f}% profit target!")
-            return (True, "profit_target")
+            self._cleanup_trailing_stop(profit_hedge_key)
+            return (True, "hedge_profit_10pct")
 
-        # Gate 2: Main drops to 50% of peak
+        # Gate 2: TRAILING STOP (Stress Test Improvement - faster exits on V-recoveries)
+        if trailing_triggered:
+            print(f"  📉 Gate 2: Trailing stop triggered (dropped {self.TRAILING_STOP_DISTANCE*100:.0f}% from peak)")
+            self.stats['trailing_stop_closes'] += 1
+            self._cleanup_trailing_stop(profit_hedge_key)
+            return (True, "trailing_stop")
+
+        # Gate 3: Main drops to 50% of peak
         if main_peak_upnl > 0:
             main_pct_of_peak = main_current_upnl / main_peak_upnl
             if main_pct_of_peak <= self.PROFIT_HEDGE_MAIN_DROP_GATE:
-                print(f"  📉 Gate 2: Main at {main_pct_of_peak*100:.0f}% of peak (threshold: {self.PROFIT_HEDGE_MAIN_DROP_GATE*100:.0f}%)")
+                print(f"  📉 Gate 3: Main at {main_pct_of_peak*100:.0f}% of peak (threshold: {self.PROFIT_HEDGE_MAIN_DROP_GATE*100:.0f}%)")
+                self._cleanup_trailing_stop(profit_hedge_key)
                 return (True, "main_dropped")
 
-        # Gate 3: Stop loss at -5%
+        # Gate 4: Stop loss at -5%
         if hedge_pnl_pct <= self.PROFIT_HEDGE_STOP_LOSS:
-            print(f"  🛑 Gate 3: Hedge stop loss hit ({self.PROFIT_HEDGE_STOP_LOSS*100:.0f}%)")
-            return (True, "stop_loss")
+            print(f"  🛑 Gate 4: Hedge stop loss hit ({self.PROFIT_HEDGE_STOP_LOSS*100:.0f}%)")
+            self._cleanup_trailing_stop(profit_hedge_key)
+            return (True, "hedge_stop_loss")
 
         return (False, "hold")
+
+    def _cleanup_trailing_stop(self, profit_hedge_key: str):
+        """Clean up trailing stop state when hedge closes."""
+        if profit_hedge_key in self.trailing_stops:
+            del self.trailing_stops[profit_hedge_key]
+            self._save_state()
 
     def close_profit_protection_hedge(self, main_position_key: str, reason: str) -> Optional[Dict]:
         """
@@ -961,6 +1110,8 @@ class HedgeGateway:
         print(f"   Profit protection hedges opened: {stats.get('profit_protection_hedges_opened', 0)}")
         print(f"   Profit protection hedges closed: {stats.get('profit_protection_hedges_closed', 0)}")
         print(f"   Hedges transitioned to main: {stats.get('hedges_transitioned_to_main', 0)}")
+        print(f"   Momentum filter blocked: {stats.get('momentum_filter_blocked', 0)}")
+        print(f"   Trailing stop closes: {stats.get('trailing_stop_closes', 0)}")
 
 
 # Singleton instance
