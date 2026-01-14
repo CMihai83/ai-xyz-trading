@@ -31,7 +31,13 @@ FIXES (Jan 2026 Consortium Review):
 - MEDIUM: Increased reversion buffer from 5% to 10%
 
 Author: Claude + Grok Consortium
-Version: 2.4.0 (Volatility Fallback Hedging)
+Version: 2.5.0 (Sprint 13 - Hedge Optimization)
+
+V2.5.0 Changes (Jan 14, 2026 - Sprint 13):
+- Tightened hedge stop-loss from -5% to -3% (cut losses faster)
+- Added DUAL-LOSS detection gate (Gate 5): Closes hedge when BOTH main and hedge are losing >5%
+- Prevents whipsaw scenarios where hedge opened at wrong time
+- Added dual_loss_exits stat counter for tracking
 
 V2.4.0 Changes (Jan 14, 2026):
 - Added volatility-based fallback for immediate hedging (Grok recommendation)
@@ -108,7 +114,7 @@ class HedgeGateway:
     PROFIT_PROTECTION_HEDGE_SIZE = 0.50  # 50% of main position (Grok original)
     PROFIT_HEDGE_PROFIT_GATE = 0.10      # Close hedge at 10% profit
     PROFIT_HEDGE_MAIN_DROP_GATE = 0.50   # Close hedge if main drops to 50% of peak
-    PROFIT_HEDGE_STOP_LOSS = -0.05       # Stop loss at -5% on profit hedge
+    PROFIT_HEDGE_STOP_LOSS = -0.03       # Sprint 13: Tightened from -5% to -3% (cut losses faster)
     MIN_PROFIT_FOR_HEDGE = 5.00          # Minimum $5 UPNL (backtest validated)
 
     # Stress Test Improvements - Momentum Filter & Trailing Stop
@@ -218,7 +224,8 @@ class HedgeGateway:
             'emergency_hedges_opened': 0,     # V1.2.0: Emergency hedges during spikes
             'fast_stop_triggers': 0,          # V1.2.0: Fast stop loss triggers
             'ultra_low_vol_blocked': 0,       # V1.2.3: Blocked by ultra-low volatility
-            'bounce_detected_blocked': 0      # V1.2.3: Blocked by bounce detection
+            'bounce_detected_blocked': 0,     # V1.2.3: Blocked by bounce detection
+            'dual_loss_exits': 0              # Sprint 13: Dual-loss exit triggers
         }
 
         # Trailing stop state for profit protection hedges
@@ -1428,11 +1435,13 @@ class HedgeGateway:
         """
         Check if profit protection hedge should close.
 
-        Gates (Grok recommendations + Stress Test Improvements):
+        Gates (Grok recommendations + Stress Test Improvements + Sprint 13):
         1. Hedge reaches 10% profit → Close hedge (lock in hedge gains)
-        2. Main position drops to 50% of peak → Close hedge (protection no longer needed)
-        3. Hedge hits -5% stop loss → Close hedge (cut losses)
-        4. TRAILING STOP: Once hedge profits 3%, trail 2% behind peak (faster exits)
+        2. TRAILING STOP: Once hedge profits 3%, trail 2% behind peak (faster exits)
+        3. FAST STOP (ATR-based, spike mode only)
+        4. Main position drops to 50% of peak → Close hedge (protection no longer needed)
+        5. DUAL-LOSS: Both main & hedge below -5% → Close hedge (Sprint 13: stop bleeding)
+        6. Hedge hits -3% stop loss → Close hedge (Sprint 13: tightened from -5%)
 
         Args:
             main_position_key: Key of the main position
@@ -1560,19 +1569,33 @@ class HedgeGateway:
                     remaining = self.MAIN_DROP_DELAY_SECONDS - seconds_since_hedge
                     print(f"  ⏳ Gate 4: Main at {main_pct_of_peak*100:.0f}% but delay not passed ({remaining:.0f}s remaining)")
 
-        # Gate 5: Stop loss at -5%
+        # Gate 5: DUAL-LOSS DETECTION (Sprint 13 - close when both losing)
+        # If both main and hedge are in significant loss, close hedge to stop bleeding
+        # This catches whipsaw scenarios where hedge opened at wrong time
+        DUAL_LOSS_THRESHOLD = -0.05  # Both must be below -5%
+        main_pnl_pct = (main_current_upnl / hedge_margin) if hedge_margin > 0 else 0
+        if hedge_pnl_pct <= DUAL_LOSS_THRESHOLD and main_current_upnl < 0:
+            if main_pnl_pct <= DUAL_LOSS_THRESHOLD:
+                print(f"  ⚠️ Gate 5: DUAL-LOSS detected!")
+                print(f"     Main: {main_pnl_pct*100:.1f}%, Hedge: {hedge_pnl_pct*100:.1f}%")
+                print(f"     Both below {DUAL_LOSS_THRESHOLD*100:.0f}% - closing hedge to stop bleeding")
+                self.stats['dual_loss_exits'] += 1
+                self._cleanup_trailing_stop(profit_hedge_key)
+                return (True, "dual_loss_exit")
+
+        # Gate 6: Stop loss at -3% (tightened from -5% in Sprint 13)
         # V1.2.5: Add delay before stop_loss can trigger (prevents dead cat bounce losses)
         stop_loss_delay_passed = (not self.STOP_LOSS_DELAY_ENABLED or
                                   seconds_since_hedge >= self.STOP_LOSS_DELAY_SECONDS)
         if hedge_pnl_pct <= self.PROFIT_HEDGE_STOP_LOSS:
             if stop_loss_delay_passed:
-                print(f"  🛑 Gate 5: Hedge stop loss hit ({self.PROFIT_HEDGE_STOP_LOSS*100:.0f}%)")
+                print(f"  🛑 Gate 6: Hedge stop loss hit ({self.PROFIT_HEDGE_STOP_LOSS*100:.0f}%)")
                 self._cleanup_trailing_stop(profit_hedge_key)
                 return (True, "hedge_stop_loss")
             else:
                 # Log that we're delaying the gate
                 remaining = self.STOP_LOSS_DELAY_SECONDS - seconds_since_hedge
-                print(f"  ⏳ Gate 5: Stop loss at {hedge_pnl_pct*100:.1f}% but delay not passed ({remaining:.0f}s remaining)")
+                print(f"  ⏳ Gate 6: Stop loss at {hedge_pnl_pct*100:.1f}% but delay not passed ({remaining:.0f}s remaining)")
 
         return (False, "hold")
 
@@ -1752,7 +1775,7 @@ class HedgeGateway:
     def print_status(self):
         """Print current hedge status."""
         stats = self.get_stats()
-        print(f"\n🛡️ Hedge Gateway Status (V1.2.0):")
+        print(f"\n🛡️ Hedge Gateway Status (V2.5.0 - Sprint 13):")
         print(f"   Active hedges: {stats['active_hedges']}")
         print(f"   Open gates: {stats['open_gates']}")
         print(f"   Total hedge P&L: ${stats['total_hedge_pnl']:.2f}")
@@ -1766,6 +1789,7 @@ class HedgeGateway:
         print(f"   ⚡ Volatility spikes detected: {stats.get('volatility_spikes_detected', 0)}")
         print(f"   ⚡ Emergency hedges opened: {stats.get('emergency_hedges_opened', 0)}")
         print(f"   ⚡ Fast stop triggers: {stats.get('fast_stop_triggers', 0)}")
+        print(f"   ⚠️ Dual-loss exits: {stats.get('dual_loss_exits', 0)}")
 
 
 # Singleton instance
