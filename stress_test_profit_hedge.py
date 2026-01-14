@@ -16,15 +16,19 @@ Scenarios:
 9. Dead Cat Bounce - Drop, small recovery, then continued drop
 
 Author: Claude + Grok Consortium
-Version: 1.2.7
+Version: 1.2.8
 Date: January 14, 2026
+
+V1.2.8 Changes:
+- DISABLED Risk Patch (no effect on dead_cat/v_shape scenarios)
+- Root cause: Drop detection at hedge open time fails because recovery has already started
+- By the time main profits (hedge opens), price has recovered from drop
+- Lookback sees recovery, not original drop → threshold never triggers
+- Conclusion: dead_cat/v_shape require ML pattern recognition, not rule-based detection
 
 V1.2.7 Changes:
 - DISABLED Market Regime Filter (caused -125% black_swan_down regression)
-- 10% threshold: didn't block enough hedges, v_shape/dead_cat unchanged
-- 5% threshold: blocked too many legitimate hedges, -12.1% overall
-- Conclusion: Filter can't distinguish crash vs bounce without ML pattern detection
-- Accept v_shape (-57%) and dead_cat (-827%) as unfixable with rule-based logic
+- Blocking hedges entirely missed legitimate protection opportunities
 
 V1.2.6 Changes:
 - DISABLED MAIN_DROP_REQUIRES_HEDGE_LOSS (just shifted exits to hedge_stop_loss)
@@ -397,6 +401,15 @@ class ProfitProtectionHedgeStressTest:
     REGIME_DROP_THRESHOLD = 0.05          # Not used when disabled
     REGIME_RECOVERY_THRESHOLD = 0.98      # Not used when disabled
 
+    # V1.2.8: Risk Patch for dead_cat/v_shape - REDUCE hedge size instead of blocking
+    # Key insight: Blocking hedges entirely caused -125% regression (missed protection)
+    # Solution: Reduce hedge size during post-drop conditions (partial protection)
+    # This limits downside in dead_cat/v_shape while preserving some protection
+    RISK_PATCH_ENABLED = False            # DISABLED: No effect on dead_cat/v_shape (drop not visible at hedge open)
+    RISK_PATCH_LOOKBACK = 30              # Look back 30 periods for recent high
+    RISK_PATCH_DROP_THRESHOLD = 0.08      # 8% drop from recent high triggers patch
+    RISK_PATCH_HEDGE_SIZE = 0.25          # Reduce hedge to 25% (from 50%) during risk
+
     def __init__(self, leverage: int = 10, position_size_usd: float = 10.0):
         self.leverage = leverage
         self.position_size_usd = position_size_usd
@@ -590,6 +603,38 @@ class ProfitProtectionHedgeStressTest:
 
         return (in_post_drop, drop_pct, recovery_pct)
 
+    def detect_risk_condition(self, prices: np.ndarray, index: int) -> Tuple[bool, float]:
+        """
+        V1.2.8: Risk Patch - detect conditions where hedge size should be reduced.
+
+        Unlike the regime filter which blocks hedges entirely (caused -125% regression),
+        this only reduces hedge size to limit downside while preserving some protection.
+
+        Returns (in_risk_mode, drop_pct)
+        """
+        if not self.RISK_PATCH_ENABLED:
+            return (False, 0.0)
+
+        if index < self.RISK_PATCH_LOOKBACK:
+            return (False, 0.0)
+
+        # Find the recent high in lookback window
+        lookback_start = max(0, index - self.RISK_PATCH_LOOKBACK)
+        lookback_prices = prices[lookback_start:index + 1]
+        recent_high = max(lookback_prices)
+        current_price = prices[index]
+
+        if recent_high <= 0:
+            return (False, 0.0)
+
+        # Calculate drop from recent high
+        drop_pct = (recent_high - current_price) / recent_high
+
+        # We're in risk mode if price has dropped more than threshold
+        in_risk_mode = drop_pct >= self.RISK_PATCH_DROP_THRESHOLD
+
+        return (in_risk_mode, drop_pct)
+
     def calc_upnl(self, entry: float, current: float, size: float, side: str) -> Tuple[float, float]:
         """Calculate UPNL and percentage"""
         if side == 'long':
@@ -705,6 +750,14 @@ class ProfitProtectionHedgeStressTest:
             # Determine thresholds based on spike mode
             min_profit = self.VOLATILITY_SPIKE_MIN_PROFIT if spike_mode else self.MIN_PROFIT
             hedge_size_pct = self.VOLATILITY_SPIKE_HEDGE_SIZE if spike_mode else self.HEDGE_SIZE
+
+            # V1.2.8: Risk Patch - reduce hedge size during post-drop conditions
+            # This limits downside in dead_cat/v_shape while preserving some protection
+            in_risk_mode = False
+            if use_improvements and not hedge_opened:
+                in_risk_mode, risk_drop_pct = self.detect_risk_condition(prices, i)
+                if in_risk_mode:
+                    hedge_size_pct = self.RISK_PATCH_HEDGE_SIZE  # Reduce from 50% to 25%
 
             # V1.2.3: Check hedge blocking conditions before opening
             hedge_blocked = False
