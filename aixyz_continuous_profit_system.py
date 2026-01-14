@@ -2730,9 +2730,11 @@ class AIXYZContinuousProfit:
         
         # Use the minimum of both calculations
         optimal_leverage = min(max_safe_leverage, volatility_leverage)
-        
-        # Ensure minimum leverage of 3x and maximum of 20x
-        optimal_leverage = max(3, min(20, optimal_leverage))
+
+        # Sprint 9: Ensure minimum leverage of 3x and maximum of 5x (reduced from 20x)
+        # Claude + Grok consensus: 22.5% leverage aggressiveness was identified as profit leak
+        LEVERAGE_CAP = 5  # Sprint 9 conservative cap
+        optimal_leverage = max(3, min(LEVERAGE_CAP, optimal_leverage))
         
         print(f"  📊 Volatility: {volatility_range*100:.1f}%, Max Step: {max_averaging_step*100:.1f}%")
         print(f"  🎯 Optimal Leverage: {optimal_leverage}x (ensures averaging steps reachable)")

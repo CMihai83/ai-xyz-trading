@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Dynamic Leverage Manager for AI-XYZ Trading System
-V2.0.0 - January 14, 2026
+V2.1.0 - January 14, 2026
 
 Adjusts leverage dynamically based on:
 - Market regime (from Dynamic Parameter Manager)
@@ -16,6 +16,12 @@ Grok Sprint 5 Enhancement: Added edge case handling for:
 - Rapid regime transitions
 - Circuit breaker mechanisms
 - Correlation-based portfolio stress
+
+Sprint 9 Enhancement (Claude + Grok Consensus):
+- Reduced MAX_LEVERAGE from 20x to 10x (conservative default)
+- Added STRICT_MODE flag for 5x leverage cap
+- Tightened regime-based leverage multipliers
+- 22.5% leverage aggressiveness identified as profit leak
 
 Author: Claude + Grok Consortium
 """
@@ -38,31 +44,51 @@ class DynamicLeverageManager:
     Integrates with DynamicParameterManager for regime-aware leverage scaling.
     """
 
-    # Base leverage settings
-    BASE_LEVERAGE = 10
-    MIN_LEVERAGE = 3
-    MAX_LEVERAGE = 20
+    # =========================================================================
+    # SPRINT 9 LEVERAGE GUARDRAILS (Claude + Grok Consensus)
+    # =========================================================================
+    # Issue: 22.5% of leverage decisions were "too aggressive"
+    # Solution: Cap leverage at 5x default, 10x max for high-confidence signals
+    #
+    # STRICT_MODE = True: Max 5x leverage (conservative, recommended for recovery)
+    # STRICT_MODE = False: Max 10x leverage (moderate risk)
+    # =========================================================================
 
-    # Regime-based leverage multipliers
+    STRICT_MODE = True  # Enable strict 5x leverage cap (Sprint 9)
+
+    # Base leverage settings - Sprint 9 tightened
+    BASE_LEVERAGE = 5 if STRICT_MODE else 10
+    MIN_LEVERAGE = 3
+    MAX_LEVERAGE = 5 if STRICT_MODE else 10  # Reduced from 20x to prevent over-leverage
+
+    # Absolute cap (never exceed regardless of any calculation)
+    ABSOLUTE_MAX_LEVERAGE = 10  # Hard cap, even in non-strict mode
+
+    # Regime-based leverage multipliers - Sprint 9 conservative
     REGIME_LEVERAGE = {
         'HIGH_VOLATILITY': {
-            'max_leverage': 5,      # Reduce max leverage in high vol
-            'recommended': 4,       # Conservative recommendation
-            'description': 'High volatility - reduced leverage for safety'
+            'max_leverage': 3,      # Reduced from 5x - extra conservative
+            'recommended': 3,       # Conservative recommendation
+            'description': 'High volatility - minimum leverage for safety'
+        },
+        'EXTREME_VOLATILITY': {  # New regime for Sprint 9
+            'max_leverage': 2,      # Near-minimum leverage
+            'recommended': 2,       # Only hold existing positions
+            'description': 'Extreme volatility - do not open new positions'
         },
         'TRENDING': {
-            'max_leverage': 12,     # Allow moderate leverage in trends
-            'recommended': 8,       # Follow the trend with reasonable leverage
+            'max_leverage': 7 if not STRICT_MODE else 5,
+            'recommended': 5,       # Reduced from 8x
             'description': 'Trending market - moderate leverage to capture moves'
         },
         'RANGING': {
-            'max_leverage': 15,     # Higher leverage OK in ranging markets
-            'recommended': 10,      # Mean reversion benefits from leverage
+            'max_leverage': 7 if not STRICT_MODE else 5,
+            'recommended': 5,       # Reduced from 10x
             'description': 'Ranging market - leverage OK for mean reversion'
         },
         'NORMAL': {
-            'max_leverage': 12,     # Standard operations
-            'recommended': 10,      # Default leverage
+            'max_leverage': 7 if not STRICT_MODE else 5,
+            'recommended': 5,       # Reduced from 10x
             'description': 'Normal conditions - standard leverage'
         }
     }
@@ -112,13 +138,19 @@ class DynamicLeverageManager:
         'transition_leverage_cap': 5,   # Max leverage during rapid transitions
     }
 
-    # Circuit breaker settings
+    # Circuit breaker settings - Sprint 9 improved for 80% effectiveness
+    # Previous: 61.5% effectiveness (triggered but didn't prevent losses)
+    # Target: 80% effectiveness via earlier, more sensitive triggers
     CIRCUIT_BREAKER = {
-        'consecutive_losses': 5,        # Consecutive losses to trigger
-        'loss_threshold': -0.15,        # -15% loss in session triggers breaker
-        'max_averaging_positions': 8,   # Too many averaging = breaker
+        'consecutive_losses': 3,        # Reduced from 5 - trigger earlier
+        'loss_threshold': -0.10,        # Reduced from -15% - more sensitive
+        'max_averaging_positions': 5,   # Reduced from 8 - prevent over-accumulation
         'leverage_floor': 3,            # Minimum leverage during breaker
-        'cooldown_minutes': 30,         # Breaker cooldown period
+        'cooldown_minutes': 20,         # Reduced from 30 - faster recovery testing
+        # Sprint 9 additional triggers
+        'margin_utilization_trigger': 0.80,  # NEW: Trigger at 80% margin used
+        'portfolio_upnl_trigger': -0.15,     # NEW: Trigger at -15% portfolio UPNL
+        'rapid_decline_trigger': -0.05,      # NEW: -5% decline in 5 min triggers
     }
 
     # Portfolio stress thresholds
@@ -466,6 +498,34 @@ class DynamicLeverageManager:
             self._activate_circuit_breaker(f"Averaging positions: {averaging_count}")
             result['is_active'] = True
             result['reason'] = f"Too many averaging ({averaging_count})"
+
+        # =================================================================
+        # Sprint 9 Additional Triggers for 80% Effectiveness
+        # =================================================================
+
+        # Check margin utilization (NEW)
+        margin_used = account_data.get('margin_utilization', 0)
+        margin_trigger = settings.get('margin_utilization_trigger', 0.80)
+        if margin_used >= margin_trigger:
+            self._activate_circuit_breaker(f"High margin utilization: {margin_used*100:.1f}%")
+            result['is_active'] = True
+            result['reason'] = f"High margin ({margin_used*100:.0f}%)"
+
+        # Check portfolio UPNL (NEW)
+        portfolio_upnl = position_data.get('total_upnl_pct', 0)
+        upnl_trigger = settings.get('portfolio_upnl_trigger', -0.15)
+        if portfolio_upnl <= upnl_trigger:
+            self._activate_circuit_breaker(f"Portfolio UPNL critical: {portfolio_upnl*100:.1f}%")
+            result['is_active'] = True
+            result['reason'] = f"Portfolio UPNL ({portfolio_upnl*100:.0f}%)"
+
+        # Check rapid decline (NEW) - requires historical tracking
+        rapid_trigger = settings.get('rapid_decline_trigger', -0.05)
+        recent_decline = account_data.get('pnl_change_5min', 0)
+        if recent_decline <= rapid_trigger:
+            self._activate_circuit_breaker(f"Rapid decline: {recent_decline*100:.1f}% in 5min")
+            result['is_active'] = True
+            result['reason'] = f"Rapid decline ({recent_decline*100:.1f}%/5min)"
 
         return result
 
