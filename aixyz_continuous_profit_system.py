@@ -1716,7 +1716,97 @@ class AIXYZContinuousProfit:
         except Exception as e:
             print(f"  ⚠️ Fibonacci service error: {e}")
             return None
-    
+
+    def check_entry_filters(self, symbol: str, direction: str) -> Tuple[bool, str]:
+        """
+        Grok Entry Filters - Check before opening position to improve averaging success
+
+        Filters:
+        1. Trend Confirmation: Price > 50-period SMA (for longs) or Price < 50 SMA (for shorts)
+        2. Momentum Filter: RSI(14) between 30-70 (avoid extremes)
+        3. Volatility Filter: ATR(14) < 1.5x average ATR(20) (avoid high volatility)
+
+        Returns: (passed: bool, reason: str)
+        """
+        try:
+            # Fetch 1h candles for indicator calculation (need ~50 for SMA)
+            ohlcv = self.exchange.fetch_ohlcv(symbol, '1h', limit=60)
+            if len(ohlcv) < 50:
+                return True, "Insufficient data, allowing entry"
+
+            closes = [c[4] for c in ohlcv]  # Close prices
+            highs = [c[2] for c in ohlcv]
+            lows = [c[3] for c in ohlcv]
+            current_price = closes[-1]
+
+            # 1. TREND FILTER: 50-period SMA
+            sma_50 = sum(closes[-50:]) / 50
+            is_long = direction.lower() in ['buy', 'long', 'bullish']
+
+            if is_long and current_price < sma_50:
+                return False, f"Trend filter: Price ${current_price:.4f} < SMA50 ${sma_50:.4f} (bearish for long)"
+            elif not is_long and current_price > sma_50:
+                return False, f"Trend filter: Price ${current_price:.4f} > SMA50 ${sma_50:.4f} (bullish for short)"
+
+            # 2. MOMENTUM FILTER: RSI(14)
+            # Calculate RSI
+            gains = []
+            losses = []
+            for i in range(1, min(15, len(closes))):
+                change = closes[-i] - closes[-i-1]
+                if change > 0:
+                    gains.append(change)
+                    losses.append(0)
+                else:
+                    gains.append(0)
+                    losses.append(abs(change))
+
+            if gains and losses:
+                avg_gain = sum(gains) / len(gains)
+                avg_loss = sum(losses) / len(losses)
+                if avg_loss > 0:
+                    rs = avg_gain / avg_loss
+                    rsi = 100 - (100 / (1 + rs))
+                else:
+                    rsi = 100
+
+                # RSI filter: avoid extremes
+                if rsi < 30:
+                    if is_long:
+                        pass  # Oversold is OK for longs
+                    else:
+                        return False, f"RSI filter: RSI={rsi:.1f} oversold (risky for short)"
+                elif rsi > 70:
+                    if not is_long:
+                        pass  # Overbought is OK for shorts
+                    else:
+                        return False, f"RSI filter: RSI={rsi:.1f} overbought (risky for long)"
+
+            # 3. VOLATILITY FILTER: ATR(14) < 1.5x ATR(20) average
+            def calc_atr(highs, lows, closes, period):
+                trs = []
+                for i in range(1, min(period + 1, len(closes))):
+                    tr = max(
+                        highs[-i] - lows[-i],
+                        abs(highs[-i] - closes[-i-1]),
+                        abs(lows[-i] - closes[-i-1])
+                    )
+                    trs.append(tr)
+                return sum(trs) / len(trs) if trs else 0
+
+            atr_14 = calc_atr(highs, lows, closes, 14)
+            atr_20 = calc_atr(highs, lows, closes, 20)
+
+            if atr_20 > 0 and atr_14 > 1.5 * atr_20:
+                return False, f"Volatility filter: ATR14={atr_14:.4f} > 1.5x ATR20={atr_20:.4f} (high volatility)"
+
+            # All filters passed
+            return True, f"Entry filters passed (SMA50: ${sma_50:.2f}, RSI: {rsi:.1f}, ATR14/20: {atr_14/atr_20:.2f}x)"
+
+        except Exception as e:
+            # On error, allow entry (don't block due to data issues)
+            return True, f"Filter check error: {e}, allowing entry"
+
     def open_position(self, opportunity: Dict) -> bool:
         """Open a new position based on opportunity"""
         # Initialize variables that might be used in exception handler
@@ -1736,6 +1826,14 @@ class AIXYZContinuousProfit:
             tier_name = tier.name if tier else 'UNKNOWN'
             print(f"  🎯 Confidence Tier: {tier_name} (score: {confidence:.3f})")
             print(f"     Tier sizing: {tier.position_size}x | Leverage: {tier.leverage}x")
+
+            # Grok Entry Filters: SMA, RSI, ATR (improve averaging success probability)
+            filter_passed, filter_reason = self.check_entry_filters(symbol, direction)
+            if not filter_passed:
+                print(f"  ❌ Entry BLOCKED by Grok filters: {filter_reason}")
+                return False
+            else:
+                print(f"  ✅ {filter_reason}")
 
             # V2.0.0: Prediction-based entry filter
             if hasattr(self, 'prediction_integration') and self.prediction_integration:
