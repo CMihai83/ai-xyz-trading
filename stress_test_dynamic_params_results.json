@@ -1,0 +1,1327 @@
+{
+  "test_timestamp": "2026-01-14T16:05:27.513357",
+  "scenarios": {
+    "flash_crash": {
+      "name": "flash_crash",
+      "description": "Sudden volatility spike (10x normal) lasting 5 minutes then recovery",
+      "num_candles": 31,
+      "regime_history": [
+        "RANGING",
+        "RANGING",
+        "RANGING",
+        "RANGING",
+        "RANGING",
+        "RANGING",
+        "RANGING",
+        "RANGING",
+        "RANGING",
+        "RANGING",
+        "RANGING"
+      ],
+      "param_history": [
+        {
+          "averaging": -0.45499999999999996,
+          "sd1": 0.85,
+          "sd2": 0.35000000000000003,
+          "stop_loss": -0.95
+        },
+        {
+          "averaging": -0.45499999999999996,
+          "sd1": 0.85,
+          "sd2": 0.35000000000000003,
+          "stop_loss": -0.95
+        },
+        {
+          "averaging": -0.45499999999999996,
+          "sd1": 0.85,
+          "sd2": 0.35000000000000003,
+          "stop_loss": -0.95
+        },
+        {
+          "averaging": -0.45499999999999996,
+          "sd1": 0.85,
+          "sd2": 0.35000000000000003,
+          "stop_loss": -0.95
+        },
+        {
+          "averaging": -0.45499999999999996,
+          "sd1": 0.85,
+          "sd2": 0.35000000000000003,
+          "stop_loss": -0.95
+        },
+        {
+          "averaging": -0.45499999999999996,
+          "sd1": 0.85,
+          "sd2": 0.35000000000000003,
+          "stop_loss": -0.95
+        },
+        {
+          "averaging": -0.45499999999999996,
+          "sd1": 0.85,
+          "sd2": 0.35000000000000003,
+          "stop_loss": -0.95
+        },
+        {
+          "averaging": -0.45499999999999996,
+          "sd1": 0.85,
+          "sd2": 0.35000000000000003,
+          "stop_loss": -0.95
+        },
+        {
+          "averaging": -0.45499999999999996,
+          "sd1": 0.85,
+          "sd2": 0.35000000000000003,
+          "stop_loss": -0.95
+        },
+        {
+          "averaging": -0.45499999999999996,
+          "sd1": 0.85,
+          "sd2": 0.35000000000000003,
+          "stop_loss": -0.95
+        },
+        {
+          "averaging": -0.45499999999999996,
+          "sd1": 0.85,
+          "sd2": 0.35000000000000003,
+          "stop_loss": -0.95
+        }
+      ],
+      "bounds_violations": [],
+      "atr_ratios": [
+        0.4144855750649275,
+        0.4144855750649275,
+        0.4144855750649275,
+        0.4144855750649275,
+        0.4144855750649275,
+        0.4144855750649275,
+        0.4144855750649275,
+        0.4144855750649275,
+        0.4144855750649275,
+        0.4144855750649275,
+        0.4144855750649275
+      ],
+      "stability": {
+        "stable": "True",
+        "transitions": 0,
+        "avg_duration": 11.0,
+        "min_duration": 11,
+        "max_duration": 11
+      },
+      "summary": {
+        "unique_regimes": [
+          "RANGING"
+        ],
+        "regime_counts": {
+          "RANGING": 11
+        },
+        "avg_atr_ratio": 0.41448557506492745,
+        "max_atr_ratio": 0.4144855750649275,
+        "min_atr_ratio": 0.4144855750649275,
+        "bounds_violations_count": 0,
+        "regime_stable": "True",
+        "regime_transitions": 0
+      },
+      "passed": "True"
+    },
+    "prolonged_high_vol": {
+      "name": "prolonged_high_vol",
+      "description": "Extended period of high volatility (3x normal) for 2 hours",
+      "num_candles": 45,
+      "regime_history": [
+        "NORMAL",
+        "NORMAL",
+        "NORMAL",
+        "NORMAL",
+        "NORMAL",
+        "NORMAL",
+        "NORMAL",
+        "NORMAL",
+        "NORMAL",
+        "NORMAL",
+        "NORMAL",
+        "NORMAL",
+        "NORMAL",
+        "NORMAL",
+        "NORMAL",
+        "NORMAL",
+        "NORMAL",
+        "NORMAL",
+        "NORMAL",
+        "NORMAL",
+        "NORMAL",
+        "NORMAL",
+        "NORMAL",
+        "NORMAL",
+        "NORMAL"
+      ],
+      "param_history": [
+        {
+          "averaging": -0.35,
+          "sd1": 0.85,
+          "sd2": 0.4,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.35,
+          "sd1": 0.85,
+          "sd2": 0.4,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.35,
+          "sd1": 0.85,
+          "sd2": 0.4,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.35,
+          "sd1": 0.85,
+          "sd2": 0.4,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.35,
+          "sd1": 0.85,
+          "sd2": 0.4,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.35,
+          "sd1": 0.85,
+          "sd2": 0.4,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.35,
+          "sd1": 0.85,
+          "sd2": 0.4,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.35,
+          "sd1": 0.85,
+          "sd2": 0.4,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.35,
+          "sd1": 0.85,
+          "sd2": 0.4,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.35,
+          "sd1": 0.85,
+          "sd2": 0.4,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.35,
+          "sd1": 0.85,
+          "sd2": 0.4,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.35,
+          "sd1": 0.85,
+          "sd2": 0.4,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.35,
+          "sd1": 0.85,
+          "sd2": 0.4,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.35,
+          "sd1": 0.85,
+          "sd2": 0.4,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.35,
+          "sd1": 0.85,
+          "sd2": 0.4,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.35,
+          "sd1": 0.85,
+          "sd2": 0.4,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.35,
+          "sd1": 0.85,
+          "sd2": 0.4,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.35,
+          "sd1": 0.85,
+          "sd2": 0.4,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.35,
+          "sd1": 0.85,
+          "sd2": 0.4,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.35,
+          "sd1": 0.85,
+          "sd2": 0.4,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.35,
+          "sd1": 0.85,
+          "sd2": 0.4,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.35,
+          "sd1": 0.85,
+          "sd2": 0.4,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.35,
+          "sd1": 0.85,
+          "sd2": 0.4,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.35,
+          "sd1": 0.85,
+          "sd2": 0.4,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.35,
+          "sd1": 0.85,
+          "sd2": 0.4,
+          "stop_loss": -0.9
+        }
+      ],
+      "bounds_violations": [],
+      "atr_ratios": [
+        1.0276633551821495,
+        1.0276633551821495,
+        1.0276633551821495,
+        1.0276633551821495,
+        1.0276633551821495,
+        1.0276633551821495,
+        1.0276633551821495,
+        1.0276633551821495,
+        1.0276633551821495,
+        1.0276633551821495,
+        1.0276633551821495,
+        1.0276633551821495,
+        1.0276633551821495,
+        1.0276633551821495,
+        1.0276633551821495,
+        1.0276633551821495,
+        1.0276633551821495,
+        1.0276633551821495,
+        1.0276633551821495,
+        1.0276633551821495,
+        1.0276633551821495,
+        1.0276633551821495,
+        1.0276633551821495,
+        1.0276633551821495,
+        1.0276633551821495
+      ],
+      "stability": {
+        "stable": "True",
+        "transitions": 0,
+        "avg_duration": 25.0,
+        "min_duration": 25,
+        "max_duration": 25
+      },
+      "summary": {
+        "unique_regimes": [
+          "NORMAL"
+        ],
+        "regime_counts": {
+          "NORMAL": 25
+        },
+        "avg_atr_ratio": 1.0276633551821495,
+        "max_atr_ratio": 1.0276633551821495,
+        "min_atr_ratio": 1.0276633551821495,
+        "bounds_violations_count": 0,
+        "regime_stable": "True",
+        "regime_transitions": 0
+      },
+      "passed": "True"
+    },
+    "rapid_transitions": {
+      "name": "rapid_transitions",
+      "description": "Quick switches between high and low volatility",
+      "num_candles": 50,
+      "regime_history": [
+        "TRENDING",
+        "TRENDING",
+        "TRENDING",
+        "TRENDING",
+        "TRENDING",
+        "TRENDING",
+        "TRENDING",
+        "TRENDING",
+        "TRENDING",
+        "TRENDING",
+        "TRENDING",
+        "TRENDING",
+        "TRENDING",
+        "TRENDING",
+        "TRENDING",
+        "TRENDING",
+        "TRENDING",
+        "TRENDING",
+        "TRENDING",
+        "TRENDING",
+        "TRENDING",
+        "TRENDING",
+        "TRENDING",
+        "TRENDING",
+        "TRENDING",
+        "TRENDING",
+        "TRENDING",
+        "TRENDING",
+        "TRENDING",
+        "TRENDING"
+      ],
+      "param_history": [
+        {
+          "averaging": -0.40249999999999997,
+          "sd1": 0.901,
+          "sd2": 0.5,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.40249999999999997,
+          "sd1": 0.901,
+          "sd2": 0.5,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.40249999999999997,
+          "sd1": 0.901,
+          "sd2": 0.5,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.40249999999999997,
+          "sd1": 0.901,
+          "sd2": 0.5,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.40249999999999997,
+          "sd1": 0.901,
+          "sd2": 0.5,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.40249999999999997,
+          "sd1": 0.901,
+          "sd2": 0.5,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.40249999999999997,
+          "sd1": 0.901,
+          "sd2": 0.5,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.40249999999999997,
+          "sd1": 0.901,
+          "sd2": 0.5,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.40249999999999997,
+          "sd1": 0.901,
+          "sd2": 0.5,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.40249999999999997,
+          "sd1": 0.901,
+          "sd2": 0.5,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.40249999999999997,
+          "sd1": 0.901,
+          "sd2": 0.5,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.40249999999999997,
+          "sd1": 0.901,
+          "sd2": 0.5,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.40249999999999997,
+          "sd1": 0.901,
+          "sd2": 0.5,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.40249999999999997,
+          "sd1": 0.901,
+          "sd2": 0.5,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.40249999999999997,
+          "sd1": 0.901,
+          "sd2": 0.5,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.40249999999999997,
+          "sd1": 0.901,
+          "sd2": 0.5,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.40249999999999997,
+          "sd1": 0.901,
+          "sd2": 0.5,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.40249999999999997,
+          "sd1": 0.901,
+          "sd2": 0.5,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.40249999999999997,
+          "sd1": 0.901,
+          "sd2": 0.5,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.40249999999999997,
+          "sd1": 0.901,
+          "sd2": 0.5,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.40249999999999997,
+          "sd1": 0.901,
+          "sd2": 0.5,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.40249999999999997,
+          "sd1": 0.901,
+          "sd2": 0.5,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.40249999999999997,
+          "sd1": 0.901,
+          "sd2": 0.5,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.40249999999999997,
+          "sd1": 0.901,
+          "sd2": 0.5,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.40249999999999997,
+          "sd1": 0.901,
+          "sd2": 0.5,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.40249999999999997,
+          "sd1": 0.901,
+          "sd2": 0.5,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.40249999999999997,
+          "sd1": 0.901,
+          "sd2": 0.5,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.40249999999999997,
+          "sd1": 0.901,
+          "sd2": 0.5,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.40249999999999997,
+          "sd1": 0.901,
+          "sd2": 0.5,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.40249999999999997,
+          "sd1": 0.901,
+          "sd2": 0.5,
+          "stop_loss": -0.9
+        }
+      ],
+      "bounds_violations": [],
+      "atr_ratios": [
+        1.5089884195303722,
+        1.5089884195303722,
+        1.5089884195303722,
+        1.5089884195303722,
+        1.5089884195303722,
+        1.5089884195303722,
+        1.5089884195303722,
+        1.5089884195303722,
+        1.5089884195303722,
+        1.5089884195303722,
+        1.5089884195303722,
+        1.5089884195303722,
+        1.5089884195303722,
+        1.5089884195303722,
+        1.5089884195303722,
+        1.5089884195303722,
+        1.5089884195303722,
+        1.5089884195303722,
+        1.5089884195303722,
+        1.5089884195303722,
+        1.5089884195303722,
+        1.5089884195303722,
+        1.5089884195303722,
+        1.5089884195303722,
+        1.5089884195303722,
+        1.5089884195303722,
+        1.5089884195303722,
+        1.5089884195303722,
+        1.5089884195303722,
+        1.5089884195303722
+      ],
+      "stability": {
+        "stable": "True",
+        "transitions": 0,
+        "avg_duration": 30.0,
+        "min_duration": 30,
+        "max_duration": 30
+      },
+      "summary": {
+        "unique_regimes": [
+          "TRENDING"
+        ],
+        "regime_counts": {
+          "TRENDING": 30
+        },
+        "avg_atr_ratio": 1.5089884195303729,
+        "max_atr_ratio": 1.5089884195303722,
+        "min_atr_ratio": 1.5089884195303722,
+        "bounds_violations_count": 0,
+        "regime_stable": "True",
+        "regime_transitions": 0
+      },
+      "passed": "True"
+    },
+    "black_swan": {
+      "name": "black_swan",
+      "description": "Extreme volatility event (20x normal) - tests bounds",
+      "num_candles": 40,
+      "regime_history": [
+        "TRENDING",
+        "TRENDING",
+        "TRENDING",
+        "TRENDING",
+        "TRENDING",
+        "TRENDING",
+        "TRENDING",
+        "TRENDING",
+        "TRENDING",
+        "TRENDING",
+        "TRENDING",
+        "TRENDING",
+        "TRENDING",
+        "TRENDING",
+        "TRENDING",
+        "TRENDING",
+        "TRENDING",
+        "TRENDING",
+        "TRENDING",
+        "TRENDING"
+      ],
+      "param_history": [
+        {
+          "averaging": -0.40249999999999997,
+          "sd1": 0.901,
+          "sd2": 0.5,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.40249999999999997,
+          "sd1": 0.901,
+          "sd2": 0.5,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.40249999999999997,
+          "sd1": 0.901,
+          "sd2": 0.5,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.40249999999999997,
+          "sd1": 0.901,
+          "sd2": 0.5,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.40249999999999997,
+          "sd1": 0.901,
+          "sd2": 0.5,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.40249999999999997,
+          "sd1": 0.901,
+          "sd2": 0.5,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.40249999999999997,
+          "sd1": 0.901,
+          "sd2": 0.5,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.40249999999999997,
+          "sd1": 0.901,
+          "sd2": 0.5,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.40249999999999997,
+          "sd1": 0.901,
+          "sd2": 0.5,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.40249999999999997,
+          "sd1": 0.901,
+          "sd2": 0.5,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.40249999999999997,
+          "sd1": 0.901,
+          "sd2": 0.5,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.40249999999999997,
+          "sd1": 0.901,
+          "sd2": 0.5,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.40249999999999997,
+          "sd1": 0.901,
+          "sd2": 0.5,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.40249999999999997,
+          "sd1": 0.901,
+          "sd2": 0.5,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.40249999999999997,
+          "sd1": 0.901,
+          "sd2": 0.5,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.40249999999999997,
+          "sd1": 0.901,
+          "sd2": 0.5,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.40249999999999997,
+          "sd1": 0.901,
+          "sd2": 0.5,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.40249999999999997,
+          "sd1": 0.901,
+          "sd2": 0.5,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.40249999999999997,
+          "sd1": 0.901,
+          "sd2": 0.5,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.40249999999999997,
+          "sd1": 0.901,
+          "sd2": 0.5,
+          "stop_loss": -0.9
+        }
+      ],
+      "bounds_violations": [],
+      "atr_ratios": [
+        1.424503999193572,
+        1.424503999193572,
+        1.424503999193572,
+        1.424503999193572,
+        1.424503999193572,
+        1.424503999193572,
+        1.424503999193572,
+        1.424503999193572,
+        1.424503999193572,
+        1.424503999193572,
+        1.424503999193572,
+        1.424503999193572,
+        1.424503999193572,
+        1.424503999193572,
+        1.424503999193572,
+        1.424503999193572,
+        1.424503999193572,
+        1.424503999193572,
+        1.424503999193572,
+        1.424503999193572
+      ],
+      "stability": {
+        "stable": "True",
+        "transitions": 0,
+        "avg_duration": 20.0,
+        "min_duration": 20,
+        "max_duration": 20
+      },
+      "summary": {
+        "unique_regimes": [
+          "TRENDING"
+        ],
+        "regime_counts": {
+          "TRENDING": 20
+        },
+        "avg_atr_ratio": 1.424503999193572,
+        "max_atr_ratio": 1.424503999193572,
+        "min_atr_ratio": 1.424503999193572,
+        "bounds_violations_count": 0,
+        "regime_stable": "True",
+        "regime_transitions": 0
+      },
+      "passed": "True"
+    },
+    "ranging_market": {
+      "name": "ranging_market",
+      "description": "Extended low volatility period - tests RANGING regime",
+      "num_candles": 45,
+      "regime_history": [
+        "NORMAL",
+        "NORMAL",
+        "NORMAL",
+        "NORMAL",
+        "NORMAL",
+        "NORMAL",
+        "NORMAL",
+        "NORMAL",
+        "NORMAL",
+        "NORMAL",
+        "NORMAL",
+        "NORMAL",
+        "NORMAL",
+        "NORMAL",
+        "NORMAL",
+        "NORMAL",
+        "NORMAL",
+        "NORMAL",
+        "NORMAL",
+        "NORMAL",
+        "NORMAL",
+        "NORMAL",
+        "NORMAL",
+        "NORMAL",
+        "NORMAL"
+      ],
+      "param_history": [
+        {
+          "averaging": -0.35,
+          "sd1": 0.85,
+          "sd2": 0.4,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.35,
+          "sd1": 0.85,
+          "sd2": 0.4,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.35,
+          "sd1": 0.85,
+          "sd2": 0.4,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.35,
+          "sd1": 0.85,
+          "sd2": 0.4,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.35,
+          "sd1": 0.85,
+          "sd2": 0.4,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.35,
+          "sd1": 0.85,
+          "sd2": 0.4,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.35,
+          "sd1": 0.85,
+          "sd2": 0.4,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.35,
+          "sd1": 0.85,
+          "sd2": 0.4,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.35,
+          "sd1": 0.85,
+          "sd2": 0.4,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.35,
+          "sd1": 0.85,
+          "sd2": 0.4,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.35,
+          "sd1": 0.85,
+          "sd2": 0.4,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.35,
+          "sd1": 0.85,
+          "sd2": 0.4,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.35,
+          "sd1": 0.85,
+          "sd2": 0.4,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.35,
+          "sd1": 0.85,
+          "sd2": 0.4,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.35,
+          "sd1": 0.85,
+          "sd2": 0.4,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.35,
+          "sd1": 0.85,
+          "sd2": 0.4,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.35,
+          "sd1": 0.85,
+          "sd2": 0.4,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.35,
+          "sd1": 0.85,
+          "sd2": 0.4,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.35,
+          "sd1": 0.85,
+          "sd2": 0.4,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.35,
+          "sd1": 0.85,
+          "sd2": 0.4,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.35,
+          "sd1": 0.85,
+          "sd2": 0.4,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.35,
+          "sd1": 0.85,
+          "sd2": 0.4,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.35,
+          "sd1": 0.85,
+          "sd2": 0.4,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.35,
+          "sd1": 0.85,
+          "sd2": 0.4,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.35,
+          "sd1": 0.85,
+          "sd2": 0.4,
+          "stop_loss": -0.9
+        }
+      ],
+      "bounds_violations": [],
+      "atr_ratios": [
+        1.0182608210125288,
+        1.0182608210125288,
+        1.0182608210125288,
+        1.0182608210125288,
+        1.0182608210125288,
+        1.0182608210125288,
+        1.0182608210125288,
+        1.0182608210125288,
+        1.0182608210125288,
+        1.0182608210125288,
+        1.0182608210125288,
+        1.0182608210125288,
+        1.0182608210125288,
+        1.0182608210125288,
+        1.0182608210125288,
+        1.0182608210125288,
+        1.0182608210125288,
+        1.0182608210125288,
+        1.0182608210125288,
+        1.0182608210125288,
+        1.0182608210125288,
+        1.0182608210125288,
+        1.0182608210125288,
+        1.0182608210125288,
+        1.0182608210125288
+      ],
+      "stability": {
+        "stable": "True",
+        "transitions": 0,
+        "avg_duration": 25.0,
+        "min_duration": 25,
+        "max_duration": 25
+      },
+      "summary": {
+        "unique_regimes": [
+          "NORMAL"
+        ],
+        "regime_counts": {
+          "NORMAL": 25
+        },
+        "avg_atr_ratio": 1.0182608210125288,
+        "max_atr_ratio": 1.0182608210125288,
+        "min_atr_ratio": 1.0182608210125288,
+        "bounds_violations_count": 0,
+        "regime_stable": "True",
+        "regime_transitions": 0
+      },
+      "passed": "True"
+    },
+    "trending_market": {
+      "name": "trending_market",
+      "description": "Sustained directional movement with moderate volatility",
+      "num_candles": 40,
+      "regime_history": [
+        "NORMAL",
+        "NORMAL",
+        "NORMAL",
+        "NORMAL",
+        "NORMAL",
+        "NORMAL",
+        "NORMAL",
+        "NORMAL",
+        "NORMAL",
+        "NORMAL",
+        "NORMAL",
+        "NORMAL",
+        "NORMAL",
+        "NORMAL",
+        "NORMAL",
+        "NORMAL",
+        "NORMAL",
+        "NORMAL",
+        "NORMAL",
+        "NORMAL"
+      ],
+      "param_history": [
+        {
+          "averaging": -0.35,
+          "sd1": 0.85,
+          "sd2": 0.4,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.35,
+          "sd1": 0.85,
+          "sd2": 0.4,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.35,
+          "sd1": 0.85,
+          "sd2": 0.4,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.35,
+          "sd1": 0.85,
+          "sd2": 0.4,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.35,
+          "sd1": 0.85,
+          "sd2": 0.4,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.35,
+          "sd1": 0.85,
+          "sd2": 0.4,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.35,
+          "sd1": 0.85,
+          "sd2": 0.4,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.35,
+          "sd1": 0.85,
+          "sd2": 0.4,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.35,
+          "sd1": 0.85,
+          "sd2": 0.4,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.35,
+          "sd1": 0.85,
+          "sd2": 0.4,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.35,
+          "sd1": 0.85,
+          "sd2": 0.4,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.35,
+          "sd1": 0.85,
+          "sd2": 0.4,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.35,
+          "sd1": 0.85,
+          "sd2": 0.4,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.35,
+          "sd1": 0.85,
+          "sd2": 0.4,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.35,
+          "sd1": 0.85,
+          "sd2": 0.4,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.35,
+          "sd1": 0.85,
+          "sd2": 0.4,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.35,
+          "sd1": 0.85,
+          "sd2": 0.4,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.35,
+          "sd1": 0.85,
+          "sd2": 0.4,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.35,
+          "sd1": 0.85,
+          "sd2": 0.4,
+          "stop_loss": -0.9
+        },
+        {
+          "averaging": -0.35,
+          "sd1": 0.85,
+          "sd2": 0.4,
+          "stop_loss": -0.9
+        }
+      ],
+      "bounds_violations": [],
+      "atr_ratios": [
+        1.0471565925355124,
+        1.0471565925355124,
+        1.0471565925355124,
+        1.0471565925355124,
+        1.0471565925355124,
+        1.0471565925355124,
+        1.0471565925355124,
+        1.0471565925355124,
+        1.0471565925355124,
+        1.0471565925355124,
+        1.0471565925355124,
+        1.0471565925355124,
+        1.0471565925355124,
+        1.0471565925355124,
+        1.0471565925355124,
+        1.0471565925355124,
+        1.0471565925355124,
+        1.0471565925355124,
+        1.0471565925355124,
+        1.0471565925355124
+      ],
+      "stability": {
+        "stable": "True",
+        "transitions": 0,
+        "avg_duration": 20.0,
+        "min_duration": 20,
+        "max_duration": 20
+      },
+      "summary": {
+        "unique_regimes": [
+          "NORMAL"
+        ],
+        "regime_counts": {
+          "NORMAL": 20
+        },
+        "avg_atr_ratio": 1.0471565925355122,
+        "max_atr_ratio": 1.0471565925355124,
+        "min_atr_ratio": 1.0471565925355124,
+        "bounds_violations_count": 0,
+        "regime_stable": "True",
+        "regime_transitions": 0
+      },
+      "passed": "True"
+    },
+    "data_gap": {
+      "name": "data_gap",
+      "description": "Missing or sparse data - tests fallback behavior",
+      "num_candles": 10,
+      "regime_history": [],
+      "param_history": [],
+      "bounds_violations": [],
+      "atr_ratios": [],
+      "stability": {
+        "stable": true,
+        "oscillations": 0,
+        "avg_duration": 0,
+        "transitions": 0,
+        "min_duration": 0,
+        "max_duration": 0
+      },
+      "summary": {
+        "unique_regimes": [],
+        "regime_counts": {},
+        "avg_atr_ratio": 0,
+        "max_atr_ratio": 0,
+        "min_atr_ratio": 0,
+        "bounds_violations_count": 0,
+        "regime_stable": true,
+        "regime_transitions": 0
+      },
+      "passed": true
+    },
+    "extreme_price_move": {
+      "name": "extreme_price_move",
+      "description": "50% price drop in 30 minutes - cascade liquidation scenario",
+      "num_candles": 20,
+      "regime_history": [],
+      "param_history": [],
+      "bounds_violations": [],
+      "atr_ratios": [],
+      "stability": {
+        "stable": true,
+        "oscillations": 0,
+        "avg_duration": 0,
+        "transitions": 0,
+        "min_duration": 0,
+        "max_duration": 0
+      },
+      "summary": {
+        "unique_regimes": [],
+        "regime_counts": {},
+        "avg_atr_ratio": 0,
+        "max_atr_ratio": 0,
+        "min_atr_ratio": 0,
+        "bounds_violations_count": 0,
+        "regime_stable": true,
+        "regime_transitions": 0
+      },
+      "passed": true
+    }
+  },
+  "summary": {
+    "total_scenarios": 8,
+    "passed": 8,
+    "failed": 0,
+    "pass_rate": 100.0,
+    "all_passed": true
+  },
+  "dampening_test": {
+    "scenario": "brief_spike_dampening",
+    "total_updates": 10,
+    "large_changes": 0,
+    "max_change": 0.0,
+    "recommendation": "Current dampening is adequate"
+  }
+}
