@@ -602,47 +602,63 @@ if TIERED_ALLOCATION_AVAILABLE:
 
 ---
 
-## 16. DYNAMIC AVERAGING THRESHOLD (V3.2.0)
+## 16. SYMBOL-SPECIFIC THRESHOLD CALIBRATION (V3.3.0)
 
-### 16.1 Regime-Based Thresholds
-**File**: `aixyz_continuous_profit_system.py` lines 3804-3826
+### 16.1 Overview
+**File**: `symbol_threshold_calibrator.py`
 
-The averaging P&L gate now adapts based on HMM volatility regime:
+The averaging P&L threshold is now calibrated per-symbol based on:
+1. **HMM Volatility Regime** - Base threshold from market conditions
+2. **Volatility Ratio vs BTC** - Higher vol coins get wider thresholds
+3. **BTC Correlation** - Uncorrelated coins get wider thresholds
+4. **CSSI Correction Probability** - Tighter if correction likely
+5. **Historical Max Drawdown** - Based on backtest data
 
-| HMM Regime | Averaging Threshold | Rationale |
-|------------|---------------------|-----------|
-| LOW_VOL | -25% | Aggressive - stable market, more opportunities |
+### 16.2 Base Thresholds (from HMM Regime)
+| HMM Regime | Base Threshold | Rationale |
+|------------|----------------|-----------|
+| LOW_VOL | -25% | Aggressive - stable market |
 | NORMAL_VOL | -30% | Balanced approach |
-| HIGH_VOL | -35% | Conservative - avoid false signals |
-| CRISIS | -45% | Very conservative - only extreme dips |
+| HIGH_VOL | -35% | Conservative |
+| CRISIS | -45% | Very conservative |
 
-### 16.2 Implementation
+### 16.3 Calibration Formula
 ```python
-# V3.2.0: Regime-Based Dynamic Averaging Threshold
-regime_thresholds = {
-    'low_vol': -25.0,
-    'normal_vol': -30.0,
-    'high_vol': -35.0,
-    'crisis': -45.0
-}
+def get_symbol_adjusted_threshold(symbol, hmm_regime, current_drawdown):
+    base_threshold = regime_thresholds[hmm_regime]  # e.g., -30%
 
-# Get current HMM regime
-current_regime = 'normal_vol'  # Default
-if hasattr(self, 'grok_v2') and self.grok_v2:
-    regime_state = self.grok_v2.volatility_hmm.get_regime()
-    current_regime = regime_state.regime.value
+    # Get symbol factors
+    vol_ratio = get_volatility_ratio(symbol)      # e.g., DOGE=2.5x BTC
+    btc_corr = get_btc_correlation(symbol)        # 0-1
+    correction_prob = get_correction_probability(symbol)
+    max_dd = get_historical_max_drawdown(symbol)
 
-averaging_pnl_threshold = regime_thresholds.get(current_regime, -30.0)
+    # Calculate adjustments
+    vol_adj = (vol_ratio - 1) * 0.5       # +50% for 2x volatility
+    corr_adj = (1 - btc_corr) * 0.2       # +20% for uncorrelated
+    cssi_adj = -correction_prob * 0.1     # -10% if correction likely
+    backtest_adj = max_dd / 200           # +25% for 50% historical DD
+
+    adjusted = base_threshold * (1 + vol_adj + corr_adj + cssi_adj + backtest_adj)
+    return max(-50.0, min(-20.0, adjusted))  # Clamp -20% to -50%
 ```
 
-### 16.3 Alignment with Tiered Capital Allocation
-This complements the tiered position limits:
+### 16.4 Example Calibrated Thresholds (NORMAL_VOL)
+| Symbol | Vol Ratio | BTC Corr | Calibrated Threshold |
+|--------|-----------|----------|---------------------|
+| BTC | 1.0x | 1.0 | -30.0% (base) |
+| ETH | 1.2x | 0.85 | -32.1% |
+| SOL | 1.5x | 0.75 | -35.3% |
+| POL | 1.8x | 0.65 | -40.2% |
+| DOGE | 2.5x | 0.60 | -46.5% |
+| PEPE | 3.5x | 0.45 | -50.0% (clamped) |
 
-| Regime | Position Limit | Averaging Threshold | Strategy |
-|--------|----------------|---------------------|----------|
-| LOW_VOL/NORMAL_VOL | 1/3 of max | -25%/-30% | Aggressive |
-| HIGH_VOL | 2/3 of max | -35% | Conservative |
-| CRISIS | 3/3 of max | -45% | Very Conservative |
+### 16.5 Alignment with Tiered Capital Allocation
+| Regime | Position Limit | Base Threshold | Per-Symbol Adjustment |
+|--------|----------------|----------------|----------------------|
+| LOW_VOL/NORMAL_VOL | 1/3 of max | -25%/-30% | ±10-20% based on factors |
+| HIGH_VOL | 2/3 of max | -35% | ±10-15% based on factors |
+| CRISIS | 3/3 of max | -45% | ±5-10% based on factors |
 
 ---
 
@@ -742,6 +758,6 @@ All discrepancies were resolved with code evidence. Key corrections:
 
 ---
 
-**Version**: 3.2.0 | **Last Updated**: January 16, 2026
+**Version**: 3.3.0 | **Last Updated**: January 16, 2026
 **Reviewed By**: Claude (Opus 4.5) & Grok (grok-2-latest)
 **Status**: Mutually Agreed

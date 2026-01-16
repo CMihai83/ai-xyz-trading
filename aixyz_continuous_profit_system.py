@@ -43,6 +43,15 @@ try:
 except ImportError as e:
     print(f"⚠️ TieredCapitalAllocation not available: {e}")
     TIERED_ALLOCATION_AVAILABLE = False
+
+# V3.3.0: Symbol-specific threshold calibration
+try:
+    from symbol_threshold_calibrator import get_symbol_adjusted_threshold, get_threshold_calibrator
+    SYMBOL_THRESHOLD_CALIBRATOR_AVAILABLE = True
+except ImportError as e:
+    print(f"⚠️ SymbolThresholdCalibrator not available: {e}")
+    SYMBOL_THRESHOLD_CALIBRATOR_AVAILABLE = False
+
 from enhanced_market_scanner import EnhancedMarketScanner
 from scanner_v4 import ScannerV4  # V4: All-market intelligent scanner
 from dynamic_fibonacci_delta import DynamicFibonacciDeltaService  # Dynamic delta based on volatility
@@ -3801,12 +3810,14 @@ class AIXYZContinuousProfit:
             # Get actual P&L percentage from direct API data
             current_pnl_pct = pnl_percentage  # This is already calculated above from direct API
 
-            # V3.2.0: Regime-Based Dynamic Averaging Threshold
-            # Adapts threshold based on HMM volatility regime for optimal risk/reward
-            # - LOW_VOL: -25% (aggressive - more averaging opportunities)
-            # - NORMAL_VOL: -30% (balanced)
-            # - HIGH_VOL: -35% (conservative - avoid false signals)
-            # - CRISIS: -45% (very conservative - only extreme dips)
+            # V3.3.0: Symbol-Specific Threshold Calibration
+            # Combines HMM regime with per-symbol factors:
+            # - Historical volatility ratio vs BTC
+            # - BTC correlation coefficient
+            # - CSSI correction probability
+            # - Backtest historical drawdown
+
+            # Base thresholds from HMM regime
             regime_thresholds = {
                 'low_vol': -25.0,
                 'normal_vol': -30.0,
@@ -3823,11 +3834,24 @@ class AIXYZContinuousProfit:
                 except Exception:
                     pass
 
-            averaging_pnl_threshold = regime_thresholds.get(current_regime, -30.0)
+            # V3.3.0: Get symbol-specific calibrated threshold
+            base_threshold = regime_thresholds.get(current_regime, -30.0)
+            if SYMBOL_THRESHOLD_CALIBRATOR_AVAILABLE:
+                try:
+                    averaging_pnl_threshold = get_symbol_adjusted_threshold(
+                        symbol=symbol,
+                        hmm_regime=current_regime,
+                        current_drawdown=current_pnl_pct,
+                        exchange=self.exchange
+                    )
+                except Exception as e:
+                    averaging_pnl_threshold = base_threshold
+            else:
+                averaging_pnl_threshold = base_threshold
 
             print(f"  🎯 Averaging Decision:")
             print(f"     Current P&L: {current_pnl_pct:.2f}%")
-            print(f"     Averaging threshold: {averaging_pnl_threshold}%")
+            print(f"     Averaging threshold: {averaging_pnl_threshold:.1f}% (base: {base_threshold}%, {current_regime.upper()})")
             print(f"     Step {step+1} of {max_steps}")
             # Check if we're through the -15% gate AND Fibonacci threshold is met
             gate_passed = current_pnl_pct <= averaging_pnl_threshold
@@ -3858,7 +3882,7 @@ class AIXYZContinuousProfit:
                 hedge_gate_passed = current_pnl_pct <= hedge_gate_threshold
                 should_average = should_average and hedge_gate_passed
 
-            print(f"     Gate ({averaging_pnl_threshold}% P&L, {current_regime.upper()}): {'✅ PASSED' if gate_passed else '❌ NOT PASSED'}")
+            print(f"     Gate ({averaging_pnl_threshold:.1f}% P&L, {current_regime.upper()}): {'✅ PASSED' if gate_passed else '❌ NOT PASSED'}")
             print(f"     Fibonacci trigger ({safe_threshold_pct*100:.1f}% UPNL): {'✅ MET' if fibonacci_triggered else '❌ NOT MET'}")
             if is_hedge_position:
                 print(f"     🛡️ HEDGE Position Gate (-70% P&L): {'✅ PASSED' if hedge_gate_passed else '❌ NOT PASSED (waiting for -70%)'}")
