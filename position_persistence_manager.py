@@ -57,7 +57,7 @@ class PositionPersistenceManager:
             base_path = '.'
         self.state_file = os.path.join(base_path, 'position_state.json')
     
-    def save_position_state(self, 
+    def save_position_state(self,
                            active_positions: Dict,
                            position_zones: Dict,
                            averaging_steps: Dict,
@@ -65,7 +65,8 @@ class PositionPersistenceManager:
                            surplus_dump_stage: Dict,
                            original_sizes: Dict = None,
                            peak_upnl_timestamps: Dict = None,
-                           position_multipliers: Dict = None) -> bool:
+                           position_multipliers: Dict = None,
+                           position_max_drawdown: Dict = None) -> bool:
         """
         Save current position state to persistent storage
         """
@@ -78,7 +79,8 @@ class PositionPersistenceManager:
             'peak_upnl_timestamps': peak_upnl_timestamps or {},
             'surplus_dump_stage': surplus_dump_stage,
             'original_sizes': original_sizes or {},
-            'position_multipliers': position_multipliers or {}
+            'position_multipliers': position_multipliers or {},
+            'position_max_drawdown': position_max_drawdown or {}  # V3.0.0: Adverse recovery tracking
         }
         
         try:
@@ -254,7 +256,8 @@ class PositionPersistenceManager:
             'peak_upnl_timestamps': {},
             'surplus_dump_stage': {},
             'original_sizes': {},
-            'position_multipliers': {}
+            'position_multipliers': {},
+            'position_max_drawdown': {}  # V3.0.0: Adverse recovery tracking
         }
     
     def initialize_from_exchange(self) -> Dict:

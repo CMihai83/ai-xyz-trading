@@ -34,6 +34,15 @@ import threading
 import asyncio
 from position_sizing_config import PositionSizingConfig
 from margin_aware_position_sizer import MarginAwarePositionSizer
+
+# V2.1.0: Tiered Capital Allocation (3-tier system: Regular/Adversity/BlackSwan)
+try:
+    from tiered_capital_allocation import TieredCapitalAllocation, MarketTier, get_tiered_allocation
+    from tiered_balance_sync_service import TieredBalanceSyncService, get_sync_service
+    TIERED_ALLOCATION_AVAILABLE = True
+except ImportError as e:
+    print(f"⚠️ TieredCapitalAllocation not available: {e}")
+    TIERED_ALLOCATION_AVAILABLE = False
 from enhanced_market_scanner import EnhancedMarketScanner
 from scanner_v4 import ScannerV4  # V4: All-market intelligent scanner
 from dynamic_fibonacci_delta import DynamicFibonacciDeltaService  # Dynamic delta based on volatility
@@ -98,6 +107,20 @@ except ImportError as e:
     print(f"⚠️ V3 AI components not available (TensorFlow missing): {e}")
     V3_AVAILABLE = False
 from trade_audit_logger import audit_logger
+
+# Market Shift Predictor - Grok AI designed (January 2026)
+try:
+    from market_shift_predictor import MarketShiftPredictor, ShiftDirection, VolatilityRegime
+    from market_shift_config import (
+        INTEGRATION_CONFIG, get_shift_action, POSITION_CONFIG,
+        AVOID_SYMBOLS, should_block_symbol, get_position_multiplier,
+        get_optimal_timeframe, get_symbol_confidence_tier, OPTIMAL_COMBOS,
+        HIGH_CONFIDENCE_SYMBOLS, PREFERRED_TIMEFRAME, SECONDARY_TIMEFRAME
+    )
+    MARKET_SHIFT_AVAILABLE = True
+except ImportError as e:
+    print(f"⚠️ Market Shift Predictor not available: {e}")
+    MARKET_SHIFT_AVAILABLE = False
 from averaging_engine import AveragingEngine
 from live_positions_registry import LivePositionsRegistry
 try:
@@ -277,6 +300,44 @@ class AIXYZContinuousProfit:
         print("   🎯 Entry/exit signal filtering")
         print("   📈 Scanner enhancement with prediction alignment")
 
+        # V2.1.0: Initialize Tiered Capital Allocation (3-tier system)
+        if TIERED_ALLOCATION_AVAILABLE:
+            # Get total capital and positions from env or use defaults
+            tiered_capital = float(os.getenv('TIERED_TOTAL_CAPITAL', 300.0))
+            tiered_positions = int(os.getenv('TIERED_MAX_POSITIONS', 30))
+            self.tiered_allocation = get_tiered_allocation(tiered_capital, tiered_positions)
+
+            # Initialize sync service to auto-update from exchange balance
+            sync_interval = int(os.getenv('TIERED_SYNC_INTERVAL', 300))  # 5 min default
+            self.tiered_sync_service = TieredBalanceSyncService(
+                exchange=self.exchange,
+                tiered_allocation=self.tiered_allocation,
+                sync_interval=sync_interval
+            )
+
+            # Sync with actual exchange balance on startup
+            print(f"\n📊 Tiered Capital Allocation enabled (V2.1.0)")
+            sync_result = self.tiered_sync_service.sync_now(force=True)
+            if sync_result.get('synced'):
+                actual_capital = sync_result['balance']['new']
+                actual_positions = sync_result['max_positions']['new']
+                print(f"   💰 Total Capital: ${actual_capital:.2f} (synced from exchange)")
+                print(f"   📈 Max Positions: {actual_positions} ({actual_positions//3} per tier)")
+                print(f"   🟢 Tier 1 - Regular Business: ${actual_capital/3:.2f} / {actual_positions//3} positions")
+                print(f"   🟡 Tier 2 - Market Adversity: ${actual_capital/3:.2f} / {actual_positions//3} positions")
+                print(f"   🔴 Tier 3 - Black Swan: ${actual_capital/3:.2f} / {actual_positions//3} positions")
+            else:
+                print(f"   💰 Total Capital: ${tiered_capital:.2f} (from env)")
+                print(f"   📈 Max Positions: {tiered_positions} ({tiered_positions//3} per tier)")
+
+            # Start background sync (updates every 5 minutes)
+            self.tiered_sync_service.start_background_sync()
+            print(f"   🔄 Auto-sync enabled (every {sync_interval}s)")
+        else:
+            self.tiered_allocation = None
+            self.tiered_sync_service = None
+            print("⚠️ Tiered Capital Allocation not available")
+
         # V1.3.1: Initialize Advanced Unused Modules (Category 1 - High Priority)
         print("\n🚀 Initializing Category 1 Advanced Modules...")
 
@@ -295,6 +356,19 @@ class AIXYZContinuousProfit:
         # 4. Opportunity Cost Predictor - ML-based capital rotation
         self.opportunity_cost_predictor = OpportunityCostPredictor()
         print("⚡ Opportunity Cost Predictor enabled (+20% faster capital rotation)")
+
+        # 5. Market Shift Predictor - Grok AI designed regime detection
+        if MARKET_SHIFT_AVAILABLE:
+            self.market_shift_predictor = MarketShiftPredictor()
+            self.current_market_shift = None  # Will hold latest prediction
+            self.shift_check_interval = 300  # Check every 5 minutes
+            self.last_shift_check = 0
+            print("🔮 Market Shift Predictor enabled (regime detection + position filtering)")
+            print("   Thresholds: Bullish/Bearish ±0.5 | Timeframe: 4h preferred")
+        else:
+            self.market_shift_predictor = None
+            self.current_market_shift = None
+
         print("✅ All Category 1 Advanced Modules initialized!\n")
         
         # Initialize portfolio balancer if available
@@ -341,6 +415,11 @@ class AIXYZContinuousProfit:
 
             # Load position multipliers or initialize
             self.position_multipliers = reconciled.get('position_multipliers', {})
+
+            # V3.0.0: Load position max drawdown for adverse recovery detection
+            self.position_max_drawdown = reconciled.get('position_max_drawdown', {})
+            if self.position_max_drawdown:
+                print(f"  📉 Loaded max drawdown data for {len(self.position_max_drawdown)} positions")
 
             # CRITICAL: Initialize pyramid_count for all loaded positions
             for symbol in self.active_positions:
@@ -707,6 +786,16 @@ class AIXYZContinuousProfit:
         # Surplus dump configuration - Single stage at 70%
         self.surplus_dump_threshold = 0.85  # 85% of peak - Stage 1 dump (50% of surplus)
         self.surplus_dump_threshold_stage2 = 0.40  # 40% of peak - Stage 2 dump (remaining 50%) - optimized from 30%
+
+        # Adverse Recovery Thresholds - for positions that survived deep drawdown and recovered
+        # Based on AXS backtest: 50/20 captured 857% more profit than 85/30 in adverse recovery scenarios
+        self.adverse_recovery_threshold_stage1 = 0.50  # 50% of peak (hold longer)
+        self.adverse_recovery_threshold_stage2 = 0.20  # 20% of peak (hold longer)
+        self.adverse_recovery_min_drawdown = -0.25  # Position must have hit -25% to qualify
+        self.adverse_recovery_min_steps = 3  # Minimum averaging steps to qualify
+
+        # Track max drawdown per position for adverse recovery detection
+        self.position_max_drawdown: Dict[str, float] = {}  # symbol -> min P&L % seen
         
         # System state
         self.running = False
@@ -1192,11 +1281,108 @@ class AIXYZContinuousProfit:
         except Exception as e:
             print(f"  Error checking extreme deviations: {e}")
             return []
-    
+
+    def _update_market_shift(self):
+        """
+        V2.3.0: Update market shift prediction using Grok AI designed predictor.
+        Uses optimal timeframes from extended backtest (Jan 15, 2026):
+        - Primary: 2h (50.1% accuracy, 92.1% zone WR)
+        - Secondary: 4h (1.32 PF, best shift predictor)
+        - XRP 6h: 80% accuracy (highest)
+        """
+        if not self.market_shift_predictor:
+            return
+
+        current_time = time.time()
+        if current_time - self.last_shift_check < self.shift_check_interval:
+            return  # Not time to check yet
+
+        try:
+            # V2.3.0: Use optimal timeframes from backtest for each symbol
+            ohlcv_dict = {}
+
+            # Core assets with their optimal timeframes
+            core_assets = [
+                ('BTC/USDT:USDT', SECONDARY_TIMEFRAME),  # 4h - 68% accuracy
+                ('ETH/USDT:USDT', PREFERRED_TIMEFRAME),   # 2h - 53% accuracy
+                ('SOL/USDT:USDT', PREFERRED_TIMEFRAME),   # 2h - 42% accuracy
+                ('XRP/USDT:USDT', '6h'),                  # 6h - 80% accuracy (highest!)
+                ('SEI/USDT:USDT', PREFERRED_TIMEFRAME),   # 2h - 63% accuracy
+            ]
+
+            for symbol, timeframe in core_assets:
+                try:
+                    ohlcv_raw = self.exchange.fetch_ohlcv(symbol, timeframe, limit=100)
+                    ohlcv_dict[symbol] = pd.DataFrame(ohlcv_raw, columns=['timestamp', 'open', 'high', 'low', 'close', 'volume'])
+                except Exception:
+                    pass  # Skip if fetch fails
+
+            # Fetch OHLCV for active positions using their optimal timeframes
+            active_positions = []
+            try:
+                positions = self.exchange.fetch_positions()
+                active_positions = [p for p in positions if abs(float(p.get('contracts', 0) or 0)) > 0]
+
+                # Fetch OHLCV for top 5 positions by margin, using optimal timeframe
+                sorted_positions = sorted(active_positions, key=lambda x: float(x.get('initialMargin', 0) or 0), reverse=True)[:5]
+                for pos in sorted_positions:
+                    symbol = pos.get('symbol', '')
+                    if symbol and symbol not in ohlcv_dict:
+                        # Use optimal timeframe for symbol, default to 2h
+                        optimal_tf = get_optimal_timeframe(symbol) if MARKET_SHIFT_AVAILABLE else PREFERRED_TIMEFRAME
+                        try:
+                            ohlcv_raw = self.exchange.fetch_ohlcv(symbol, optimal_tf, limit=100)
+                            ohlcv_dict[symbol] = pd.DataFrame(ohlcv_raw, columns=['timestamp', 'open', 'high', 'low', 'close', 'volume'])
+                        except Exception:
+                            pass
+            except Exception:
+                pass
+
+            # Get COMBINED prediction (multi-asset + weighted + portfolio)
+            prediction = self.market_shift_predictor.predict_combined(ohlcv_dict, active_positions)
+            self.current_market_shift = prediction
+            self.last_shift_check = current_time
+
+            # Log shift detection
+            shift_emoji = {
+                'bullish': '🟢',
+                'bearish': '🔴',
+                'neutral': '⚪'
+            }.get(prediction.direction.value, '⚪')
+
+            active_signals = [k for k, v in prediction.signals.items() if v]
+            assets_analyzed = len(ohlcv_dict)
+
+            if prediction.direction.value != 'neutral':
+                print(f"\n{shift_emoji} MARKET SHIFT DETECTED: {prediction.direction.value.upper()}")
+                print(f"   Probability: {prediction.probability:+.2f} | Confidence: {prediction.confidence:.1%}")
+                print(f"   Assets analyzed: {assets_analyzed} | Signals: {active_signals}")
+                print(f"   Volatility: {prediction.volatility_regime.value}")
+                print(f"   Action: Size {prediction.recommended_size_mult:.1f}x | Stop {prediction.recommended_stop_atr:.1f}x ATR")
+
+                # Apply shift-based actions
+                if prediction.direction == ShiftDirection.BEARISH:
+                    print("   📉 Bearish shift: Accelerating profit-taking, blocking new longs")
+                elif prediction.direction == ShiftDirection.BULLISH:
+                    print("   📈 Bullish shift: Allowing aggressive longs, delaying profit-taking")
+            else:
+                # Only print occasionally for neutral
+                if hasattr(self, '_last_neutral_log') and current_time - self._last_neutral_log < 1800:
+                    pass  # Don't spam neutral logs
+                else:
+                    print(f"   {shift_emoji} Market shift: NEUTRAL ({prediction.probability:+.2f}) | {assets_analyzed} assets | {active_signals}")
+                    self._last_neutral_log = current_time
+
+        except Exception as e:
+            print(f"   ⚠️ Market shift check failed: {e}")
+
     def scan_for_opportunities(self) -> List[Dict]:
         """Scan market for high-probability opportunities"""
         print(f"\n🔍 Scanning market at {datetime.now().strftime('%H:%M:%S')}...")
-        
+
+        # V2.2.0: Market Shift Detection (Grok AI designed)
+        self._update_market_shift()
+
         # Update dynamic position limit based on available capital
         self.calculate_dynamic_position_limit()
         
@@ -1870,21 +2056,111 @@ class AIXYZContinuousProfit:
         """Open a new position based on opportunity"""
         # Initialize variables that might be used in exception handler
         available_margin = 0
-        
+
         try:
             symbol = opportunity['symbol']
             direction = opportunity['direction']
-            confidence = opportunity.get('confidence', opportunity.get('4h_strength', opportunity['score']))
+            raw_confidence = opportunity.get('confidence', opportunity.get('4h_strength', opportunity['score']))
 
-            # V1.1.0: Check Confidence Tier - reject weak signals
+            # V2.3.0: Factor in backtest results (Extended Backtest Jan 15, 2026)
+            # Adjust confidence based on symbol performance from 162-test backtest
+            confidence = raw_confidence
+            confidence_adjustment = 0
+            adjustment_reason = ""
+
+            if MARKET_SHIFT_AVAILABLE:
+                # Check if symbol is in avoid list (FLOKI, GALA, INJ, FET, WIF, DOT, IMX)
+                if should_block_symbol(symbol):
+                    # Severely penalize avoid-list symbols (-30% confidence)
+                    confidence_adjustment = -0.30
+                    adjustment_reason = f"AVOID_LIST (-30%)"
+                    print(f"  ⚠️ {symbol.split('/')[0]} is on AVOID list (backtest: consistent losses)")
+
+                # Boost high confidence symbols (SEI, ARB, XRP, AVAX, LINK, APT)
+                elif symbol in HIGH_CONFIDENCE_SYMBOLS:
+                    # Boost high performers (+15% confidence)
+                    confidence_adjustment = +0.15
+                    adjustment_reason = f"HIGH_CONFIDENCE (+15%)"
+
+                # Check optimal combo performance
+                elif symbol in OPTIMAL_COMBOS:
+                    combo = OPTIMAL_COMBOS[symbol]
+                    zone_wr = combo.get('zone_wr', 0)
+                    if zone_wr >= 0.95:
+                        confidence_adjustment = +0.10
+                        adjustment_reason = f"HIGH_ZONE_WR (+10%)"
+                    elif zone_wr >= 0.85:
+                        confidence_adjustment = +0.05
+                        adjustment_reason = f"GOOD_ZONE_WR (+5%)"
+
+                # Apply adjustment
+                if confidence_adjustment != 0:
+                    confidence = raw_confidence + confidence_adjustment
+                    confidence = max(0.0, min(1.0, confidence))  # Clamp to [0, 1]
+                    print(f"  📊 Confidence: {raw_confidence:.3f} → {confidence:.3f} ({adjustment_reason})")
+
+                    # If adjusted confidence drops below minimum, reject
+                    if confidence < 0.50 and confidence_adjustment < 0:
+                        print(f"  ❌ Rejected {symbol.split('/')[0]}: adjusted confidence {confidence:.3f} too low")
+                        return False
+
+            # V2.1.0: Detect market tier FIRST based on portfolio drawdown
+            # This determines entry threshold BEFORE confidence check
+            detected_market_tier = MarketTier.REGULAR_BUSINESS
+            portfolio_drawdown_pct = 0
+
+            if hasattr(self, 'tiered_allocation') and self.tiered_allocation:
+                try:
+                    # Quick portfolio check for tier detection
+                    exchange_positions = self.exchange.fetch_positions()
+                    active_positions = [p for p in exchange_positions if abs(p.get('contracts', 0)) > 0]
+
+                    if active_positions:
+                        total_upnl = sum(float(p.get('unrealizedPnl', 0) or 0) for p in active_positions)
+                        total_margin = sum(float(p.get('initialMargin', 0) or p.get('collateral', 0) or 0) for p in active_positions)
+                        portfolio_drawdown_pct = (total_upnl / total_margin * 100) if total_margin > 0 else 0
+
+                        positions_in_loss = sum(1 for p in active_positions if float(p.get('unrealizedPnl', 0) or 0) < 0)
+                        positions_in_loss_pct = (positions_in_loss / len(active_positions) * 100) if active_positions else 0
+
+                        # Detect tier based on portfolio state
+                        if portfolio_drawdown_pct <= -50 or positions_in_loss_pct >= 90:
+                            detected_market_tier = MarketTier.BLACK_SWAN
+                        elif portfolio_drawdown_pct <= -15 or positions_in_loss_pct >= 70:
+                            detected_market_tier = MarketTier.MARKET_ADVERSITY
+
+                    # Update the tiered allocation's current tier
+                    self.tiered_allocation.current_tier = detected_market_tier
+                except Exception as e:
+                    pass  # Keep default tier on error
+
+            # Get tier-specific entry threshold
+            min_entry_threshold = 0.70  # Default for REGULAR_BUSINESS
+            if hasattr(self, 'tiered_allocation') and self.tiered_allocation:
+                tier_config = self.tiered_allocation.tier_configs.get(detected_market_tier)
+                if tier_config:
+                    min_entry_threshold = tier_config.entry_score_threshold
+
+            # V1.1.0: Check Confidence Tier - reject weak signals (using tier-specific threshold)
             tier, should_trade = ConfidenceTierSystem.get_tier(confidence)
-            if not should_trade:
-                print(f"  ❌ Rejected {symbol}: score {confidence:.3f} below minimum {ConfidenceTierSystem.MIN_SCORE_THRESHOLD}")
+
+            # Override should_trade based on tier-specific threshold
+            if confidence >= min_entry_threshold:
+                should_trade = True  # Allow entry if meets tier threshold
+
+            if not should_trade and confidence < min_entry_threshold:
+                print(f"  ❌ Rejected {symbol}: score {confidence:.3f} below tier threshold {min_entry_threshold} ({detected_market_tier.name})")
                 return False
 
             tier_name = tier.name if tier else 'UNKNOWN'
+            # Handle case when tier is None (score below ConfidenceTierSystem threshold but above tiered_allocation threshold)
+            tier_position_size = tier.position_size if tier else 0.5  # Conservative 0.5x for low confidence
+            tier_leverage = tier.leverage if tier else 5  # Conservative 5x leverage
             print(f"  🎯 Confidence Tier: {tier_name} (score: {confidence:.3f})")
-            print(f"     Tier sizing: {tier.position_size}x | Leverage: {tier.leverage}x")
+            print(f"     Market Tier: {detected_market_tier.name} | Entry threshold: {min_entry_threshold}")
+            if detected_market_tier != MarketTier.REGULAR_BUSINESS:
+                print(f"     ⚡ Portfolio: {portfolio_drawdown_pct:+.1f}% - {detected_market_tier.name} opportunity!")
+            print(f"     Tier sizing: {tier_position_size}x | Leverage: {tier_leverage}x")
 
             # Grok Entry Filters: SMA, RSI, ATR (improve averaging success probability)
             filter_passed, filter_reason = self.check_entry_filters(symbol, direction)
@@ -1894,9 +2170,45 @@ class AIXYZContinuousProfit:
             else:
                 print(f"  ✅ {filter_reason}")
 
+            # V2.2.0: Market Shift Filter (Grok AI designed)
+            if self.current_market_shift and MARKET_SHIFT_AVAILABLE:
+                shift = self.current_market_shift
+                is_long = direction.lower() in ['buy', 'long', 'bullish']
+                is_short = direction.lower() in ['sell', 'short', 'bearish']
+
+                # Block longs on strong bearish shift
+                if shift.direction == ShiftDirection.BEARISH and shift.confidence > 0.5:
+                    if is_long:
+                        print(f"  ⛔ Entry BLOCKED by Market Shift: BEARISH ({shift.probability:+.2f})")
+                        print(f"     Blocking long entries during bearish regime")
+                        return False
+                    elif is_short:
+                        print(f"  ✅ Market Shift: BEARISH - short entry aligned with regime")
+
+                # Block shorts on strong bullish shift
+                elif shift.direction == ShiftDirection.BULLISH and shift.confidence > 0.5:
+                    if is_short:
+                        print(f"  ⛔ Entry BLOCKED by Market Shift: BULLISH ({shift.probability:+.2f})")
+                        print(f"     Blocking short entries during bullish regime")
+                        return False
+                    elif is_long:
+                        print(f"  ✅ Market Shift: BULLISH - long entry aligned with regime")
+
+                # Neutral - allow all
+                else:
+                    print(f"  ℹ️ Market Shift: {shift.direction.value} ({shift.probability:+.2f}) - entry allowed")
+
             # Sprint 14: Pre-Trade Backtest Validation (Grok recommendation)
             # Run 30-day backtest before opening to validate trade viability
-            if self.pre_trade_backtester:
+            # V2.1.0: Skip backtest for Adversity/BlackSwan tiers - capitalize on corrections!
+            skip_backtest = False
+            if hasattr(self, 'tiered_allocation') and self.tiered_allocation:
+                current_tier = getattr(self.tiered_allocation, 'current_tier', MarketTier.REGULAR_BUSINESS)
+                if current_tier in [MarketTier.MARKET_ADVERSITY, MarketTier.BLACK_SWAN]:
+                    skip_backtest = True
+                    print(f"  ⚡ Skipping backtest validation - {current_tier.name} tier (buy the dip!)")
+
+            if self.pre_trade_backtester and not skip_backtest:
                 try:
                     backtest_direction = 'long' if direction.lower() in ['buy', 'long', 'bullish'] else 'short'
                     backtest_result = self.pre_trade_backtester.validate_trade(
@@ -2074,7 +2386,92 @@ class AIXYZContinuousProfit:
                     print(f"  ⚠️ VaR check failed (proceeding anyway): {var_err}")
 
             print(f"\n🎯 Opening position: {symbol}")
-            
+
+            # V2.1.0: Check tiered capital allocation
+            current_market_tier = MarketTier.REGULAR_BUSINESS  # Default
+            if hasattr(self, 'tiered_allocation') and self.tiered_allocation:
+                try:
+                    # Get BTC conditions
+                    btc_ticker = self.exchange.fetch_ticker('BTC/USDT:USDT')
+                    btc_24h_change = btc_ticker.get('percentage', 0) or 0
+
+                    # Get 7d change from OHLCV if available
+                    try:
+                        btc_ohlcv = self.exchange.fetch_ohlcv('BTC/USDT:USDT', '1d', limit=7)
+                        if len(btc_ohlcv) >= 7:
+                            btc_7d_change = ((btc_ohlcv[-1][4] - btc_ohlcv[0][1]) / btc_ohlcv[0][1]) * 100
+                        else:
+                            btc_7d_change = btc_24h_change * 3  # Estimate
+                    except:
+                        btc_7d_change = btc_24h_change * 3
+
+                    # Calculate PORTFOLIO metrics for tier detection
+                    # When portfolio is in drawdown = OPPORTUNITY to deploy reserved capital!
+                    portfolio_drawdown_pct = 0
+                    positions_in_loss_pct = 0
+                    avg_position_pnl_pct = 0
+
+                    try:
+                        exchange_positions = self.exchange.fetch_positions()
+                        active_positions = [p for p in exchange_positions if abs(p.get('contracts', 0)) > 0]
+
+                        if active_positions:
+                            total_upnl = sum(float(p.get('unrealizedPnl', 0) or 0) for p in active_positions)
+                            total_margin = sum(float(p.get('initialMargin', 0) or p.get('collateral', 0) or 0) for p in active_positions)
+
+                            # Portfolio drawdown as % of margin
+                            if total_margin > 0:
+                                portfolio_drawdown_pct = (total_upnl / total_margin) * 100
+
+                            # % of positions in loss
+                            positions_in_loss = sum(1 for p in active_positions if float(p.get('unrealizedPnl', 0) or 0) < 0)
+                            positions_in_loss_pct = (positions_in_loss / len(active_positions)) * 100
+
+                            # Average P&L% across positions
+                            pnl_pcts = []
+                            for p in active_positions:
+                                upnl = float(p.get('unrealizedPnl', 0) or 0)
+                                margin = float(p.get('initialMargin', 0) or p.get('collateral', 0) or 1)
+                                pnl_pcts.append((upnl / margin) * 100 if margin > 0 else 0)
+                            avg_position_pnl_pct = sum(pnl_pcts) / len(pnl_pcts) if pnl_pcts else 0
+                    except Exception as port_err:
+                        print(f"  ⚠️ Portfolio metrics error: {port_err}")
+
+                    # Detect market tier based on BOTH market AND portfolio conditions
+                    current_market_tier = self.tiered_allocation.detect_market_tier(
+                        btc_24h_change=btc_24h_change,
+                        btc_7d_change=btc_7d_change,
+                        avg_volatility=volatility * 20 if volatility else 1.0,
+                        portfolio_drawdown_pct=portfolio_drawdown_pct,
+                        positions_in_loss_pct=positions_in_loss_pct,
+                        avg_position_pnl_pct=avg_position_pnl_pct
+                    )
+                    self.tiered_allocation.current_tier = current_market_tier
+
+                    # Check if we can open in this tier
+                    tier_config = self.tiered_allocation.tier_configs[current_market_tier]
+                    if not self.tiered_allocation.can_open_position(current_market_tier, margin_required=10.0):
+                        avail_cap, avail_pos = self.tiered_allocation.get_available_capital(current_market_tier)
+                        print(f"  ⛔ Tier {current_market_tier.name} full: {avail_pos} positions, ${avail_cap:.2f} available")
+                        return False
+
+                    # Show tier info with portfolio context
+                    tier_reason = self.tiered_allocation.market_metrics.get('tier_reason', '')
+                    if current_market_tier == MarketTier.BLACK_SWAN:
+                        print(f"  🔴 BLACK SWAN OPPORTUNITY DETECTED!")
+                        print(f"     Portfolio: {portfolio_drawdown_pct:+.1f}% | {positions_in_loss_pct:.0f}% in loss")
+                        print(f"     Deploying Tier 3 capital: Entry threshold {tier_config.entry_score_threshold}")
+                    elif current_market_tier == MarketTier.MARKET_ADVERSITY:
+                        print(f"  🟡 MARKET ADVERSITY - Correction Opportunity!")
+                        print(f"     Portfolio: {portfolio_drawdown_pct:+.1f}% | {positions_in_loss_pct:.0f}% in loss")
+                        print(f"     Deploying Tier 2 capital: Entry threshold {tier_config.entry_score_threshold}")
+                    else:
+                        print(f"  🟢 Market Tier: REGULAR (BTC 24h: {btc_24h_change:+.1f}%)")
+                        print(f"     Tier settings: Lev {tier_config.leverage_max}x | Entry {tier_config.entry_score_threshold}")
+                except Exception as tier_err:
+                    print(f"  ⚠️ Tier detection failed (using Regular): {tier_err}")
+                    current_market_tier = MarketTier.REGULAR_BUSINESS
+
             # Start position opening audit
             audit_logger.start_trade_audit(symbol, "open_position")
             audit_logger.log_step("POSITION_OPENING_START", {
@@ -2337,6 +2734,24 @@ class AIXYZContinuousProfit:
 
             # Store position info with hedge mode key (symbol:long or symbol:short)
             position_key = self.get_position_key(symbol, side)
+
+            # V2.1.0: Allocate capital in tiered system
+            position_tier = MarketTier.REGULAR_BUSINESS  # Default
+            if hasattr(self, 'tiered_allocation') and self.tiered_allocation:
+                try:
+                    allocation_result = self.tiered_allocation.allocate_position(
+                        symbol=symbol,
+                        margin=sizing['total_initial_margin'],
+                        tier=current_market_tier
+                    )
+                    if allocation_result['success']:
+                        position_tier = current_market_tier
+                        print(f"  📊 Allocated to {position_tier.name}: {allocation_result['positions_used']}/{allocation_result['positions_max']} positions")
+                    else:
+                        print(f"  ⚠️ Tier allocation failed: {allocation_result['reason']}")
+                except Exception as alloc_err:
+                    print(f"  ⚠️ Tier allocation error: {alloc_err}")
+
             self.active_positions[position_key] = {
                 'symbol': symbol,  # Store original symbol for API calls
                 'entry_price': price,
@@ -2350,7 +2765,8 @@ class AIXYZContinuousProfit:
                 'order_id': order['id'],
                 'initial_margin': sizing['total_initial_margin'],
                 'safety_margin': sizing['safety_margin'],
-                'pyramid_count': 0  # Track pyramid count from start (max 2)
+                'pyramid_count': 0,  # Track pyramid count from start (max 2)
+                'tier': position_tier.value if hasattr(position_tier, 'value') else 1  # V2.1.0: Track which tier
             }
 
             # Initialize tracking with FRESH values for new position (using position_key)
@@ -3363,8 +3779,39 @@ class AIXYZContinuousProfit:
             print(f"     Fibonacci trigger ({safe_threshold_pct*100:.1f}% UPNL): {'✅ MET' if fibonacci_triggered else '❌ NOT MET'}")
             if is_hedge_position:
                 print(f"     🛡️ HEDGE Position Gate (-70% P&L): {'✅ PASSED' if hedge_gate_passed else '❌ NOT PASSED (waiting for -70%)'}")
+
+            # V2.2.0: Market Shift averaging adjustment
+            shift_averaging_mode = 'normal'
+            if self.current_market_shift and MARKET_SHIFT_AVAILABLE:
+                shift = self.current_market_shift
+                position_side = position.get('side', 'long').lower()
+                is_long = position_side in ['buy', 'long']
+
+                # Conservative averaging on shift against position
+                if shift.direction == ShiftDirection.BEARISH and is_long and shift.confidence > 0.4:
+                    shift_averaging_mode = 'conservative'
+                    print(f"     ⚠️ Market Shift BEARISH: Conservative averaging for long position")
+                elif shift.direction == ShiftDirection.BULLISH and not is_long and shift.confidence > 0.4:
+                    shift_averaging_mode = 'conservative'
+                    print(f"     ⚠️ Market Shift BULLISH: Conservative averaging for short position")
+                # Aggressive averaging when shift aligns
+                elif shift.direction == ShiftDirection.BULLISH and is_long and shift.confidence > 0.5:
+                    shift_averaging_mode = 'aggressive'
+                    print(f"     🚀 Market Shift BULLISH: Aggressive averaging for aligned long position")
+                elif shift.direction == ShiftDirection.BEARISH and not is_long and shift.confidence > 0.5:
+                    shift_averaging_mode = 'aggressive'
+                    print(f"     🚀 Market Shift BEARISH: Aggressive averaging for aligned short position")
+
+            # Apply shift mode to averaging decision
+            if shift_averaging_mode == 'conservative' and should_average:
+                # Require more drawdown before averaging against the trend
+                conservative_threshold = averaging_pnl_threshold * 1.5  # -52.5% instead of -35%
+                if current_pnl_pct > conservative_threshold:
+                    should_average = False
+                    print(f"     ⛔ Conservative mode: Waiting for {conservative_threshold:.1f}% (current: {current_pnl_pct:.1f}%)")
+
             print(f"     Should average: {should_average}")
-            
+
             # Check if BOTH conditions are met: gate passed AND Fibonacci threshold reached
             if should_average:
                 try:
@@ -4005,15 +4452,49 @@ class AIXYZContinuousProfit:
             except Exception as e:
                 print(f"  ⚠️ Prediction exit check failed: {e}")
 
+        # V2.2.0: Market Shift acceleration for profit-taking
+        shift_acceleration = 1.0  # Default - no acceleration
+        if self.current_market_shift and MARKET_SHIFT_AVAILABLE:
+            shift = self.current_market_shift
+            position_side = position.get('side', 'long').lower()
+            is_long = position_side in ['buy', 'long']
+
+            # Accelerate profit-taking if shift is against position
+            if shift.direction == ShiftDirection.BEARISH and is_long and shift.confidence > 0.4:
+                shift_acceleration = 0.7  # Lower threshold = faster profit taking
+                print(f"  ⚡ Market Shift: BEARISH - accelerating long profit-taking (70% threshold)")
+            elif shift.direction == ShiftDirection.BULLISH and not is_long and shift.confidence > 0.4:
+                shift_acceleration = 0.7  # Lower threshold = faster profit taking
+                print(f"  ⚡ Market Shift: BULLISH - accelerating short profit-taking (70% threshold)")
+
+        # ADVERSE RECOVERY DETECTION (V3.0.0)
+        # Check if position qualifies for more lenient thresholds (survived deep drawdown)
+        is_adverse, max_drawdown, adv_steps = self.is_adverse_recovery(symbol)
+
+        # Determine which thresholds to use
+        if is_adverse:
+            stage1_threshold = self.adverse_recovery_threshold_stage1  # 50%
+            stage2_threshold = self.adverse_recovery_threshold_stage2  # 20%
+            threshold_mode = "ADVERSE RECOVERY"
+        else:
+            stage1_threshold = self.surplus_dump_threshold  # 85%
+            stage2_threshold = self.surplus_dump_threshold_stage2  # 40%
+            threshold_mode = "STANDARD"
+
         # Debug output for surplus dump monitoring
         original_size = self.original_sizes.get(symbol, 0)
         current_size = position['amount']
         surplus = current_size - original_size
-        
+
         print(f"  🔍 Surplus dump check for {symbol}:")
         print(f"     Peak UPNL: ${peak:.4f}, Current: ${upnl:.4f} ({(upnl/peak*100):.1f}% of peak)")
         print(f"     Original size: {original_size:.4f}, Current: {current_size:.4f}, Surplus: {surplus:.4f}")
-        print(f"     Dump stage: {stage}, Trigger: {self.surplus_dump_threshold*100:.0f}% of peak")
+        print(f"     Dump stage: {stage}, Mode: {threshold_mode}")
+        if is_adverse:
+            print(f"     🌊 ADVERSE RECOVERY DETECTED: Max drawdown {max_drawdown*100:.1f}%, {adv_steps} avg steps")
+            print(f"     📊 Using thresholds: Stage1={stage1_threshold*100:.0f}%, Stage2={stage2_threshold*100:.0f}%")
+        else:
+            print(f"     Trigger: {stage1_threshold*100:.0f}% of peak (Stage 2: {stage2_threshold*100:.0f}%)")
 
         # V1.1.0: Use Hybrid Profit Taker for velocity-based decision
         volatility = self.get_recent_volatility(symbol)
@@ -4022,10 +4503,31 @@ class AIXYZContinuousProfit:
         print(f"     💡 Profit Taker: {profit_decision.reason}")
         print(f"     Threshold used: {profit_decision.threshold_used*100:.0f}% of peak")
 
+        # Calculate current ratio for threshold comparison
+        current_ratio = upnl / peak if peak > 0 else 0
+
+        # Determine should_dump based on mode
+        if is_adverse:
+            # ADVERSE RECOVERY MODE: Use fixed 50% threshold (hold longer)
+            should_dump = current_ratio <= stage1_threshold
+            if should_dump:
+                print(f"     🌊 Adverse recovery trigger: {current_ratio*100:.0f}% <= {stage1_threshold*100:.0f}%")
+        else:
+            # STANDARD MODE: Use velocity-based decision
+            should_dump = profit_decision.should_close
+
+        # V2.2.0: Apply market shift acceleration to threshold (only in standard mode)
+        if not is_adverse and shift_acceleration < 1.0 and upnl > 0:
+            # Market shift is against position - use accelerated threshold
+            accelerated_threshold = stage1_threshold * shift_acceleration
+            if current_ratio >= accelerated_threshold:
+                should_dump = True
+                print(f"     🔥 Market Shift accelerated dump: {current_ratio*100:.0f}% >= {accelerated_threshold*100:.0f}%")
+
         # Check dump conditions - Two-stage surplus dump
         # Stage 1: Dump 50% at velocity-based threshold (was 70%)
         # Stage 2: Dump remaining 50% at 30% of peak
-        if stage == 0 and profit_decision.should_close:  # Velocity-based threshold for stage 1
+        if stage == 0 and should_dump:  # Velocity-based threshold for stage 1 (or shift-accelerated)
             # Stage 1: Dump 50% of SURPLUS at 70% of peak
             try:
                 original_size = self.original_sizes.get(symbol, 0)
@@ -4121,16 +4623,16 @@ class AIXYZContinuousProfit:
             except Exception as e:
                 print(f"  ❌ Stage 1 dump failed: {e}")
         
-        # Stage 2: Dump remaining 50% at 30% of peak
-        elif stage == 1 and upnl <= peak * 0.30:  # 30% of peak for stage 2
+        # Stage 2: Dump remaining at stage2_threshold of peak (standard: 40%, adverse: 20%)
+        elif stage == 1 and upnl <= peak * stage2_threshold:
             try:
                 original_size = self.original_sizes.get(symbol, 0)
                 remaining_surplus = position['amount'] - original_size
-                
+
                 if remaining_surplus <= 0:
                     print(f"  ⚠️ No remaining surplus for stage 2 dump")
                     return False
-                
+
                 dump_amount = remaining_surplus  # Dump all remaining surplus
 
                 # FIX: Check minimum order size before attempting dump
@@ -4152,9 +4654,9 @@ class AIXYZContinuousProfit:
                 close_side = self.get_order_side(position_side, is_open=False)
                 close_params = self.get_hedge_order_params(position_side, is_open=False)
 
-                print(f"\n💰 Surplus Dump {symbol} - Stage 2 (Final 50%)")
+                print(f"\n💰 Surplus Dump {symbol} - Stage 2 (Final 50%) [{threshold_mode}]")
                 print(f"  Peak UPNL: ${peak:.4f}")
-                print(f"  Current: ${upnl:.4f} (30% trigger)")
+                print(f"  Current: ${upnl:.4f} ({stage2_threshold*100:.0f}% trigger)")
                 print(f"  Original size: {original_size:.4f}")
                 print(f"  Current size: {position['amount']:.4f}")
                 print(f"  Remaining surplus: {remaining_surplus:.4f}")
@@ -4221,7 +4723,42 @@ class AIXYZContinuousProfit:
                 print(f"  ❌ Stage 2 dump failed: {e}")
         
         return False
-    
+
+    def is_adverse_recovery(self, symbol: str) -> tuple:
+        """
+        ============================================================================
+        ADVERSE RECOVERY DETECTION
+        ============================================================================
+        Purpose: Detect positions that survived deep drawdown and are now recovering.
+        These positions should use more lenient profit-taking thresholds (50/20 instead
+        of 85/40) because they have proven resilience and the market tends to continue
+        correcting after adverse conditions.
+
+        Based on AXS backtest analysis (Jan 2026):
+        - Position with $160 margin hit -32% P&L drawdown
+        - Averaged through 5 steps, recovered to $88.17 peak
+        - With 85/30 thresholds: captured only $24.60
+        - With 50/20 thresholds: would have captured $235.52 (857% more!)
+
+        QUALIFICATION CRITERIA:
+        1. Position must have hit adverse_recovery_min_drawdown (-25% P&L)
+        2. Position must have at least adverse_recovery_min_steps (3) averaging steps
+
+        RETURNS:
+        tuple: (is_adverse_recovery: bool, max_drawdown: float, averaging_steps: int)
+        ============================================================================
+        """
+        max_drawdown = self.position_max_drawdown.get(symbol, 0)
+        averaging_steps = self.averaging_steps.get(symbol, 0)
+
+        # Check both conditions: deep drawdown AND significant averaging
+        qualifies = (
+            max_drawdown <= self.adverse_recovery_min_drawdown and  # Hit -25% or worse
+            averaging_steps >= self.adverse_recovery_min_steps      # At least 3 averaging steps
+        )
+
+        return (qualifies, max_drawdown, averaging_steps)
+
     def check_take_profit(self, symbol: str, position: Dict, upnl: float, pct: float) -> bool:
         """
         ============================================================================
@@ -5017,6 +5554,20 @@ class AIXYZContinuousProfit:
             print(f"  ⚠️  Position {symbol} not confirmed closed on exchange - skipping cleanup")
             return
 
+        # V2.1.0: Release tier allocation when position closes
+        if hasattr(self, 'tiered_allocation') and self.tiered_allocation:
+            try:
+                if symbol in self.active_positions:
+                    position = self.active_positions[symbol]
+                    tier_value = position.get('tier', 1)
+                    margin = position.get('initial_margin', 10.0)
+                    tier = MarketTier(tier_value)
+                    release_result = self.tiered_allocation.release_position(symbol, margin, tier)
+                    if release_result['success']:
+                        print(f"  📊 Released from {tier.name}: ${margin:.2f} | {release_result['positions_remaining']} positions left")
+            except Exception as tier_err:
+                print(f"  ⚠️ Tier release error: {tier_err}")
+
         # Calculate final PnL for adaptive Fibonacci learning (if position exists)
         final_pnl = 0.0
         if symbol in self.active_positions:
@@ -5049,6 +5600,7 @@ class AIXYZContinuousProfit:
         self.peak_upnl_timestamps.pop(symbol, None)
         self.surplus_dump_stage.pop(symbol, None)
         self.original_sizes.pop(symbol, None)
+        self.position_max_drawdown.pop(symbol, None)  # V3.0.0: Adverse recovery tracking
 
         # V1.2.0: Reset partial close ladder and profit taker
         self.partial_closer.reset_ladder(symbol)
@@ -5076,6 +5628,7 @@ class AIXYZContinuousProfit:
         tracked_symbols.update(self.peak_upnl.keys())
         tracked_symbols.update(self.surplus_dump_stage.keys())
         tracked_symbols.update(self.original_sizes.keys())
+        tracked_symbols.update(self.position_max_drawdown.keys())  # V3.0.0: Adverse recovery
         
         active_symbols = set(self.active_positions.keys())
         stale_symbols = tracked_symbols - active_symbols
@@ -5531,6 +6084,17 @@ class AIXYZContinuousProfit:
                     if self.averaging_steps.get(symbol, 0) > 0:
                         print(f"  📈 New peak UPNL for {symbol}: ${upnl:.4f} (was ${old_peak:.4f}) at {self.peak_upnl_timestamps[symbol]}")
 
+                # ADVERSE RECOVERY: Track max drawdown (minimum P&L% seen)
+                # Used to detect positions that survived deep drawdown and recovered
+                pct_decimal = pct / 100  # Convert to decimal for comparison
+                if symbol not in self.position_max_drawdown:
+                    self.position_max_drawdown[symbol] = min(0, pct_decimal)
+                elif pct_decimal < self.position_max_drawdown[symbol]:
+                    old_drawdown = self.position_max_drawdown[symbol]
+                    self.position_max_drawdown[symbol] = pct_decimal
+                    if pct_decimal < -0.20:  # Log significant drawdowns
+                        print(f"  📉 Max drawdown update for {symbol}: {pct_decimal*100:.1f}% (was {old_drawdown*100:.1f}%)")
+
                 # Track if position is in profit
                 if upnl > 0:
                     self.positions_in_profit.add(symbol)
@@ -5874,7 +6438,8 @@ class AIXYZContinuousProfit:
                     self.surplus_dump_stage,
                     self.original_sizes,
                     self.peak_upnl_timestamps,
-                    self.position_multipliers
+                    self.position_multipliers,
+                    self.position_max_drawdown  # V3.0.0: Adverse recovery tracking
                 )
             
         except Exception as e:
