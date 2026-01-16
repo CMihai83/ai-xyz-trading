@@ -24,6 +24,8 @@ services:
       - MAX_POSITIONS=${MAX_POSITIONS:-10}
       - DEFAULT_LEVERAGE=${DEFAULT_LEVERAGE:-5}
       - POSITION_SIZE_USD=${POSITION_SIZE_USD:-10}
+      - TIERED_TOTAL_CAPITAL=${TIERED_TOTAL_CAPITAL:-300}
+      - TIERED_MAX_POSITIONS=${TIERED_MAX_POSITIONS:-30}
     volumes:
       - ./logs:/app/logs
       - ./data:/app/data
@@ -413,7 +415,7 @@ services:
     networks:
       - ai_xyz_network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8009/health"]
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8009/health', timeout=5)"]
       interval: 30s
       timeout: 10s
       retries: 3

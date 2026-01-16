@@ -1,0 +1,79 @@
+{
+  "85/30 (Current)": {
+    "partial": {
+      "valid": false
+    },
+    "full": {
+      "valid": false
+    },
+    "overshoot": {
+      "valid": false
+    }
+  },
+  "85/40 (Current+)": {
+    "partial": {
+      "valid": false
+    },
+    "full": {
+      "valid": false
+    },
+    "overshoot": {
+      "valid": false
+    }
+  },
+  "75/30 (Moderate)": {
+    "partial": {
+      "valid": false
+    },
+    "full": {
+      "valid": false
+    },
+    "overshoot": {
+      "valid": false
+    }
+  },
+  "70/25 (Aggressive)": {
+    "partial": {
+      "valid": false
+    },
+    "full": {
+      "valid": false
+    },
+    "overshoot": {
+      "valid": false
+    }
+  },
+  "65/20 (Very Aggressive)": {
+    "partial": {
+      "valid": false
+    },
+    "full": {
+      "valid": false
+    },
+    "overshoot": {
+      "valid": false
+    }
+  },
+  "50/20 (Ultra)": {
+    "partial": {
+      "valid": false
+    },
+    "full": {
+      "valid": false
+    },
+    "overshoot": {
+      "valid": false
+    }
+  },
+  "50/15 (Max Hold)": {
+    "partial": {
+      "valid": false
+    },
+    "full": {
+      "valid": false
+    },
+    "overshoot": {
+      "valid": false
+    }
+  }
+}

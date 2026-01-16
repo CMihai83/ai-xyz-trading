@@ -1,0 +1,69 @@
+{
+  "timestamp": "2026-01-16T10:48:14.741520",
+  "symbol": "AXS/USDT:USDT",
+  "results": {
+    "85/30 (Current)": {
+      "total_captured": -164.2601657459663,
+      "total_final_value": -114.50547112967504,
+      "avg_capture_rate": -7.501958613431879,
+      "wins": 6,
+      "losses": 13,
+      "avg_peak_upnl": 5.881000379522035,
+      "win_rate": 0.3157894736842105
+    },
+    "85/40": {
+      "total_captured": -163.99920541193708,
+      "total_final_value": -114.19231872883995,
+      "avg_capture_rate": -7.437265630975739,
+      "wins": 6,
+      "losses": 13,
+      "avg_peak_upnl": 5.831555263600708,
+      "win_rate": 0.3157894736842105
+    },
+    "75/30": {
+      "total_captured": -164.2601657459663,
+      "total_final_value": -114.50547112967504,
+      "avg_capture_rate": -7.501958613431879,
+      "wins": 6,
+      "losses": 13,
+      "avg_peak_upnl": 5.881000379522035,
+      "win_rate": 0.3157894736842105
+    },
+    "70/25": {
+      "total_captured": -164.2601657459663,
+      "total_final_value": -114.50547112967504,
+      "avg_capture_rate": -7.501958613431879,
+      "wins": 6,
+      "losses": 13,
+      "avg_peak_upnl": 5.881000379522035,
+      "win_rate": 0.3157894736842105
+    },
+    "65/20": {
+      "total_captured": -166.08688808417088,
+      "total_final_value": -116.59315380190887,
+      "avg_capture_rate": -7.540335806414336,
+      "wins": 6,
+      "losses": 13,
+      "avg_peak_upnl": 5.881000379522035,
+      "win_rate": 0.3157894736842105
+    },
+    "50/20 (Hold Longer)": {
+      "total_captured": -166.08688808417088,
+      "total_final_value": -116.59315380190887,
+      "avg_capture_rate": -7.540335806414336,
+      "wins": 6,
+      "losses": 13,
+      "avg_peak_upnl": 5.881000379522035,
+      "win_rate": 0.3157894736842105
+    },
+    "50/15 (Max Hold)": {
+      "total_captured": -166.08688808417088,
+      "total_final_value": -116.59315380190887,
+      "avg_capture_rate": -7.540335806414336,
+      "wins": 6,
+      "losses": 13,
+      "avg_peak_upnl": 5.881000379522035,
+      "win_rate": 0.3157894736842105
+    }
+  }
+}

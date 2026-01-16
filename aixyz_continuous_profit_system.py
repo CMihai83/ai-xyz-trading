@@ -3800,10 +3800,30 @@ class AIXYZContinuousProfit:
             
             # Get actual P&L percentage from direct API data
             current_pnl_pct = pnl_percentage  # This is already calculated above from direct API
-            
-            # Averaging P&L threshold - optimized from -25% to -35% for more selective averaging
-            # More conservative: only average into significant dips, avoid false signals
-            averaging_pnl_threshold = -35.0  # -35% P&L triggers averaging (was -25%)
+
+            # V3.2.0: Regime-Based Dynamic Averaging Threshold
+            # Adapts threshold based on HMM volatility regime for optimal risk/reward
+            # - LOW_VOL: -25% (aggressive - more averaging opportunities)
+            # - NORMAL_VOL: -30% (balanced)
+            # - HIGH_VOL: -35% (conservative - avoid false signals)
+            # - CRISIS: -45% (very conservative - only extreme dips)
+            regime_thresholds = {
+                'low_vol': -25.0,
+                'normal_vol': -30.0,
+                'high_vol': -35.0,
+                'crisis': -45.0
+            }
+
+            # Get current HMM regime
+            current_regime = 'normal_vol'  # Default
+            if hasattr(self, 'grok_v2') and self.grok_v2:
+                try:
+                    regime_state = self.grok_v2.volatility_hmm.get_regime()
+                    current_regime = regime_state.regime.value
+                except Exception:
+                    pass
+
+            averaging_pnl_threshold = regime_thresholds.get(current_regime, -30.0)
 
             print(f"  🎯 Averaging Decision:")
             print(f"     Current P&L: {current_pnl_pct:.2f}%")
@@ -3838,7 +3858,7 @@ class AIXYZContinuousProfit:
                 hedge_gate_passed = current_pnl_pct <= hedge_gate_threshold
                 should_average = should_average and hedge_gate_passed
 
-            print(f"     Gate (-25% P&L): {'✅ PASSED' if gate_passed else '❌ NOT PASSED'}")
+            print(f"     Gate ({averaging_pnl_threshold}% P&L, {current_regime.upper()}): {'✅ PASSED' if gate_passed else '❌ NOT PASSED'}")
             print(f"     Fibonacci trigger ({safe_threshold_pct*100:.1f}% UPNL): {'✅ MET' if fibonacci_triggered else '❌ NOT MET'}")
             if is_hedge_position:
                 print(f"     🛡️ HEDGE Position Gate (-70% P&L): {'✅ PASSED' if hedge_gate_passed else '❌ NOT PASSED (waiting for -70%)'}")

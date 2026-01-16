@@ -602,6 +602,50 @@ if TIERED_ALLOCATION_AVAILABLE:
 
 ---
 
+## 16. DYNAMIC AVERAGING THRESHOLD (V3.2.0)
+
+### 16.1 Regime-Based Thresholds
+**File**: `aixyz_continuous_profit_system.py` lines 3804-3826
+
+The averaging P&L gate now adapts based on HMM volatility regime:
+
+| HMM Regime | Averaging Threshold | Rationale |
+|------------|---------------------|-----------|
+| LOW_VOL | -25% | Aggressive - stable market, more opportunities |
+| NORMAL_VOL | -30% | Balanced approach |
+| HIGH_VOL | -35% | Conservative - avoid false signals |
+| CRISIS | -45% | Very conservative - only extreme dips |
+
+### 16.2 Implementation
+```python
+# V3.2.0: Regime-Based Dynamic Averaging Threshold
+regime_thresholds = {
+    'low_vol': -25.0,
+    'normal_vol': -30.0,
+    'high_vol': -35.0,
+    'crisis': -45.0
+}
+
+# Get current HMM regime
+current_regime = 'normal_vol'  # Default
+if hasattr(self, 'grok_v2') and self.grok_v2:
+    regime_state = self.grok_v2.volatility_hmm.get_regime()
+    current_regime = regime_state.regime.value
+
+averaging_pnl_threshold = regime_thresholds.get(current_regime, -30.0)
+```
+
+### 16.3 Alignment with Tiered Capital Allocation
+This complements the tiered position limits:
+
+| Regime | Position Limit | Averaging Threshold | Strategy |
+|--------|----------------|---------------------|----------|
+| LOW_VOL/NORMAL_VOL | 1/3 of max | -25%/-30% | Aggressive |
+| HIGH_VOL | 2/3 of max | -35% | Conservative |
+| CRISIS | 3/3 of max | -45% | Very Conservative |
+
+---
+
 ## QUICK REFERENCE TABLE
 
 | Parameter | Value |
@@ -614,7 +658,7 @@ if TIERED_ALLOCATION_AVAILABLE:
 | Leverage | 5x default, 20x max |
 | Averaging Steps | 8 max |
 | Neutral Zone | -$0.15 to +$0.15 USD |
-| Averaging Trigger (Main) | -25% UPNL |
+| Averaging Trigger (Main) | Dynamic: -25%/-30%/-35%/-45% based on HMM regime |
 | Averaging Trigger (Hedge) | -70% UPNL |
 | Profit Taking | +5% UPNL |
 | Stop Loss | -95% UPNL (liquidation prevention only) |
@@ -698,6 +742,6 @@ All discrepancies were resolved with code evidence. Key corrections:
 
 ---
 
-**Version**: 3.0 | **Last Updated**: January 16, 2026
+**Version**: 3.2.0 | **Last Updated**: January 16, 2026
 **Reviewed By**: Claude (Opus 4.5) & Grok (grok-2-latest)
 **Status**: Mutually Agreed

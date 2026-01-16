@@ -295,7 +295,22 @@ class OpportunityCostEngine:
             }
 
             # Sprint 14: Validate with backtest
-            if use_backtest and self.backtester:
+            # V2.1.0: Skip backtest when portfolio in drawdown (adversity/black swan opportunity!)
+            skip_backtest_for_adversity = False
+            try:
+                positions = self.exchange.fetch_positions()
+                active = [p for p in positions if abs(p.get('contracts', 0)) > 0]
+                if active:
+                    total_upnl = sum(float(p.get('unrealizedPnl', 0) or 0) for p in active)
+                    total_margin = sum(float(p.get('initialMargin', 0) or p.get('collateral', 0) or 0) for p in active)
+                    portfolio_drawdown = (total_upnl / total_margin * 100) if total_margin > 0 else 0
+                    # If portfolio is down 15%+ = adversity opportunity, skip backtest
+                    if portfolio_drawdown <= -15:
+                        skip_backtest_for_adversity = True
+            except:
+                pass
+
+            if use_backtest and self.backtester and not skip_backtest_for_adversity:
                 direction = opp_data.get('direction', 'long')
                 try:
                     backtest_result = self.backtester.validate_trade(symbol, direction, days=30)
@@ -315,6 +330,10 @@ class OpportunityCostEngine:
                     opp_data['backtest_score'] = 0
                     opp_data['backtest_approved'] = False
                     print(f"  ⚠️ Backtest failed for {symbol}: {e}")
+            elif skip_backtest_for_adversity:
+                opp_data['backtest_score'] = opp_data['scanner_score']  # Use scanner score as backtest
+                opp_data['backtest_approved'] = True
+                print(f"  ⚡ {symbol}: Skipping backtest - portfolio in drawdown (buy the dip!)")
 
             opportunities[symbol] = opp_data
 
