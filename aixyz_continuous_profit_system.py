@@ -929,7 +929,47 @@ class AIXYZContinuousProfit:
             
             # Never allow more than we can properly manage with averaging
             dynamic_limit = max(1, dynamic_limit)  # At least 1 if we have any capital
-            
+
+            # V3.1.0: Apply tiered allocation based on HMM volatility regime
+            # NORMAL_VOL/LOW_VOL: 1/3 of dynamic_limit
+            # HIGH_VOL: 2/3 of dynamic_limit
+            # CRISIS: Full dynamic_limit (3/3)
+            if TIERED_ALLOCATION_AVAILABLE:
+                try:
+                    tiered = get_tiered_allocation()
+                    # Get current HMM regime
+                    current_regime = 'normal_vol'
+                    if hasattr(self, 'grok_v2') and self.grok_v2:
+                        try:
+                            regime_state = self.grok_v2.volatility_hmm.get_regime()
+                            current_regime = regime_state.regime.value
+                        except:
+                            pass
+
+                    # Apply tiered limit based on regime
+                    if current_regime == 'crisis':
+                        # CRISIS: Full limit (3/3)
+                        regime_limit = dynamic_limit
+                        tiers_active = "1+2+3"
+                    elif current_regime == 'high_vol':
+                        # HIGH_VOL: 2/3 of limit
+                        regime_limit = (dynamic_limit * 2) // 3
+                        tiers_active = "1+2"
+                    else:
+                        # NORMAL_VOL/LOW_VOL: 1/3 of limit
+                        regime_limit = dynamic_limit // 3
+                        tiers_active = "1"
+
+                    # Ensure at least 1 position allowed
+                    regime_limit = max(1, regime_limit)
+
+                    if regime_limit != dynamic_limit:
+                        print(f"  🎯 Tiered limit ({current_regime.upper()}): {regime_limit}/{dynamic_limit} (Tiers {tiers_active})")
+
+                    dynamic_limit = regime_limit
+                except Exception as e:
+                    pass  # Use capital-based limit if tiered fails
+
             # Calculate how many averaging steps we can support
             if dynamic_limit > 0 and available_for_new > 0:
                 capital_per_position = available_for_new / max(1, max_new_positions)
@@ -6569,36 +6609,14 @@ class AIXYZContinuousProfit:
     async def run_scanner_loop(self):
         """Continuous scanning loop"""
         while self.running:
-            # V3.1.0: Get regime-based position limit from tiered allocation
-            regime_max_positions = self.max_positions  # Default
-            current_regime = 'normal_vol'
-
-            if TIERED_ALLOCATION_AVAILABLE:
-                try:
-                    tiered = get_tiered_allocation()
-                    # Get current HMM regime
-                    if hasattr(self, 'grok_v2') and self.grok_v2:
-                        regime_state = self.grok_v2.volatility_hmm.get_regime()
-                        current_regime = regime_state.regime.value
-                    # Get max positions for current regime (1/3, 2/3, or 3/3)
-                    regime_max_positions = tiered.get_max_positions_for_regime(current_regime)
-                except Exception as e:
-                    pass  # Use default max_positions
-
-            current_count = len(self.active_positions)
-
-            if current_count < regime_max_positions:
+            # V3.1.0: max_positions is now tiered-adjusted in calculate_dynamic_position_limit()
+            if len(self.active_positions) < self.max_positions:
                 opportunities = self.scan_for_opportunities()
 
                 for opp in opportunities:
-                    if len(self.active_positions) >= regime_max_positions:
-                        print(f"  ⛔ Regime limit reached: {len(self.active_positions)}/{regime_max_positions} ({current_regime.upper()})")
+                    if len(self.active_positions) >= self.max_positions:
                         break
                     self.open_position(opp)
-            else:
-                # Log when blocked by regime limit
-                if current_count >= regime_max_positions and current_count < self.max_positions:
-                    print(f"  📊 Tiered limit: {current_count}/{regime_max_positions} for {current_regime.upper()} (max {self.max_positions})")
 
             await asyncio.sleep(self.scan_interval)
     
