@@ -6569,14 +6569,37 @@ class AIXYZContinuousProfit:
     async def run_scanner_loop(self):
         """Continuous scanning loop"""
         while self.running:
-            if len(self.active_positions) < self.max_positions:
+            # V3.1.0: Get regime-based position limit from tiered allocation
+            regime_max_positions = self.max_positions  # Default
+            current_regime = 'normal_vol'
+
+            if TIERED_ALLOCATION_AVAILABLE:
+                try:
+                    tiered = get_tiered_allocation()
+                    # Get current HMM regime
+                    if hasattr(self, 'grok_v2') and self.grok_v2:
+                        regime_state = self.grok_v2.volatility_hmm.get_regime()
+                        current_regime = regime_state.regime.value
+                    # Get max positions for current regime (1/3, 2/3, or 3/3)
+                    regime_max_positions = tiered.get_max_positions_for_regime(current_regime)
+                except Exception as e:
+                    pass  # Use default max_positions
+
+            current_count = len(self.active_positions)
+
+            if current_count < regime_max_positions:
                 opportunities = self.scan_for_opportunities()
-                
+
                 for opp in opportunities:
-                    if len(self.active_positions) >= self.max_positions:
+                    if len(self.active_positions) >= regime_max_positions:
+                        print(f"  ⛔ Regime limit reached: {len(self.active_positions)}/{regime_max_positions} ({current_regime.upper()})")
                         break
                     self.open_position(opp)
-            
+            else:
+                # Log when blocked by regime limit
+                if current_count >= regime_max_positions and current_count < self.max_positions:
+                    print(f"  📊 Tiered limit: {current_count}/{regime_max_positions} for {current_regime.upper()} (max {self.max_positions})")
+
             await asyncio.sleep(self.scan_interval)
     
     async def run_monitor_loop(self):

@@ -560,12 +560,54 @@ redis_port = int(os.getenv('REDIS_PORT', 6379))
 
 ---
 
+## 15. TIERED CAPITAL ALLOCATION (V3.1.0)
+
+### 15.1 Regime-Based Position Limits
+**File**: `tiered_capital_allocation.py` lines 236-328
+
+| HMM Regime | Tiers Active | Positions Allowed |
+|------------|--------------|-------------------|
+| LOW_VOL / NORMAL_VOL | Tier 1 only | 1/3 of max |
+| HIGH_VOL | Tier 1 + Tier 2 | 2/3 of max |
+| CRISIS | Tier 1 + Tier 2 + Tier 3 | 3/3 (full) |
+
+**Example** (max_positions = 30):
+- NORMAL_VOL: 10 positions max
+- HIGH_VOL: 20 positions max
+- CRISIS: 30 positions max
+
+### 15.2 Key Methods
+```python
+# Get max positions for current HMM regime
+tiered = get_tiered_allocation()
+regime_max = tiered.get_max_positions_for_regime(hmm_regime)
+
+# Check if new position should be blocked
+blocked, reason = tiered.should_block_new_position(current_count, hmm_regime)
+
+# Get tier from HMM regime
+tier = tiered.get_tier_from_hmm_regime(hmm_regime)
+```
+
+### 15.3 Integration with Scanner
+**File**: `aixyz_continuous_profit_system.py` lines 6569-6603
+```python
+# Scanner loop enforces regime-based limits
+if TIERED_ALLOCATION_AVAILABLE:
+    tiered = get_tiered_allocation()
+    regime_state = self.grok_v2.volatility_hmm.get_regime()
+    current_regime = regime_state.regime.value
+    regime_max_positions = tiered.get_max_positions_for_regime(current_regime)
+```
+
+---
+
 ## QUICK REFERENCE TABLE
 
 | Parameter | Value |
 |-----------|-------|
 | Exchange | Bitget (USDT-M Futures) |
-| Max Positions | 12 (correlation-adjusted, tiered allocation can increase) |
+| Max Positions | 30 total (tiered: 10/20/30 based on regime) |
 | Base Margin | $5.00 |
 | Averaging Capital | $20.00 |
 | Total per Position | $25 + $25 protection = $50 |
