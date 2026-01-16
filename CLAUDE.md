@@ -69,30 +69,65 @@ USE_TESTNET=false
 ## 3. Zone-Based Position Management
 
 ### 3.1 Zone Thresholds
+**File**: `aixyz_continuous_profit_system.py` lines 731-746
 ```python
 zone_thresholds = {
     'averaging': -0.25,      # -25% UPNL triggers averaging (AI can override)
     'profit_taking': 0.05,   # +5% UPNL enters surplus dump zone
-    'stop_loss': -0.90       # -90% UPNL (safe for 15x leverage)
+    'stop_loss': -0.95       # -95% UPNL (liquidation prevention ONLY, not traditional stop-loss)
 }
 neutral_zone_upper_usd = 0.15  # $0.15 minimum UPNL to exit neutral
+
+# Sprint 14: Stop-loss is DISABLED - positions can recover
+# Only -95% threshold for liquidation prevention
+stop_loss_disabled = True
 ```
 
 ### 3.2 Zone States
 | Zone | Trigger | Action |
 |------|---------|--------|
 | **NEUTRAL** | -$0.15 to +$0.15 UPNL | Hold, no action |
-| **AVERAGING** | UPNL < -25% | Execute Fibonacci averaging steps |
-| **PROFIT_TAKING** | UPNL > +5% | Monitor for surplus dump |
-| **SURPLUS_DUMP** | Peak tracking active | Execute staged profit taking |
-| **STOP_LOSS** | UPNL < -90% | Emergency close |
+| **AVERAGING** | UPNL ≤ -25% | Execute Fibonacci averaging steps |
+| **PROFIT_TAKING** | UPNL > +5%, no averaging | Monitor peak UPNL |
+| **SURPLUS_DUMP** | UPNL > +5%, has averaged | Execute staged profit taking |
+| **STOP_LOSS** | UPNL ≤ -95% | Liquidation prevention (not traditional stop-loss) |
 
-### 3.3 Surplus Dump Strategy (Two-Stage)
+### 3.3 Surplus Dump Strategy (Two-Stage Peak-Based)
+**File**: `aixyz_continuous_profit_system.py` lines 793-794
 ```python
-surplus_dump_threshold = 0.85      # Stage 1: 85% of peak → dump 50% of surplus
-surplus_dump_threshold_stage2 = 0.30  # Stage 2: 30% of peak → dump remaining 50%
-profit_threshold = 0.015           # 1.5% profit threshold for large positions
+surplus_dump_threshold = 0.85       # Stage 1: 85% of PEAK → dump 50% of surplus
+surplus_dump_threshold_stage2 = 0.40  # Stage 2: 40% of PEAK → dump remaining 50%
+profit_threshold = 0.015            # 1.5% profit threshold for large positions
 ```
+
+**How it works:**
+- Tracks `peak_upnl[symbol]` - highest UPNL reached
+- When UPNL drops to 85% of peak → dump 50% of surplus contracts
+- When UPNL drops to 40% of peak → dump remaining 50% of surplus
+- Surplus = current_size - original_size
+
+### 3.4 Adverse Recovery V3.1.0 (Market Regime-Based)
+**File**: `aixyz_continuous_profit_system.py` lines 796-807
+```python
+# V3.1.0: Lenient thresholds for positions opened during adverse market conditions
+adverse_recovery_threshold_stage1 = 0.50  # 50% of peak (hold longer)
+adverse_recovery_threshold_stage2 = 0.20  # 20% of peak (hold longer)
+adverse_market_regimes = ['high_vol', 'crisis']
+recovered_market_regimes = ['normal_vol', 'low_vol']
+
+# Tracks market regime when position was opened
+position_opened_regime: Dict[str, str] = {}
+```
+
+**Logic:**
+1. When position OPENS → record current market regime from Grok V2 HMM
+2. During averaging → update to WORST regime seen
+3. At surplus dump: if opened in HIGH_VOL/CRISIS and now NORMAL/LOW → use 50/20 thresholds
+
+| Mode | Stage 1 | Stage 2 | When Used |
+|------|---------|---------|-----------|
+| STANDARD | 85% of peak | 40% of peak | Normal market conditions |
+| ADVERSE RECOVERY | 50% of peak | 20% of peak | Opened in crisis, market recovered |
 
 ---
 
@@ -102,35 +137,69 @@ profit_threshold = 0.015           # 1.5% profit threshold for large positions
 - Uses golden ratio (φ = 1.618) for position scaling
 - Dynamic delta calculation based on market volatility
 - Timeframe-based capital allocation (1m, 5m, 15m, 1h, 4h, 1d)
-- Maximum 5 averaging steps per position
+- Maximum 8 averaging steps per position
 
 ### 4.2 Key Components
 ```python
-AdaptiveFibonacciAveraging(total_capital=2.80)  # Core averaging logic
+AdaptiveFibonacciAveraging(total_capital=20.0)  # Core averaging logic
 DynamicFibonacciDeltaService                     # Volatility-adaptive delta
 TimeframeSpeedTracker                            # Dynamic threshold adjustment
 TimeframeCapitalAllocator                        # Capital distribution
 ```
 
-### 4.3 Averaging Execution
-- Tracks `averaging_steps[symbol]` (0-5)
+### 4.3 Base Averaging Multipliers
+**File**: `aixyz_continuous_profit_system.py` lines 775-784
+```python
+base_averaging_multipliers = [
+    0.5,   # Step 1: 0.5x original (small test)
+    0.75,  # Step 2: 0.75x original (conservative)
+    1.5,   # Step 3: 1.5x original (moderate)
+    3.0,   # Step 4: 3x original (aggressive)
+    5.0,   # Step 5: 5x original (Fibonacci F5)
+    8.0,   # Step 6: 8x original (Fibonacci F6)
+    12.0,  # Step 7: 12x original (extreme)
+    15.0   # Step 8: 15x original (final push)
+]
+```
+
+### 4.4 Grok V2 Reduced Multipliers
+**File**: `aixyz_continuous_profit_system.py` lines 971-988
+```python
+# Grok V2: Reduced from 19x total to 10x total for better risk control
+if averaging_steps_possible == 5:
+    averaging_multipliers = [1.0, 1.5, 2.0, 2.5, 3.0]  # 10x total
+elif averaging_steps_possible == 4:
+    averaging_multipliers = [1.0, 1.5, 2.0, 2.5]       # 7x total
+elif averaging_steps_possible == 3:
+    averaging_multipliers = [1.0, 1.5, 2.0]            # 4.5x total
+```
+
+### 4.5 Averaging Execution
+- Tracks `averaging_steps[symbol]` (0-8)
 - Tracks `original_sizes[symbol]` for surplus calculation
 - Tracks `peak_upnl[symbol]` for profit taking
-- Fibonacci multipliers: [1.0, 2.0, 3.0, 4.0, 5.0]
+- Tracks `position_opened_regime[symbol]` for adverse recovery
 
 ---
 
 ## 5. Market Scanner (V4.0)
 
 ### 5.1 Two-Stage Filtering
+**File**: `scanner_v4.py`
 ```
-Stage 1: Quick Filter (ALL 497 USDT perpetual futures)
-  → Filter to ~137 candidates based on volume/volatility
+Stage 1: Quick Filter (ALL ~497 USDT perpetual futures)
+  → Volume filter: > $10M 24h volume
+  → Liquidity filter: < 0.5% bid-ask spread
+  → Volatility filter: 1% ≤ volatility ≤ 20%
+  → Output: ~120-140 candidates (25-28%)
 
-Stage 2: Deep Analysis (Top 40 candidates)
+Stage 2: Deep Analysis (Top 40 by volume × volatility)
   → VSA (Volume Spread Analysis) scoring
-  → Minimum score threshold: 0.55
-  → Entry threshold: 0.70
+  → MACD divergence detection
+  → Support/resistance levels
+  → Multi-timeframe confirmation
+  → Entry threshold: >= 0.70
+  → Minimum score: >= 0.55
 ```
 
 ### 5.2 Scan Cycle
@@ -142,7 +211,43 @@ Stage 2: Deep Analysis (Top 40 candidates)
 
 ## 6. AI/ML Modules
 
-### 6.1 Category 1 - High Priority (Active)
+### 6.1 Grok V2 Integration Modules (11 Modules)
+**File**: `grok_v2_integration.py`
+
+| # | Module | File | Purpose |
+|---|--------|------|---------|
+| 1 | Trade Tracker | `trade_results_tracker.py` | Profit factor metrics |
+| 2 | Bayesian Correction | `grok_v2_bayesian_correction.py` | Per-symbol correction probability |
+| 3 | Volatility HMM | `grok_v2_volatility_regime_hmm.py` | 4-regime detection |
+| 4 | Redis Pool | `grok_v2_redis_pool.py` | Connection pooling |
+| 5 | VaR Calculator | `grok_v2_var_integration.py` | Value at Risk limits |
+| 6 | WebSocket Events | `grok_v2_websocket_events.py` | Real-time updates |
+| 7 | Stress Testing | `grok_v2_stress_testing.py` | Scenario analysis |
+| 8 | Ensemble Exit | `grok_v2_ensemble_exit.py` | Multi-model exit signals |
+| 9 | Online CSSI | `grok_v2_online_cssi_learning.py` | Continuous learning |
+| 10 | Anomaly Detection | `grok_v2_anomaly_detection.py` | Z-score anomalies |
+| 11 | Graceful Degradation | `grok_v2_graceful_degradation.py` | Fallback mechanisms |
+
+### 6.2 Volatility Regime HMM (4 Regimes)
+**File**: `grok_v2_volatility_regime_hmm.py` lines 22-27
+```python
+class VolatilityRegime(Enum):
+    LOW_VOL = "low_vol"       # 0-20% annualized
+    NORMAL_VOL = "normal_vol" # 15-40% annualized
+    HIGH_VOL = "high_vol"     # 35-80% annualized
+    CRISIS = "crisis"         # 70-200% annualized
+```
+
+**Transition Matrix** (regimes tend to persist):
+```
+             LOW    NORMAL  HIGH   CRISIS
+LOW_VOL    [ 0.90,  0.08,  0.02,  0.00 ]
+NORMAL_VOL [ 0.10,  0.80,  0.08,  0.02 ]
+HIGH_VOL   [ 0.02,  0.10,  0.80,  0.08 ]
+CRISIS     [ 0.00,  0.05,  0.15,  0.80 ]
+```
+
+### 6.3 Category 1 - High Priority (Active)
 | Module | Purpose | Benefit |
 |--------|---------|---------|
 | `RLClosingAgent` | Q-learning exit timing | +15-25% better exits |
@@ -150,25 +255,59 @@ Stage 2: Deep Analysis (Top 40 candidates)
 | `CorrelationMatrixAnalyzer` | Diversification | -25% correlated drawdowns |
 | `OpportunityCostPredictor` | ML capital rotation | +20% faster rotation |
 
-### 6.2 Performance Modules (V1.1.0)
+### 6.4 Performance Modules (V1.1.0)
 - `MomentumBurstDetector` - 1% burst threshold
-- `ConfidenceTierSystem` - Signal quality filtering
+- `ConfidenceTierSystem` - Signal quality filtering (min 0.55)
 - `DynamicPositionSizer` - +30% profit per winning trade
 - `KellyCriterionSizer` - Optimal growth rate
 - `VelocityProfitTaker` - Speed-based profit taking
 
-### 6.3 Market Microstructure (V1.2.0)
+### 6.5 Market Microstructure (V1.2.0)
 - `FundingRateOptimizer` - Funding rate arbitrage
 - `OrderBookImbalanceDetector` - Order flow analysis
-- `PartialCloseLadder` - Staged exits
-- `ATRStopLoss` / `TrailingATRStop` - Volatility-based stops
+- `PartialCloseLadder` - Staged exits (25% at 2%, 4%, 6%)
+- `ATRStopLoss` / `TrailingATRStop` - Volatility-based stops (1.5x ATR)
 
-### 6.4 V3 AI Components (TensorFlow)
+### 6.6 V3 AI Components (TensorFlow)
 - `AdaptiveThresholdEngine` - AI-driven thresholds
 - `AIMarketIntelligence` - Market regime detection
 - `OpportunityCostEngine` - V3 opportunity analysis
 - `AdvancedDeltaEngine` - AI delta calculation
 - `AdaptiveAveragingEngine` - AI averaging decisions
+
+### 6.7 CSSI - Correction-Support Strength Index
+**File**: `historical_correction_analyzer.py` lines 73-83
+```python
+@dataclass
+class CSSI:
+    cssi_score: float              # Main metric (0-3+)
+    correction_probability: float  # From logistic regression
+    support_proximity: float       # 0-1 (1 = at support)
+    risk_factor: float            # 0.3-1.0
+    recommended_action: str        # 'AVERAGE_IN', 'HOLD', 'REDUCE'
+    step_multiplier: float        # Position size modifier (0.5-2.0)
+```
+
+**Formula**:
+```
+CSSI = (correction_probability / 100) × proximity_to_support × risk_factor
+
+Correction Probability (Logistic Regression):
+P(correction | depth) = 1 / (1 + exp(-β₀ - β₁×d - β₂×d²))
+  β₀ = -1.0, β₁ = 20.0, β₂ = 0.0
+
+Example Probabilities:
+- 5% drawdown:  ~50% correction probability
+- 10% drawdown: ~80% correction probability
+- 15% drawdown: ~92% correction probability
+```
+
+| CSSI Score | Action | Step Multiplier |
+|------------|--------|-----------------|
+| ≥ 1.5 | AVERAGE_IN_AGGRESSIVE | 1.45-2.0x |
+| ≥ 1.0 | AVERAGE_IN | 1.2-1.5x |
+| ≥ 0.5 | HOLD | 1.0x |
+| < 0.5 | REDUCE | 0.5-1.0x |
 
 ---
 
@@ -426,19 +565,26 @@ redis_port = int(os.getenv('REDIS_PORT', 6379))
 | Parameter | Value |
 |-----------|-------|
 | Exchange | Bitget (USDT-M Futures) |
-| Max Positions | 12 |
-| Position Size | $5-10 USD |
+| Max Positions | 12 (correlation-adjusted, tiered allocation can increase) |
+| Base Margin | $5.00 |
+| Averaging Capital | $20.00 |
+| Total per Position | $25 + $25 protection = $50 |
 | Leverage | 5x default, 20x max |
-| Averaging Steps | 5 max |
-| Neutral Zone | -$0.15 to +$0.15 |
+| Averaging Steps | 8 max |
+| Neutral Zone | -$0.15 to +$0.15 USD |
 | Averaging Trigger (Main) | -25% UPNL |
 | Averaging Trigger (Hedge) | -70% UPNL |
 | Profit Taking | +5% UPNL |
-| Stop Loss | -90% UPNL |
+| Stop Loss | -95% UPNL (liquidation prevention only) |
 | Surplus Dump Stage 1 | 85% of peak |
-| Surplus Dump Stage 2 | 30% of peak |
-| Profit Threshold | 1.5% |
-| Scanner Score Threshold | 0.70 |
+| Surplus Dump Stage 2 | 40% of peak |
+| Adverse Recovery Stage 1 | 50% of peak |
+| Adverse Recovery Stage 2 | 20% of peak |
+| Liquidation Protection | -82.5% UPNL at step ≥ 6 |
+| Scanner Entry Threshold | >= 0.70 |
+| Scanner Minimum Score | >= 0.55 |
+| Scanner Volume Filter | > $10M 24h |
+| HMM Regimes | LOW_VOL, NORMAL_VOL, HIGH_VOL, CRISIS |
 | Balance Manager Threshold | $400 |
 | Transfer Increment | $15 |
 
@@ -495,4 +641,21 @@ See `docs_archive/ARCHIVE_NOTICE.md` for details.
 
 ---
 
-**Version**: 2.1 | **Last Updated**: January 13, 2026
+## 14. MUTUAL AGREEMENT DOCUMENT
+
+A comprehensive review was conducted on January 16, 2026 between Claude (Opus 4.5) and Grok (grok-2-latest) to verify system understanding against actual codebase.
+
+**Document**: `/root/ai_xyz/MUTUALLY_AGREED_SYSTEM_UNDERSTANDING.md`
+
+All discrepancies were resolved with code evidence. Key corrections:
+- Stop-loss is -95% (not -90%) - liquidation prevention only
+- Surplus Dump Stage 2 is 40% (not 30%)
+- 4 volatility regimes including CRISIS (not 3)
+- Scanner volume filter is $10M (not $1M)
+- V3.1.0 Adverse Recovery is market regime-based
+
+---
+
+**Version**: 3.0 | **Last Updated**: January 16, 2026
+**Reviewed By**: Claude (Opus 4.5) & Grok (grok-2-latest)
+**Status**: Mutually Agreed
