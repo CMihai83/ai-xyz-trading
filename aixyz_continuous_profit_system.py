@@ -421,6 +421,12 @@ class AIXYZContinuousProfit:
             if self.position_max_drawdown:
                 print(f"  📉 Loaded max drawdown data for {len(self.position_max_drawdown)} positions")
 
+            # V3.1.0: Load market regime tracking for adverse recovery detection
+            self.position_opened_regime = reconciled.get('position_opened_regime', {})
+            if self.position_opened_regime:
+                adverse_count = sum(1 for r in self.position_opened_regime.values() if r in ['high_vol', 'crisis'])
+                print(f"  🌊 Loaded market regime data for {len(self.position_opened_regime)} positions ({adverse_count} in adverse markets)")
+
             # CRITICAL: Initialize pyramid_count for all loaded positions
             for symbol in self.active_positions:
                 if 'pyramid_count' not in self.active_positions[symbol]:
@@ -787,14 +793,20 @@ class AIXYZContinuousProfit:
         self.surplus_dump_threshold = 0.85  # 85% of peak - Stage 1 dump (50% of surplus)
         self.surplus_dump_threshold_stage2 = 0.40  # 40% of peak - Stage 2 dump (remaining 50%) - optimized from 30%
 
-        # Adverse Recovery Thresholds - for positions that survived deep drawdown and recovered
-        # Based on AXS backtest: 50/20 captured 857% more profit than 85/30 in adverse recovery scenarios
+        # Adverse Recovery Thresholds - for positions opened during adverse MARKET conditions
+        # Based on AXS backtest: 50/20 captured 857% more profit than 85/30 when market recovers
+        # Logic: If position was opened/averaged during HIGH_VOL or CRISIS market, and market
+        # has now recovered to NORMAL_VOL or LOW_VOL, use lenient thresholds to hold longer
         self.adverse_recovery_threshold_stage1 = 0.50  # 50% of peak (hold longer)
         self.adverse_recovery_threshold_stage2 = 0.20  # 20% of peak (hold longer)
-        self.adverse_recovery_min_drawdown = -0.25  # Position must have hit -25% to qualify
-        self.adverse_recovery_min_steps = 3  # Minimum averaging steps to qualify
+        self.adverse_market_regimes = ['high_vol', 'crisis']  # Regimes that qualify as "adverse"
+        self.recovered_market_regimes = ['normal_vol', 'low_vol']  # Regimes that signal recovery
 
-        # Track max drawdown per position for adverse recovery detection
+        # Track market regime when position was opened/averaged (worst regime seen)
+        # symbol -> worst regime value ('crisis', 'high_vol', 'normal_vol', 'low_vol')
+        self.position_opened_regime: Dict[str, str] = {}
+
+        # Track max drawdown per position (legacy, still useful for logging)
         self.position_max_drawdown: Dict[str, float] = {}  # symbol -> min P&L % seen
         
         # System state
@@ -2777,6 +2789,17 @@ class AIXYZContinuousProfit:
             self.surplus_dump_stage[position_key] = 0  # No surplus dump stage
             self.original_sizes[position_key] = amount  # Track original size
 
+            # V3.1.0: Track market regime when position opened (for adverse recovery detection)
+            current_market_regime = 'normal_vol'  # Default
+            if hasattr(self, 'grok_v2') and self.grok_v2:
+                try:
+                    regime_state = self.grok_v2.volatility_hmm.get_regime()
+                    current_market_regime = regime_state.regime.value
+                    print(f"  📊 Market regime at open: {current_market_regime.upper()}")
+                except Exception:
+                    pass
+            self.position_opened_regime[position_key] = current_market_regime
+
             # NEW: Initialize missing implementation tracking
             if not hasattr(self, 'k_coefficients'):
                 self.k_coefficients = {}
@@ -3925,6 +3948,21 @@ class AIXYZContinuousProfit:
                             self.averaging_steps[symbol] += 1
                             self.position_zones[symbol] = 'AVERAGING'
 
+                            # V3.1.0: Update market regime if current is worse (more adverse)
+                            # Track worst regime seen during position lifecycle for adverse recovery
+                            regime_priority = {'crisis': 0, 'high_vol': 1, 'normal_vol': 2, 'low_vol': 3}
+                            if hasattr(self, 'grok_v2') and self.grok_v2:
+                                try:
+                                    regime_state = self.grok_v2.volatility_hmm.get_regime()
+                                    current_regime = regime_state.regime.value
+                                    existing_regime = self.position_opened_regime.get(symbol, 'normal_vol')
+                                    # Keep the worse (more adverse) regime
+                                    if regime_priority.get(current_regime, 2) < regime_priority.get(existing_regime, 2):
+                                        self.position_opened_regime[symbol] = current_regime
+                                        print(f"  🌊 Updated position regime to {current_regime.upper()} (more adverse)")
+                                except Exception:
+                                    pass
+
                             # CRITICAL: Reset peak_upnl after averaging (entry price changed)
                             # Old peak is stale because position characteristics changed
                             old_peak = self.peak_upnl.get(symbol, 0)
@@ -4225,6 +4263,19 @@ class AIXYZContinuousProfit:
 
                     self.averaging_steps[symbol] += 1
 
+                    # V3.1.0: Update market regime if current is worse (more adverse)
+                    regime_priority = {'crisis': 0, 'high_vol': 1, 'normal_vol': 2, 'low_vol': 3}
+                    if hasattr(self, 'grok_v2') and self.grok_v2:
+                        try:
+                            regime_state = self.grok_v2.volatility_hmm.get_regime()
+                            current_regime = regime_state.regime.value
+                            existing_regime = self.position_opened_regime.get(symbol, 'normal_vol')
+                            if regime_priority.get(current_regime, 2) < regime_priority.get(existing_regime, 2):
+                                self.position_opened_regime[symbol] = current_regime
+                                print(f"  🌊 Updated position regime to {current_regime.upper()} (more adverse)")
+                        except Exception:
+                            pass
+
                     # CRITICAL: Reset peak_upnl after averaging (entry price changed)
                     # Old peak is stale because position characteristics changed
                     old_peak = self.peak_upnl.get(symbol, 0)
@@ -4467,9 +4518,9 @@ class AIXYZContinuousProfit:
                 shift_acceleration = 0.7  # Lower threshold = faster profit taking
                 print(f"  ⚡ Market Shift: BULLISH - accelerating short profit-taking (70% threshold)")
 
-        # ADVERSE RECOVERY DETECTION (V3.0.0)
-        # Check if position qualifies for more lenient thresholds (survived deep drawdown)
-        is_adverse, max_drawdown, adv_steps = self.is_adverse_recovery(symbol)
+        # ADVERSE RECOVERY DETECTION (V3.1.0) - MARKET REGIME BASED
+        # Check if position was opened in adverse MARKET and market has recovered
+        is_adverse, opened_regime, current_regime = self.is_adverse_recovery(symbol)
 
         # Determine which thresholds to use
         if is_adverse:
@@ -4490,8 +4541,9 @@ class AIXYZContinuousProfit:
         print(f"     Peak UPNL: ${peak:.4f}, Current: ${upnl:.4f} ({(upnl/peak*100):.1f}% of peak)")
         print(f"     Original size: {original_size:.4f}, Current: {current_size:.4f}, Surplus: {surplus:.4f}")
         print(f"     Dump stage: {stage}, Mode: {threshold_mode}")
+        print(f"     Market: Opened={opened_regime.upper()}, Current={current_regime.upper()}")
         if is_adverse:
-            print(f"     🌊 ADVERSE RECOVERY DETECTED: Max drawdown {max_drawdown*100:.1f}%, {adv_steps} avg steps")
+            print(f"     🌊 ADVERSE RECOVERY: Position opened during {opened_regime.upper()} market, now {current_regime.upper()}")
             print(f"     📊 Using thresholds: Stage1={stage1_threshold*100:.0f}%, Stage2={stage2_threshold*100:.0f}%")
         else:
             print(f"     Trigger: {stage1_threshold*100:.0f}% of peak (Stage 2: {stage2_threshold*100:.0f}%)")
@@ -4727,37 +4779,49 @@ class AIXYZContinuousProfit:
     def is_adverse_recovery(self, symbol: str) -> tuple:
         """
         ============================================================================
-        ADVERSE RECOVERY DETECTION
+        ADVERSE RECOVERY DETECTION - MARKET REGIME BASED
         ============================================================================
-        Purpose: Detect positions that survived deep drawdown and are now recovering.
-        These positions should use more lenient profit-taking thresholds (50/20 instead
-        of 85/40) because they have proven resilience and the market tends to continue
-        correcting after adverse conditions.
+        Purpose: Detect positions that were opened/averaged during ADVERSE MARKET
+        conditions (HIGH_VOL or CRISIS) and the market has now recovered to
+        NORMAL_VOL or LOW_VOL.
+
+        Logic: When the entire market was in adverse conditions (crash/high volatility)
+        and a position was opened or averaged during that time, the market will likely
+        correct back to normal. These positions should use lenient thresholds (50/20)
+        to hold longer and capture more of the recovery rally.
 
         Based on AXS backtest analysis (Jan 2026):
-        - Position with $160 margin hit -32% P&L drawdown
-        - Averaged through 5 steps, recovered to $88.17 peak
-        - With 85/30 thresholds: captured only $24.60
-        - With 50/20 thresholds: would have captured $235.52 (857% more!)
+        - Position opened during market adverse conditions
+        - Market recovered, position should hold longer
+        - With 50/20 thresholds: captured 857% more profit than 85/30
 
         QUALIFICATION CRITERIA:
-        1. Position must have hit adverse_recovery_min_drawdown (-25% P&L)
-        2. Position must have at least adverse_recovery_min_steps (3) averaging steps
+        1. Position was opened/averaged during HIGH_VOL or CRISIS market regime
+        2. Current market regime is NORMAL_VOL or LOW_VOL (recovered)
 
         RETURNS:
-        tuple: (is_adverse_recovery: bool, max_drawdown: float, averaging_steps: int)
+        tuple: (is_adverse_recovery: bool, opened_regime: str, current_regime: str)
         ============================================================================
         """
-        max_drawdown = self.position_max_drawdown.get(symbol, 0)
-        averaging_steps = self.averaging_steps.get(symbol, 0)
+        # Get regime when position was opened/averaged
+        opened_regime = self.position_opened_regime.get(symbol, 'normal_vol')
 
-        # Check both conditions: deep drawdown AND significant averaging
-        qualifies = (
-            max_drawdown <= self.adverse_recovery_min_drawdown and  # Hit -25% or worse
-            averaging_steps >= self.adverse_recovery_min_steps      # At least 3 averaging steps
-        )
+        # Get current market regime from Grok V2 HMM
+        current_regime = 'normal_vol'  # Default
+        if hasattr(self, 'grok_v2') and self.grok_v2:
+            try:
+                regime_state = self.grok_v2.volatility_hmm.get_regime()
+                current_regime = regime_state.regime.value
+            except Exception:
+                pass
 
-        return (qualifies, max_drawdown, averaging_steps)
+        # Check if position was opened in adverse market AND market has recovered
+        opened_in_adverse = opened_regime in self.adverse_market_regimes
+        market_recovered = current_regime in self.recovered_market_regimes
+
+        qualifies = opened_in_adverse and market_recovered
+
+        return (qualifies, opened_regime, current_regime)
 
     def check_take_profit(self, symbol: str, position: Dict, upnl: float, pct: float) -> bool:
         """
@@ -5601,6 +5665,7 @@ class AIXYZContinuousProfit:
         self.surplus_dump_stage.pop(symbol, None)
         self.original_sizes.pop(symbol, None)
         self.position_max_drawdown.pop(symbol, None)  # V3.0.0: Adverse recovery tracking
+        self.position_opened_regime.pop(symbol, None)  # V3.1.0: Market regime tracking
 
         # V1.2.0: Reset partial close ladder and profit taker
         self.partial_closer.reset_ladder(symbol)
@@ -6439,7 +6504,8 @@ class AIXYZContinuousProfit:
                     self.original_sizes,
                     self.peak_upnl_timestamps,
                     self.position_multipliers,
-                    self.position_max_drawdown  # V3.0.0: Adverse recovery tracking
+                    self.position_max_drawdown,  # V3.0.0: Adverse recovery tracking
+                    self.position_opened_regime  # V3.1.0: Market regime tracking
                 )
             
         except Exception as e:

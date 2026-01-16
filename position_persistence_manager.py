@@ -66,7 +66,8 @@ class PositionPersistenceManager:
                            original_sizes: Dict = None,
                            peak_upnl_timestamps: Dict = None,
                            position_multipliers: Dict = None,
-                           position_max_drawdown: Dict = None) -> bool:
+                           position_max_drawdown: Dict = None,
+                           position_opened_regime: Dict = None) -> bool:
         """
         Save current position state to persistent storage
         """
@@ -80,7 +81,8 @@ class PositionPersistenceManager:
             'surplus_dump_stage': surplus_dump_stage,
             'original_sizes': original_sizes or {},
             'position_multipliers': position_multipliers or {},
-            'position_max_drawdown': position_max_drawdown or {}  # V3.0.0: Adverse recovery tracking
+            'position_max_drawdown': position_max_drawdown or {},  # V3.0.0: Adverse recovery tracking
+            'position_opened_regime': position_opened_regime or {}  # V3.1.0: Market regime tracking
         }
         
         try:
@@ -257,7 +259,8 @@ class PositionPersistenceManager:
             'surplus_dump_stage': {},
             'original_sizes': {},
             'position_multipliers': {},
-            'position_max_drawdown': {}  # V3.0.0: Adverse recovery tracking
+            'position_max_drawdown': {},  # V3.0.0: Adverse recovery tracking
+            'position_opened_regime': {}  # V3.1.0: Market regime tracking
         }
     
     def initialize_from_exchange(self) -> Dict:
