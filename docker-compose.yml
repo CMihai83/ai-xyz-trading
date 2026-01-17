@@ -449,6 +449,34 @@ services:
       redis:
         condition: service_healthy
 
+  # ==========================================================================
+  # OPPORTUNITY DISCOVERY ENGINE (V1.0.0)
+  # ==========================================================================
+  # Multi-factor opportunity scoring (Claude + Grok design)
+  # Scans volatile symbols, scores by RSI + Volume + Momentum + Volatility
+  # Backtest: DASH 72.1% WR, 3.41 PF | Overall +16.23% on 168 trades
+  # --------------------------------------------------------------------------
+  opportunity_engine:
+    build:
+      context: .
+      dockerfile: Dockerfile.opportunity_engine
+    container_name: ai_xyz_opportunity_engine
+    restart: unless-stopped
+    environment:
+      - BITGET_API_KEY=${BITGET_API_KEY}
+      - BITGET_API_SECRET=${BITGET_API_SECRET}
+      - BITGET_API_PASSPHRASE=${BITGET_API_PASSPHRASE}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - ai_xyz_network
+    depends_on:
+      redis:
+        condition: service_healthy
+
 volumes:
   redis_data:
     driver: local
