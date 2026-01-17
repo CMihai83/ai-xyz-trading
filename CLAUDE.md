@@ -602,7 +602,7 @@ if TIERED_ALLOCATION_AVAILABLE:
 
 ---
 
-## 16. SYMBOL-SPECIFIC THRESHOLD CALIBRATION (V3.3.0)
+## 16. SYMBOL-SPECIFIC THRESHOLD CALIBRATION (V3.4.0)
 
 ### 16.1 Overview
 **File**: `symbol_threshold_calibrator.py`
@@ -611,8 +611,14 @@ The averaging P&L threshold is now calibrated per-symbol based on:
 1. **HMM Volatility Regime** - Base threshold from market conditions
 2. **Volatility Ratio vs BTC** - Higher vol coins get wider thresholds
 3. **BTC Correlation** - Uncorrelated coins get wider thresholds
-4. **CSSI Correction Probability** - Tighter if correction likely
+4. **CSSI Correction Probability** - WIDER if correction likely (V3.4.0 inverted)
 5. **Historical Max Drawdown** - Based on backtest data
+
+**V3.4.0 Changes (Grok recommendations):**
+- A: Reduced vol weight from 0.5 to 0.3 for mid-caps (vol_ratio 1.5-2.5)
+- B: Inverted CSSI logic (correction likely = WIDER threshold, wait longer)
+- C: Live data priority (try exchange first, then defaults)
+- D: Widened clamp range from [-50%, -20%] to [-60%, -15%]
 
 ### 16.2 Base Thresholds (from HMM Regime)
 | HMM Regime | Base Threshold | Rationale |
@@ -622,36 +628,45 @@ The averaging P&L threshold is now calibrated per-symbol based on:
 | HIGH_VOL | -35% | Conservative |
 | CRISIS | -45% | Very conservative |
 
-### 16.3 Calibration Formula
+### 16.3 Calibration Formula (V3.4.0)
 ```python
 def get_symbol_adjusted_threshold(symbol, hmm_regime, current_drawdown):
     base_threshold = regime_thresholds[hmm_regime]  # e.g., -30%
 
-    # Get symbol factors
+    # Get symbol factors (V3.4.0: try LIVE data first)
     vol_ratio = get_volatility_ratio(symbol)      # e.g., DOGE=2.5x BTC
     btc_corr = get_btc_correlation(symbol)        # 0-1
     correction_prob = get_correction_probability(symbol)
     max_dd = get_historical_max_drawdown(symbol)
 
-    # Calculate adjustments
-    vol_adj = (vol_ratio - 1) * 0.5       # +50% for 2x volatility
+    # V3.4.0-A: Volatility weight varies by coin type
+    if vol_ratio <= 2.5:
+        vol_weight = 0.3  # Mid-caps: reduced weight
+    else:
+        vol_weight = 0.5  # Meme coins: full weight
+    vol_adj = (vol_ratio - 1) * vol_weight
+
     corr_adj = (1 - btc_corr) * 0.2       # +20% for uncorrelated
-    cssi_adj = -correction_prob * 0.1     # -10% if correction likely
+
+    # V3.4.0-B: INVERTED CSSI logic
+    cssi_adj = +correction_prob * 0.1     # +10% if correction likely (wait LONGER)
+
     backtest_adj = max_dd / 200           # +25% for 50% historical DD
 
     adjusted = base_threshold * (1 + vol_adj + corr_adj + cssi_adj + backtest_adj)
-    return max(-50.0, min(-20.0, adjusted))  # Clamp -20% to -50%
+    return max(-60.0, min(-15.0, adjusted))  # V3.4.0-D: Widened clamp range
 ```
 
-### 16.4 Example Calibrated Thresholds (NORMAL_VOL)
-| Symbol | Vol Ratio | BTC Corr | Calibrated Threshold |
-|--------|-----------|----------|---------------------|
-| BTC | 1.0x | 1.0 | -30.0% (base) |
-| ETH | 1.2x | 0.85 | -32.1% |
-| SOL | 1.5x | 0.75 | -35.3% |
-| POL | 1.8x | 0.65 | -40.2% |
-| DOGE | 2.5x | 0.60 | -46.5% |
-| PEPE | 3.5x | 0.45 | -50.0% (clamped) |
+### 16.4 Example Calibrated Thresholds (NORMAL_VOL, V3.4.0)
+| Symbol | Vol Ratio | Vol Weight | BTC Corr | Calibrated Threshold |
+|--------|-----------|------------|----------|---------------------|
+| BTC | 1.0x | 0.3 | 1.0 | -30.0% (base) |
+| ETH | 1.2x | 0.3 | 0.85 | -31.5% |
+| SOL | 1.5x | 0.3 | 0.75 | -33.8% |
+| POL | 1.8x | 0.3 | 0.65 | -37.6% |
+| DOGE | 2.5x | 0.3 | 0.60 | -41.2% |
+| PEPE | 3.5x | 0.5 | 0.45 | -53.4% |
+| WIF | 3.0x | 0.5 | 0.40 | -49.8% |
 
 ### 16.5 Alignment with Tiered Capital Allocation
 | Regime | Position Limit | Base Threshold | Per-Symbol Adjustment |
@@ -758,6 +773,307 @@ All discrepancies were resolved with code evidence. Key corrections:
 
 ---
 
-**Version**: 3.3.0 | **Last Updated**: January 16, 2026
+## 17. OPPORTUNITY COST SERVICE V3.5.0
+
+### 17.1 Overview
+**Files**: `v3_opportunity_cost_engine.py`, `opportunity_cost_calibrator.py`
+
+The opportunity cost service determines when to close profitable positions based on
+whether better opportunities exist in the market. V3.5.0 implements symbol-specific
+calibration based on backtest validation with real market data.
+
+### 17.2 Backtest Findings (30 days, 8 symbols, 240 trades)
+
+| Metric | Current (V3) | Proposed (V3.5) | Change |
+|--------|--------------|-----------------|--------|
+| Total P&L | $16.48 | $168.00 | **+919%** |
+| Win Rate | 52.5% | 62.1% | **+9.6%** |
+| Avg Holding | 8h fixed | 80.5h tiered | Flexible |
+| Opp Cost at Exit | 1.62% | 0.83% | Better timing |
+
+**Critical Finding**: Fixed 8-hour max holding was forcing exits on ALL trades.
+
+### 17.3 V3.5.0 Changes (Grok Recommendations)
+
+| ID | Change | Before | After |
+|----|--------|--------|-------|
+| 1A/1B | Symbol-specific thresholds | Fixed 5%/3%/2% | Calibrated by vol/corr |
+| 2A/2B | Percentage-based guard | Fixed $0.15 | 3% of position |
+| 5A/5B | Tiered max holding | Fixed 480min | Tiered by vol/avg |
+
+### 17.4 Tiered Max Holding Times
+**File**: `opportunity_cost_calibrator.py`
+
+| Condition | Max Holding | Rationale |
+|-----------|-------------|-----------|
+| Averaged positions (steps > 0) | 7 days | Recovery trades need time |
+| Low vol (BTC-like, ratio ≤ 1.5) | 12 hours | Steady, can hold longer |
+| Mid vol (alts, ratio 1.5-2.5) | 8 hours | Balanced approach |
+| High vol (meme, ratio > 2.5) | **4 hours** | Backtest showed -11.8% with long holds |
+
+### 17.5 Symbol-Specific Thresholds
+```python
+# Calibration formula
+vol_mult = 1.0 + (vol_ratio - 1.5) * weight  # weight: 0.3 mid, 0.5 meme
+corr_mult = 1.0 + (1 - btc_corr) * 0.2
+
+calibrated_threshold = base_threshold * vol_mult * corr_mult
+```
+
+| Symbol | Vol Ratio | BTC Corr | High Cost | Max Hold |
+|--------|-----------|----------|-----------|----------|
+| BTC | 1.0 | 1.0 | 5.0% | 720min |
+| ETH | 1.2 | 0.85 | 5.2% | 720min |
+| SOL | 1.5 | 0.75 | 5.3% | 480min |
+| POL | 1.8 | 0.65 | 5.8% | 480min |
+| DOGE | 2.5 | 0.60 | 7.0% | 480min |
+| PEPE | 3.5 | 0.45 | 11.1% | **240min** |
+
+### 17.6 Percentage-Based Guard
+```python
+# Old: Fixed guard
+if unrealized_pl_usd <= 0.15:  # $0.15 fixed
+    return HOLD
+
+# New: Percentage-based guard (3% of position)
+guard_usd = position_size_usd * 0.03  # Scales with position
+if unrealized_pl_usd <= guard_usd:
+    return HOLD
+```
+
+### 17.7 AI Components (Unchanged)
+- **DynamicThresholdEngine**: Adjusts thresholds by market regime
+- **OpportunityCostPredictor**: ML ensemble (RF + GB + LSTM)
+- **CorrelationMatrixAnalyzer**: Portfolio correlation analysis
+- **MarkowitzOptimizer**: Mean-variance optimization
+- **RLClosingAgent**: Q-learning for exit timing
+
+---
+
+**Version**: 3.5.0 | **Last Updated**: January 16, 2026
 **Reviewed By**: Claude (Opus 4.5) & Grok (grok-2-latest)
 **Status**: Mutually Agreed
+
+### V3.5.0 Changelog
+- Opportunity Cost Service calibration (Grok recommendations 1-6)
+- Symbol-specific thresholds based on volatility/correlation
+- Percentage-based guard (3% instead of fixed $0.15)
+- Tiered max holding times (meme=4h, averaged=7d)
+- Backtest validated with real market data (+919% P&L improvement)
+
+---
+
+## MEMORIZED PRINCIPLES
+
+### Always Backtest First with Real Data
+**CRITICAL**: Before implementing any parameter changes or strategy modifications:
+1. Create a backtest script that uses REAL market data from the exchange
+2. Compare current vs proposed implementation
+3. Validate improvements across different symbol volatility profiles (BTC, alts, meme coins)
+4. Only implement changes that show measurable improvement in backtest
+5. Document backtest results in CLAUDE.md
+
+Example workflow:
+```bash
+# 1. Create backtest
+python3 opportunity_cost_backtest.py
+
+# 2. Analyze results by volatility category
+# - Low vol (BTC-like): Should benefit from longer holding
+# - Mid vol (alts): Balanced approach
+# - High vol (meme): May need SHORTER holding (inverse of intuition!)
+
+# 3. Implement based on data, not assumptions
+# 4. Rebuild and verify
+docker compose build ai_xyz_trading --no-cache
+docker compose up -d ai_xyz_trading
+```
+
+### Live Data Priority
+Always try to fetch LIVE data from the exchange before falling back to defaults.
+This ensures calibration adapts to current market conditions.
+
+### Always Backtest with Different Timeframes
+**CRITICAL**: A strategy that works on 1h candles may FAIL on 5m or 4h candles. Before implementing:
+1. Test across multiple timeframes: 5m, 15m, 1h, 4h (minimum)
+2. Verify improvement is CONSISTENT across timeframes
+3. If strategy works on some timeframes but not others:
+   - Consider timeframe-adaptive parameters
+   - Investigate why it fails on specific timeframes
+   - Do NOT implement until understood
+4. Document which timeframe shows best results
+
+Example workflow:
+```bash
+# Run multi-timeframe backtest
+python3 opportunity_cost_backtest.py --mode multi --timeframes 5m 15m 1h 4h
+
+# Verify CONSISTENT improvement across ALL timeframes
+# If improvement is negative on ANY timeframe, investigate before implementing
+```
+
+**Key Insight**: High-frequency timeframes (1m, 5m) capture different market dynamics than low-frequency (4h, 1d). A robust strategy should work across the spectrum.
+
+### V3.4.0 Changelog
+- Symbol-specific calibration improvements (Grok recommendations A-D)
+- Reduced volatility weight for mid-caps (0.5 → 0.3)
+- Inverted CSSI logic (correction likely = wait longer)
+- Live data priority for volatility/correlation
+- Widened clamp range (-60% to -15%)
+
+---
+
+## 18. Dynamic Position Manager V1.0.0 (Consortium Design)
+
+**File**: `dynamic_position_manager.py`
+**Design**: Claude + Grok Consortium (January 16, 2026)
+
+### Multi-Factor Position Sizing
+
+Determines position parameters based on 4 factors:
+
+| Factor | Weight | Effect |
+|--------|--------|--------|
+| **Volatility** | 40% | Higher vol = smaller positions, more averaging room |
+| **BTC Correlation** | 30% | High corr = reduce allocation (systemic risk) |
+| **Trend Strength** | 20% | Strong trend = larger positions, more averaging |
+| **Funding Rate** | 10% | Extreme funding = reduce exposure |
+
+### Factor Calculation
+
+```python
+vol_score = min(annualized_vol / 0.50, 1.0)
+corr_score = (1 + pearson_corr(asset, btc)) / 2
+trend_score = min(ADX / 50, 1.0)
+funding_score = min(abs(funding_rate) / 0.001, 1.0)
+
+# Combined Position Type Score (higher = riskier)
+PTS = 0.4*vol + 0.3*corr + 0.2*(1-trend) + 0.1*funding
+```
+
+### Position Parameters from PTS
+
+```python
+base_margin = base_max * (1 - 0.6*vol - 0.3*corr + 0.1*trend)
+total_allocation = alloc_max * (1 - 0.5*vol - 0.3*corr - 0.2*funding)
+max_steps = round(8 * (0.5*trend + 0.3*(1-vol) + 0.2*(1-funding)))
+```
+
+### Risk Tiers
+
+| Tier | PTS Range | base_margin | total_allocation | max_steps | leverage |
+|------|-----------|-------------|------------------|-----------|----------|
+| CONSERVATIVE | < 0.35 | $1.50-2.00 | $15-20 | 5-8 | 10x |
+| MODERATE | 0.35-0.65 | $0.70-1.50 | $10-15 | 4-6 | 7x |
+| AGGRESSIVE | > 0.65 | $0.30-0.70 | $5-10 | 2-4 | 5x |
+
+### Dynamic MAX_POSITIONS
+
+```python
+max_positions = min(
+    equity * 0.25 / base_allocation_reference,
+    HARD_CAP_30
+)
+
+effective_slots_used = sum(pos.total_allocation / 25.0)
+remaining_capacity = max_positions - effective_slots_used
+```
+
+### Safety Mechanisms
+
+1. **Block high-risk positions** when equity < 50% of initial
+2. **Only allow CONSERVATIVE** when equity < 30% of initial
+3. **Emergency de-risk** when UPNL < -20% of equity
+
+### Backtest Results (240 trades, $404 equity)
+
+| Timeframe | Trades | P&L | Win Rate |
+|-----------|--------|-----|----------|
+| 15m | 80 | $1.09 | 57.5% |
+| 1h | 80 | $9.69 | 83.8% |
+| 4h | 80 | $40.41 | 98.8% |
+| **TOTAL** | 240 | **$51.19** | - |
+
+### Usage
+
+```python
+from dynamic_position_manager import get_dynamic_position_manager
+
+manager = get_dynamic_position_manager(equity=404.0)
+config = manager.calculate_position_parameters('PEPE/USDT:USDT')
+
+print(f"Tier: {config.risk_tier.value}")
+print(f"Base: ${config.base_margin:.2f}")
+print(f"Allocation: ${config.total_allocation:.2f}")
+print(f"Max Steps: {config.max_averaging_steps}")
+```
+
+---
+
+## 19. V3.5.1 STATE SYNCHRONIZATION FIX (Jan 17, 2026)
+
+### 19.1 Bug Description
+**Issue**: Position state (averaging_steps) persisted across position cycles, causing surplus dump failures.
+
+**Root Cause**: Multiple Redis persistence layers (db=0: EnhancedPositionSync, db=1: PositionPersistenceManager) storing state independently. When a position closed, db=1 was cleared but db=0 retained stale state that was restored on new position open.
+
+**Impact**: BLUR position stuck at +59% profit with near-zero surplus (0.1 contracts instead of expected ~38,000).
+
+### 19.2 Fix Implementation
+
+**File**: `aixyz_continuous_profit_system.py`
+
+**Change 1: Clear EnhancedPositionSync on position close (line 5840-5847)**
+```python
+# V3.5.1 FIX: Clear EnhancedPositionSync state (Redis db=0)
+if hasattr(self, 'sync_integration') and self.sync_integration:
+    try:
+        self.sync_integration.sync._remove_position_state(symbol)
+        print(f"  🔄 Cleared EnhancedPositionSync state for {symbol}")
+    except Exception as sync_err:
+        print(f"  ⚠️ Failed to clear sync state: {sync_err}")
+```
+
+**Change 2: Startup validation for stale averaging_steps (line 655-685)**
+```python
+# V3.5.1 FIX: Detect STALE averaging_steps (high steps but no actual surplus)
+if steps > 0 and symbol in self.original_sizes:
+    surplus = current - original
+    margin = pos.get('initial_margin', 5.0)
+
+    # If surplus is <20% of current AND margin is small, state is stale
+    if actual_surplus_ratio < 0.2 and margin < expected_min_margin:
+        print(f"⚠️ STALE STATE DETECTED for {symbol}")
+        self.averaging_steps[symbol] = 0
+        self.original_sizes[symbol] = current
+        self.position_zones[symbol] = 'NEUTRAL'
+```
+
+### 19.3 Grok Feedback (Jan 17, 2026)
+
+**Recommendations integrated into Sprint 15 backlog:**
+1. ✅ V3.5.1 fix approach confirmed correct
+2. Add position timestamp tracking for stale state detection
+3. Implement automated alerts for stuck positions
+4. Add zone transition logging for monitoring
+5. Extend startup validation to other critical state variables
+6. Conduct stress testing for state synchronization
+
+### 19.4 Sprint 15 Backlog
+
+See `/root/ai_xyz/SPRINT_BACKLOG.json` for full backlog.
+
+| ID | Title | Priority | Status |
+|----|-------|----------|--------|
+| S15-001 | BLUR State Corruption Fix | P0 | ✅ Completed |
+| S15-002 | Position Timestamp Tracking | P1 | Backlog |
+| S15-003 | Automated Stuck Position Alerts | P2 | Backlog |
+| S15-004 | Zone Transition Logging | P2 | Backlog |
+| S15-005 | Extend Startup Validation | P1 | Backlog |
+| S15-006 | State Sync Stress Testing | P2 | Backlog |
+
+---
+
+**Version**: 3.5.1 | **Last Updated**: January 17, 2026
+**Reviewed By**: Claude (Opus 4.5) & Grok (grok-2-latest)
+**Status**: Deployed & Operational

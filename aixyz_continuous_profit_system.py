@@ -52,6 +52,14 @@ except ImportError as e:
     print(f"⚠️ SymbolThresholdCalibrator not available: {e}")
     SYMBOL_THRESHOLD_CALIBRATOR_AVAILABLE = False
 
+# V3.6.0: Multi-factor dynamic position manager (Claude+Grok consortium)
+try:
+    from dynamic_position_manager import DynamicPositionManager, get_dynamic_position_manager
+    DYNAMIC_POSITION_MANAGER_AVAILABLE = True
+except ImportError as e:
+    print(f"⚠️ DynamicPositionManager not available: {e}")
+    DYNAMIC_POSITION_MANAGER_AVAILABLE = False
+
 from enhanced_market_scanner import EnhancedMarketScanner
 from scanner_v4 import ScannerV4  # V4: All-market intelligent scanner
 from dynamic_fibonacci_delta import DynamicFibonacciDeltaService  # Dynamic delta based on volatility
@@ -225,7 +233,21 @@ class AIXYZContinuousProfit:
         # Initialize margin-aware position sizer
         self.margin_sizer = MarginAwarePositionSizer()
         print("💰 Margin-Aware Position Sizer initialized - prevents liquidation")
-        
+
+        # V3.6.0: Initialize multi-factor dynamic position manager
+        if DYNAMIC_POSITION_MANAGER_AVAILABLE:
+            try:
+                initial_equity = float(os.getenv('INITIAL_BALANCE', 400.0))
+                self.dynamic_position_manager = get_dynamic_position_manager(initial_equity)
+                print("📊 V3.6.0: DynamicPositionManager initialized - Multi-factor position sizing")
+                print("   Factors: Volatility (40%), BTC Correlation (30%), Trend (20%), Funding (10%)")
+                print("   Dynamic: base_margin, total_allocation, max_steps per symbol")
+            except Exception as e:
+                print(f"⚠️ DynamicPositionManager initialization failed: {e}")
+                self.dynamic_position_manager = None
+        else:
+            self.dynamic_position_manager = None
+
         # Initialize zone state machine for adaptive delta calculation (optional)
         try:
             from zone_state_machine import ZoneStateMachine
@@ -629,6 +651,38 @@ class AIXYZContinuousProfit:
                             self.averaging_steps[symbol] = implied_steps
                             steps = implied_steps
                             print(f"    🔧 Detected averaging from size: {symbol} → {implied_steps} steps (ratio {ratio:.2f}x)")
+
+                    # V3.5.1 FIX: Detect STALE averaging_steps (high steps but no actual surplus)
+                    # Bug: averaging_steps persisted from old position to new position of same symbol
+                    if steps > 0 and symbol in self.original_sizes:
+                        original = self.original_sizes[symbol]
+                        current = pos['amount']
+                        surplus = current - original
+                        margin = pos.get('initial_margin', pos.get('margin', 5.0))
+
+                        # With averaging steps, surplus should be significant (at least 20% of current)
+                        # And margin should be larger than base ($5 × sum of multipliers for steps)
+                        expected_min_surplus_ratio = 0.2  # At least 20% surplus expected
+                        base_margin = 5.0
+                        # Multipliers sum for steps: [0.5, 0.75, 1.5, 3.0, 5.0, 8.0, 12.0, 15.0]
+                        multipliers_cumsum = [0.5, 1.25, 2.75, 5.75, 10.75, 18.75, 30.75, 45.75]
+                        expected_min_margin = base_margin * (1 + multipliers_cumsum[min(steps-1, 7)] * 0.5)
+
+                        actual_surplus_ratio = surplus / current if current > 0 else 0
+
+                        if actual_surplus_ratio < expected_min_surplus_ratio and margin < expected_min_margin:
+                            # STALE STATE DETECTED: averaging_steps is from old position
+                            print(f"    ⚠️ STALE STATE DETECTED for {symbol}:")
+                            print(f"       Steps={steps} but surplus={surplus:.2f} ({actual_surplus_ratio*100:.1f}%)")
+                            print(f"       Margin=${margin:.2f} (expected min ${expected_min_margin:.2f})")
+                            print(f"       RESETTING to fresh position state")
+                            self.averaging_steps[symbol] = 0
+                            self.original_sizes[symbol] = current  # Set current as original
+                            self.surplus_dump_stage.pop(symbol, None)
+                            self.peak_upnl.pop(symbol, None)
+                            self.position_zones[symbol] = 'NEUTRAL'
+                            steps = 0
+                            zone = 'NEUTRAL'
 
                     print(f"    {symbol}: {pos['side']} | Zone: {zone} | Avg Steps: {steps}")
 
@@ -2572,8 +2626,35 @@ class AIXYZContinuousProfit:
             # This is needed for the position opening logic later
             balance = self.exchange.fetch_balance()
             account_balance = balance['USDT']['free'] + balance['USDT']['used']
-            max_capital_per_position = PositionSizingConfig.TOTAL_CAPITAL  # Use config value
-            capital_allocation_percent = PositionSizingConfig.TRADING_CAPITAL_PERCENT
+
+            # V3.6.0: Use dynamic position manager for symbol-specific sizing
+            dynamic_config = None
+            if hasattr(self, 'dynamic_position_manager') and self.dynamic_position_manager:
+                try:
+                    # Update equity in manager
+                    self.dynamic_position_manager.update_equity(account_balance)
+
+                    # Get multi-factor position parameters for this symbol
+                    dynamic_config = self.dynamic_position_manager.calculate_position_parameters(symbol)
+
+                    # Use dynamic allocation instead of fixed
+                    max_capital_per_position = dynamic_config.total_allocation
+                    capital_allocation_percent = 1.0  # Already calculated in dynamic config
+
+                    print(f"  📊 V3.6.0 Dynamic Sizing: {dynamic_config.risk_tier.value}")
+                    print(f"     Base: ${dynamic_config.base_margin:.2f}, Alloc: ${dynamic_config.total_allocation:.2f}")
+                    print(f"     Max Steps: {dynamic_config.max_averaging_steps}, Leverage Cap: {dynamic_config.leverage_max}x")
+                    print(f"     Factors: Vol={dynamic_config.volatility_score:.2f}, Corr={dynamic_config.correlation_score:.2f}, "
+                          f"Trend={dynamic_config.trend_score:.2f}, Fund={dynamic_config.funding_score:.2f}")
+                except Exception as e:
+                    print(f"  ⚠️ Dynamic sizing failed, using fixed: {e}")
+                    max_capital_per_position = PositionSizingConfig.TOTAL_CAPITAL
+                    capital_allocation_percent = PositionSizingConfig.TRADING_CAPITAL_PERCENT
+            else:
+                # Fallback to fixed sizing
+                max_capital_per_position = PositionSizingConfig.TOTAL_CAPITAL
+                capital_allocation_percent = PositionSizingConfig.TRADING_CAPITAL_PERCENT
+
             effective_capital = min(account_balance, max_capital_per_position)
             available_margin = effective_capital * capital_allocation_percent
             
@@ -2618,7 +2699,12 @@ class AIXYZContinuousProfit:
                 if signal_leverage < leverage:
                     print(f"  📉 Using more conservative signal leverage: {signal_leverage}x instead of {leverage}x")
                     leverage = signal_leverage
-            
+
+            # V3.6.0: Cap leverage based on dynamic position manager's risk tier
+            if dynamic_config and dynamic_config.leverage_max < leverage:
+                print(f"  🎯 V3.6.0 Leverage Cap: {leverage}x -> {dynamic_config.leverage_max}x ({dynamic_config.risk_tier.value})")
+                leverage = dynamic_config.leverage_max
+
             # Calculate position sizing with 70/30 split
             # Get account balance for proper sizing
             balance = self.exchange.fetch_balance()
@@ -2630,9 +2716,13 @@ class AIXYZContinuousProfit:
             averaging_plan = fib_params.get('averaging_plan', {})
             
             # Calculate base margin first (fallback value)
-            # available_margin was already calculated earlier
-            base_margin = available_margin / 6  # Default fallback
-            
+            # V3.6.0: Use dynamic config's base_margin if available
+            if dynamic_config:
+                base_margin = dynamic_config.base_margin
+                print(f"  📊 V3.6.0 Dynamic Base Margin: ${base_margin:.2f}")
+            else:
+                base_margin = available_margin / 6  # Default fallback
+
             initial_margin = averaging_plan.get('initial_margin', base_margin)
             total_capital_needed = averaging_plan.get('total_margin_used', available_margin)
             
@@ -2914,8 +3004,16 @@ class AIXYZContinuousProfit:
                 )
             
             print(f"  ✅ Position opened: {amount:.4f} contracts @ {price}")
+
+            # V3.6.0: Register position with dynamic position manager for capacity tracking
+            if hasattr(self, 'dynamic_position_manager') and self.dynamic_position_manager and dynamic_config:
+                self.dynamic_position_manager.register_position(symbol, dynamic_config)
+                capacity = self.dynamic_position_manager.get_remaining_capacity()
+                print(f"  📊 V3.6.0 Capacity: {capacity['effective_slots_used']:.1f}/{capacity['max_positions']} slots, "
+                      f"${capacity['remaining_capital']:.2f} remaining")
+
             return True
-            
+
         except Exception as e:
             print(f"  ❌ Failed to open position: {e}")
             return False
@@ -5716,6 +5814,16 @@ class AIXYZContinuousProfit:
             except Exception as tier_err:
                 print(f"  ⚠️ Tier release error: {tier_err}")
 
+        # V3.6.0: Release from dynamic position manager
+        if hasattr(self, 'dynamic_position_manager') and self.dynamic_position_manager:
+            try:
+                self.dynamic_position_manager.release_position(symbol)
+                capacity = self.dynamic_position_manager.get_remaining_capacity()
+                print(f"  📊 V3.6.0 Released: {capacity['effective_slots_used']:.1f}/{capacity['max_positions']} slots, "
+                      f"${capacity['remaining_capital']:.2f} available")
+            except Exception as dpm_err:
+                print(f"  ⚠️ Dynamic position manager release error: {dpm_err}")
+
         # Calculate final PnL for adaptive Fibonacci learning (if position exists)
         final_pnl = 0.0
         if symbol in self.active_positions:
@@ -5760,6 +5868,15 @@ class AIXYZContinuousProfit:
         if symbol in self.liquidation_protection.protection_orders:
             print(f"  🛡️ Cancelling liquidation protection order for closed position {symbol}")
             self.liquidation_protection.cancel_protection_order(symbol)
+
+        # V3.5.1 FIX: Clear EnhancedPositionSync state (Redis db=0) to prevent stale state on reopen
+        # Bug: averaging_steps was persisting across position cycles, causing surplus dump failures
+        if hasattr(self, 'sync_integration') and self.sync_integration:
+            try:
+                self.sync_integration.sync._remove_position_state(symbol)
+                print(f"  🔄 Cleared EnhancedPositionSync state for {symbol}")
+            except Exception as sync_err:
+                print(f"  ⚠️ Failed to clear sync state: {sync_err}")
 
         print(f"  🧹 Cleaned tracking data for closed position {symbol}")
 
