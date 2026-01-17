@@ -4,7 +4,7 @@ AI-XYZ Quick Scalper Module V1.0.0
 ===================================
 
 High-frequency RSI mean-reversion scalping strategy for predictable symbols.
-Based on backtest validation: FIL (62.1% WR, 18min hold), ATOM (62.9% WR, 21min hold)
+Based on backtest validation: FIL (62.1% WR), ATOM (62.9% WR), APT (73.6% WR)
 
 STRATEGY PARAMETERS (Backtest Validated):
 - Entry: RSI < 25 (LONG), RSI > 75 (SHORT)
@@ -22,8 +22,9 @@ import time
 import json
 import os
 import redis
+import requests
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Set
 import pandas as pd
 import numpy as np
 from dotenv import load_dotenv
@@ -34,11 +35,18 @@ load_dotenv()
 class QuickScalperConfig:
     """Configuration for Quick Scalper strategy"""
 
-    # Symbols selected by backtest analysis (high predictability + volatility)
-    SCALP_SYMBOLS = [
+    # Fallback symbols (used if prediction API unavailable)
+    FALLBACK_SYMBOLS = [
         'FIL/USDT:USDT',   # 62.1% WR, 2.45 PF, 18min avg hold
         'ATOM/USDT:USDT',  # 62.9% WR, 2.44 PF, 21min avg hold
+        'APT/USDT:USDT',   # 73.6% WR - highest predictability
     ]
+
+    # Dynamic symbol selection from prediction API
+    PREDICTION_API_URL = "http://prediction_service:8009"
+    MIN_CONFIDENCE = 70    # Minimum confidence score to consider
+    MAX_SYMBOLS = 5        # Max symbols per direction (long/short)
+    SYMBOL_REFRESH_SECONDS = 300  # Refresh every 5 minutes
 
     # RSI parameters (backtest validated)
     RSI_PERIOD = 14
@@ -50,9 +58,9 @@ class QuickScalperConfig:
     STOP_LOSS_PCT = 0.2    # 0.2% stop loss
     MAX_HOLD_CANDLES = 4   # Max 4 candles (60 min on 15m TF)
 
-    # Position sizing
-    POSITION_SIZE_USD = 5.0
-    MAX_CONCURRENT_SCALPS = 2  # One per symbol
+    # Position sizing (must be >= $5 margin after leverage)
+    POSITION_SIZE_USD = 50.0   # $50 notional = $5 margin at 10x
+    MAX_CONCURRENT_SCALPS = 3  # One per symbol
 
     # Timeframe
     TIMEFRAME = '15m'
@@ -169,6 +177,11 @@ class QuickScalper:
         # Cooldown tracking
         self.last_trade_time: Dict[str, datetime] = {}
 
+        # Dynamic symbol lists from prediction API
+        self.long_candidates: List[dict] = []   # Symbols good for LONG (bullish predictions)
+        self.short_candidates: List[dict] = []  # Symbols good for SHORT (bearish predictions)
+        self.last_symbol_refresh: datetime = datetime.min
+
         # Statistics
         self.stats = {
             'total_trades': 0,
@@ -181,8 +194,12 @@ class QuickScalper:
         # Load state from Redis
         self._load_state()
 
-        print(f"QuickScalper V1.0.0 initialized")
-        print(f"  Symbols: {QuickScalperConfig.SCALP_SYMBOLS}")
+        # Initial symbol fetch
+        self._refresh_symbols()
+
+        print(f"QuickScalper V1.1.0 initialized (Dynamic Symbol Selection)")
+        print(f"  Prediction API: {QuickScalperConfig.PREDICTION_API_URL}")
+        print(f"  Min confidence: {QuickScalperConfig.MIN_CONFIDENCE}%")
         print(f"  RSI: <{QuickScalperConfig.RSI_OVERSOLD} LONG, >{QuickScalperConfig.RSI_OVERBOUGHT} SHORT")
         print(f"  TP: {QuickScalperConfig.TAKE_PROFIT_PCT}%, SL: {QuickScalperConfig.STOP_LOSS_PCT}%")
         print(f"  Max hold: {QuickScalperConfig.MAX_HOLD_CANDLES} candles ({QuickScalperConfig.MAX_HOLD_CANDLES * QuickScalperConfig.CANDLE_MINUTES} min)")
@@ -221,6 +238,65 @@ class QuickScalper:
             self.redis.set('quick_scalper:state', json.dumps(state))
         except Exception as e:
             print(f"  Failed to save state: {e}")
+
+    def _refresh_symbols(self):
+        """Fetch top predicted symbols from prediction API"""
+        try:
+            url = f"{QuickScalperConfig.PREDICTION_API_URL}/market/overview"
+            response = requests.get(url, timeout=30)
+
+            if response.status_code != 200:
+                print(f"  Prediction API error: {response.status_code}")
+                self._use_fallback_symbols()
+                return
+
+            data = response.json()
+
+            # Filter bullish symbols (for LONG entries when RSI oversold)
+            self.long_candidates = [
+                s for s in data.get('top_bullish', [])
+                if s.get('confidence', 0) >= QuickScalperConfig.MIN_CONFIDENCE
+            ][:QuickScalperConfig.MAX_SYMBOLS]
+
+            # Filter bearish symbols (for SHORT entries when RSI overbought)
+            self.short_candidates = [
+                s for s in data.get('top_bearish', [])
+                if s.get('confidence', 0) >= QuickScalperConfig.MIN_CONFIDENCE
+            ][:QuickScalperConfig.MAX_SYMBOLS]
+
+            self.last_symbol_refresh = datetime.now()
+
+            long_syms = [s['symbol'].replace('/USDT:USDT', '') for s in self.long_candidates]
+            short_syms = [s['symbol'].replace('/USDT:USDT', '') for s in self.short_candidates]
+
+            print(f"\n[SYMBOLS UPDATED] {datetime.now().strftime('%H:%M:%S')}")
+            print(f"  LONG candidates ({len(self.long_candidates)}): {long_syms}")
+            print(f"  SHORT candidates ({len(self.short_candidates)}): {short_syms}")
+
+        except requests.exceptions.RequestException as e:
+            print(f"  Prediction API connection error: {e}")
+            self._use_fallback_symbols()
+        except Exception as e:
+            print(f"  Symbol refresh error: {e}")
+            self._use_fallback_symbols()
+
+    def _use_fallback_symbols(self):
+        """Use fallback symbols when prediction API unavailable"""
+        print("  Using fallback symbols")
+        self.long_candidates = [
+            {'symbol': s, 'confidence': 65}
+            for s in QuickScalperConfig.FALLBACK_SYMBOLS
+        ]
+        self.short_candidates = [
+            {'symbol': s, 'confidence': 65}
+            for s in QuickScalperConfig.FALLBACK_SYMBOLS
+        ]
+        self.last_symbol_refresh = datetime.now()
+
+    def _should_refresh_symbols(self) -> bool:
+        """Check if symbols need refresh"""
+        elapsed = (datetime.now() - self.last_symbol_refresh).total_seconds()
+        return elapsed >= QuickScalperConfig.SYMBOL_REFRESH_SECONDS
 
     def calculate_rsi(self, symbol: str) -> Optional[float]:
         """Calculate RSI for symbol"""
@@ -273,15 +349,22 @@ class QuickScalper:
             amount = QuickScalperConfig.POSITION_SIZE_USD / price
 
             # Set leverage
-            self.exchange.set_leverage(QuickScalperConfig.LEVERAGE, symbol)
+            try:
+                self.exchange.set_leverage(QuickScalperConfig.LEVERAGE, symbol)
+            except Exception as lev_err:
+                print(f"  Leverage warning: {lev_err}")
 
-            # Create market order
+            # Create market order (hedge mode - use tradeSide='open')
             order_side = 'buy' if side == 'long' else 'sell'
             order = self.exchange.create_market_order(
                 symbol,
                 order_side,
                 amount,
-                params={'posSide': 'long' if side == 'long' else 'short'}
+                params={
+                    'tradeSide': 'open',
+                    'holdSide': side,  # 'long' or 'short'
+                    'productType': 'USDT-FUTURES'
+                }
             )
 
             # Create position object
@@ -317,15 +400,16 @@ class QuickScalper:
             if not current_price:
                 return False
 
-            # Close the position
+            # Close the position (hedge mode - use tradeSide='close')
             close_side = 'sell' if pos.side == 'long' else 'buy'
             order = self.exchange.create_market_order(
                 symbol,
                 close_side,
                 pos.size,
                 params={
-                    'posSide': 'long' if pos.side == 'long' else 'short',
-                    'reduceOnly': True
+                    'tradeSide': 'close',
+                    'holdSide': pos.side,  # 'long' or 'short'
+                    'productType': 'USDT-FUTURES'
                 }
             )
 
@@ -375,37 +459,59 @@ class QuickScalper:
         self._save_state()
 
     def scan_for_entries(self):
-        """Scan for entry opportunities"""
-        for symbol in QuickScalperConfig.SCALP_SYMBOLS:
-            # Skip if already in position
-            if symbol in self.positions:
+        """Scan for entry opportunities using dynamic symbol selection"""
+
+        # Refresh symbols if needed
+        if self._should_refresh_symbols():
+            self._refresh_symbols()
+
+        # Skip if max concurrent reached
+        if len(self.positions) >= QuickScalperConfig.MAX_CONCURRENT_SCALPS:
+            return
+
+        # Scan LONG candidates (bullish predictions) for oversold RSI
+        for candidate in self.long_candidates:
+            symbol = candidate.get('symbol')
+            confidence = candidate.get('confidence', 0)
+
+            if symbol in self.positions or self.check_cooldown(symbol):
                 continue
 
-            # Skip if in cooldown
-            if self.check_cooldown(symbol):
-                continue
-
-            # Skip if max concurrent reached
             if len(self.positions) >= QuickScalperConfig.MAX_CONCURRENT_SCALPS:
-                continue
+                break
 
-            # Get RSI
             rsi = self.calculate_rsi(symbol)
             if rsi is None:
                 continue
 
-            # Get current price
-            price = self.get_current_price(symbol)
-            if price is None:
+            # LONG entry: RSI oversold + bullish prediction
+            if rsi < QuickScalperConfig.RSI_OVERSOLD:
+                price = self.get_current_price(symbol)
+                if price:
+                    print(f"\n[SCALP] {symbol}: RSI={rsi:.1f} < {QuickScalperConfig.RSI_OVERSOLD} + Bullish ({confidence}%) -> LONG")
+                    self.open_position(symbol, 'long', price)
+
+        # Scan SHORT candidates (bearish predictions) for overbought RSI
+        for candidate in self.short_candidates:
+            symbol = candidate.get('symbol')
+            confidence = candidate.get('confidence', 0)
+
+            if symbol in self.positions or self.check_cooldown(symbol):
                 continue
 
-            # Check for entry signals
-            if rsi < QuickScalperConfig.RSI_OVERSOLD:
-                print(f"\n[SCALP] {symbol}: RSI={rsi:.1f} < {QuickScalperConfig.RSI_OVERSOLD} -> LONG SIGNAL")
-                self.open_position(symbol, 'long', price)
-            elif rsi > QuickScalperConfig.RSI_OVERBOUGHT:
-                print(f"\n[SCALP] {symbol}: RSI={rsi:.1f} > {QuickScalperConfig.RSI_OVERBOUGHT} -> SHORT SIGNAL")
-                self.open_position(symbol, 'short', price)
+            if len(self.positions) >= QuickScalperConfig.MAX_CONCURRENT_SCALPS:
+                break
+
+            rsi = self.calculate_rsi(symbol)
+            if rsi is None:
+                continue
+
+            # SHORT entry: RSI overbought + bearish prediction
+            if rsi > QuickScalperConfig.RSI_OVERBOUGHT:
+                price = self.get_current_price(symbol)
+                if price:
+                    print(f"\n[SCALP] {symbol}: RSI={rsi:.1f} > {QuickScalperConfig.RSI_OVERBOUGHT} + Bearish ({confidence}%) -> SHORT")
+                    self.open_position(symbol, 'short', price)
 
     def manage_positions(self):
         """Manage existing positions"""

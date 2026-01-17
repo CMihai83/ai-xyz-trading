@@ -7,7 +7,7 @@ WORKDIR /app
 
 # Install dependencies
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir ccxt pandas numpy redis python-dotenv
+    pip install --no-cache-dir ccxt pandas numpy redis python-dotenv requests
 
 # Copy only required files
 COPY quick_scalper.py /app/
