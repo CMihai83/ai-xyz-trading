@@ -1,0 +1,17 @@
+# Quick Scalper Service Dockerfile
+# AI-XYZ Trading System - High-frequency RSI mean-reversion scalping
+
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install dependencies
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir ccxt pandas numpy redis python-dotenv
+
+# Copy only required files
+COPY quick_scalper.py /app/
+COPY .env /app/
+
+# Run the service
+CMD ["python3", "quick_scalper.py"]

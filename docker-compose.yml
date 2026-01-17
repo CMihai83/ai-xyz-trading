@@ -421,6 +421,34 @@ services:
       retries: 3
       start_period: 30s
 
+  # ==========================================================================
+  # QUICK SCALPER SERVICE (V1.0.0)
+  # ==========================================================================
+  # High-frequency RSI mean-reversion scalping for predictable symbols
+  # Targets: FIL (62.1% WR), ATOM (62.9% WR) - Backtest validated
+  # Strategy: RSI <25 LONG, RSI >75 SHORT, 0.3% TP, 0.2% SL, 60min max hold
+  # --------------------------------------------------------------------------
+  quick_scalper:
+    build:
+      context: .
+      dockerfile: Dockerfile.quick_scalper
+    container_name: ai_xyz_quick_scalper
+    restart: unless-stopped
+    environment:
+      - BITGET_API_KEY=${BITGET_API_KEY}
+      - BITGET_API_SECRET=${BITGET_API_SECRET}
+      - BITGET_API_PASSPHRASE=${BITGET_API_PASSPHRASE}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - ai_xyz_network
+    depends_on:
+      redis:
+        condition: service_healthy
+
 volumes:
   redis_data:
     driver: local
