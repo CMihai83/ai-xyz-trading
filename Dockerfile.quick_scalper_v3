@@ -11,6 +11,7 @@ RUN pip install --no-cache-dir --upgrade pip && \
 
 # Copy files
 COPY quick_scalper_v3.py /app/
+COPY unified_order_router.py /app/
 COPY .env /app/
 
 # Run the service

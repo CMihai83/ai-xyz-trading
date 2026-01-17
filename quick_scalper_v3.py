@@ -1,22 +1,26 @@
 #!/usr/bin/env python3
 """
-AI-XYZ Quick Scalper V3.0.0 - Hybrid 1-Minute + Order Book
+AI-XYZ Quick Scalper V3.1.0 - Hybrid 1-Minute + Order Book
 ============================================================
 
 High-frequency scalping with 1-minute candles + order book confirmation.
 Designed by Claude (Opus 4.5) + Grok Consortium.
+
+V3.1.0: Integrated with Unified Order Router for cross-system coordination.
 
 ARCHITECTURE:
 - 1-minute candles for RSI signals
 - Real-time order book for imbalance confirmation
 - Combined scoring: RSI (40%) + OrderBook (40%) + Volume (10%) + Momentum (10%)
 - Micro TP/SL: 0.15% / 0.08%
+- UNIFIED ORDER ROUTER: Prevents conflicts with main trading system
 
 SIGNAL FLOW:
 1. RSI reaches extreme (<25 or >75 on 1m)
 2. Order book imbalance confirms direction (>20% imbalance)
-3. Combined score > 70 triggers entry
-4. Exit on TP/SL or max hold (5 minutes)
+3. Check for conflicts with other systems via Order Router
+4. Combined score > 70 triggers entry
+5. Exit on TP/SL or max hold (5 minutes)
 
 DATE: January 17, 2026
 """
@@ -37,6 +41,18 @@ from dotenv import load_dotenv
 from dataclasses import dataclass, field
 
 load_dotenv()
+
+# Import Unified Order Router
+try:
+    from unified_order_router import (
+        submit_order, get_position, get_all_positions,
+        can_open_position, OrderResponse, SystemType
+    )
+    ORDER_ROUTER_AVAILABLE = True
+    print("  ✓ Unified Order Router loaded")
+except ImportError:
+    ORDER_ROUTER_AVAILABLE = False
+    print("  ⚠ Order Router not available - running standalone")
 
 
 # ========== CONFIGURATION ==========
@@ -467,31 +483,73 @@ class HybridScalper:
     # ========== POSITION MANAGEMENT ==========
 
     def open_position(self, signal: HybridSignal) -> bool:
-        """Open a new position"""
+        """Open a new position via Unified Order Router"""
         try:
             symbol = signal.symbol
-            amount = self.config.POSITION_SIZE_USD / signal.price
+            sym = symbol.replace('/USDT:USDT', '')
 
-            # Set leverage
-            try:
-                self.exchange.set_leverage(self.config.LEVERAGE, symbol)
-            except:
-                pass
+            # ===== USE ORDER ROUTER IF AVAILABLE =====
+            if ORDER_ROUTER_AVAILABLE:
+                # Check for conflicts first
+                can_open, conflict_msg = can_open_position(
+                    system="quick_scalper",
+                    symbol=symbol,
+                    side=signal.direction
+                )
 
-            side = 'buy' if signal.direction == 'long' else 'sell'
-            order = self.exchange.create_market_order(
-                symbol, side, amount,
-                params={
-                    'tradeSide': 'open',
-                    'holdSide': signal.direction,
-                    'productType': 'USDT-FUTURES'
-                }
-            )
+                if not can_open:
+                    print(f"  ⚠️ CONFLICT: {sym} - {conflict_msg}")
+                    return False
 
+                # Submit order via router
+                response = submit_order(
+                    system="quick_scalper",
+                    symbol=symbol,
+                    action="open",
+                    side=signal.direction,
+                    size_usd=self.config.POSITION_SIZE_USD,
+                    leverage=self.config.LEVERAGE,
+                    tp_pct=self.config.TAKE_PROFIT_PCT,
+                    sl_pct=self.config.STOP_LOSS_PCT,
+                    metadata={
+                        'score': signal.score,
+                        'rsi': signal.rsi,
+                        'ob_imbalance': signal.ob_imbalance
+                    }
+                )
+
+                if response.status != "accepted":
+                    print(f"  ⚠️ REJECTED: {sym} - {response.message}")
+                    return False
+
+                fill_price = response.fill_price or signal.price
+                amount = self.config.POSITION_SIZE_USD / fill_price
+
+            else:
+                # Fallback: Direct exchange access
+                amount = self.config.POSITION_SIZE_USD / signal.price
+                fill_price = signal.price
+
+                try:
+                    self.exchange.set_leverage(self.config.LEVERAGE, symbol)
+                except:
+                    pass
+
+                side = 'buy' if signal.direction == 'long' else 'sell'
+                order = self.exchange.create_market_order(
+                    symbol, side, amount,
+                    params={
+                        'tradeSide': 'open',
+                        'holdSide': signal.direction,
+                        'productType': 'USDT-FUTURES'
+                    }
+                )
+
+            # Track locally
             pos = ScalperPosition(
                 symbol=symbol,
                 side=signal.direction,
-                entry_price=signal.price,
+                entry_price=fill_price,
                 size=amount,
                 entry_time=datetime.now(),
                 score=signal.score,
@@ -503,9 +561,9 @@ class HybridScalper:
             self.last_trade_time[symbol] = datetime.now()
             self._save_state()
 
-            sym = symbol.replace('/USDT:USDT', '')
+            router_tag = "[ROUTER] " if ORDER_ROUTER_AVAILABLE else ""
             print(f"\n{'='*50}")
-            print(f"[OPEN] {signal.direction.upper()} {sym} @ ${signal.price:.4f}")
+            print(f"{router_tag}[OPEN] {signal.direction.upper()} {sym} @ ${fill_price:.4f}")
             print(f"  Score: {signal.score:.1f} (RSI:{signal.rsi_score:.0f} OB:{signal.ob_score:.0f} Vol:{signal.volume_score:.0f} Mom:{signal.momentum_score:.0f})")
             print(f"  RSI: {signal.rsi:.1f} | OB Imbalance: {signal.ob_imbalance*100:+.1f}%")
             print(f"  TP: ${signal.tp_price:.4f} | SL: ${signal.sl_price:.4f}")
@@ -518,24 +576,49 @@ class HybridScalper:
             return False
 
     def close_position(self, symbol: str, reason: str) -> bool:
-        """Close a position"""
+        """Close a position via Unified Order Router"""
         try:
             pos = self.positions.get(symbol)
             if not pos:
                 return False
 
-            ticker = self.exchange.fetch_ticker(symbol)
-            current_price = ticker['last']
+            sym = symbol.replace('/USDT:USDT', '')
 
-            side = 'sell' if pos.side == 'long' else 'buy'
-            order = self.exchange.create_market_order(
-                symbol, side, pos.size,
-                params={
-                    'tradeSide': 'close',
-                    'holdSide': pos.side,
-                    'productType': 'USDT-FUTURES'
-                }
-            )
+            # ===== USE ORDER ROUTER IF AVAILABLE =====
+            if ORDER_ROUTER_AVAILABLE:
+                response = submit_order(
+                    system="quick_scalper",
+                    symbol=symbol,
+                    action="close",
+                    side=pos.side,
+                    size_usd=self.config.POSITION_SIZE_USD
+                )
+
+                if response.status != "accepted":
+                    # Check if already closed
+                    if "already closed" in response.message.lower():
+                        del self.positions[symbol]
+                        self._save_state()
+                        print(f"  {sym} - Already closed externally")
+                        return True
+                    print(f"  ⚠️ Close rejected: {response.message}")
+                    return False
+
+                current_price = response.fill_price or self.exchange.fetch_ticker(symbol)['last']
+            else:
+                # Fallback: Direct exchange access
+                ticker = self.exchange.fetch_ticker(symbol)
+                current_price = ticker['last']
+
+                side = 'sell' if pos.side == 'long' else 'buy'
+                order = self.exchange.create_market_order(
+                    symbol, side, pos.size,
+                    params={
+                        'tradeSide': 'close',
+                        'holdSide': pos.side,
+                        'productType': 'USDT-FUTURES'
+                    }
+                )
 
             # Calculate PnL
             if pos.side == 'long':
@@ -563,9 +646,9 @@ class HybridScalper:
             del self.positions[symbol]
             self._save_state()
 
-            sym = symbol.replace('/USDT:USDT', '')
+            router_tag = "[ROUTER] " if ORDER_ROUTER_AVAILABLE else ""
             emoji = "+" if pnl_usd >= 0 else ""
-            print(f"\n[CLOSE] {sym} - {reason}")
+            print(f"\n{router_tag}[CLOSE] {sym} - {reason}")
             print(f"  PnL: {emoji}${pnl_usd:.2f} ({emoji}{pnl_pct:.2f}%) | Hold: {hold_time:.0f}s")
 
             total = self.stats['wins'] + self.stats['losses']
