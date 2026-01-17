@@ -422,11 +422,39 @@ services:
       start_period: 30s
 
   # ==========================================================================
-  # QUICK SCALPER SERVICE (V1.0.0)
+  # QUICK SCALPER V3.0.0 - HYBRID 1m + ORDERBOOK (PRIMARY)
   # ==========================================================================
-  # High-frequency RSI mean-reversion scalping for predictable symbols
+  # High-frequency micro-scalping with order book confirmation
+  # Strategy: 1m RSI + OrderBook imbalance | 0.15% TP, 0.08% SL, 5min max hold
+  # Scoring: RSI (40%) + OrderBook (40%) + Volume (10%) + Momentum (10%)
+  # --------------------------------------------------------------------------
+  quick_scalper_v3:
+    build:
+      context: .
+      dockerfile: Dockerfile.quick_scalper_v3
+    container_name: ai_xyz_quick_scalper_v3
+    restart: unless-stopped
+    environment:
+      - BITGET_API_KEY=${BITGET_API_KEY}
+      - BITGET_API_SECRET=${BITGET_API_SECRET}
+      - BITGET_API_PASSPHRASE=${BITGET_API_PASSPHRASE}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - ai_xyz_network
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  # ==========================================================================
+  # QUICK SCALPER V2.0.0 (LEGACY - 15m timeframe)
+  # ==========================================================================
+  # 15-minute RSI mean-reversion with prediction API integration
   # Targets: FIL (62.1% WR), ATOM (62.9% WR) - Backtest validated
-  # Strategy: RSI <25 LONG, RSI >75 SHORT, 0.3% TP, 0.2% SL, 60min max hold
+  # Strategy: RSI <30 LONG, RSI >70 SHORT, 0.4% TP, 0.25% SL
   # --------------------------------------------------------------------------
   quick_scalper:
     build:

@@ -1,0 +1,17 @@
+# Quick Scalper V3.0.0 - Hybrid 1m + OrderBook
+# AI-XYZ Trading System - High-frequency micro-scalping
+
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install dependencies
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir ccxt pandas numpy redis python-dotenv requests
+
+# Copy files
+COPY quick_scalper_v3.py /app/
+COPY .env /app/
+
+# Run the service
+CMD ["python3", "quick_scalper_v3.py"]
