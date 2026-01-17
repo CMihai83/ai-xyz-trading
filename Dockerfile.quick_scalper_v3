@@ -1,5 +1,5 @@
-# Quick Scalper V3.0.0 - Hybrid 1m + OrderBook
-# AI-XYZ Trading System - High-frequency micro-scalping
+# Quick Scalper V3.2.0 - Hybrid 1m + OrderBook + Averaging
+# AI-XYZ Trading System - High-frequency micro-scalping with averaging
 
 FROM python:3.11-slim
 

@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """
-AI-XYZ Quick Scalper V3.1.0 - Hybrid 1-Minute + Order Book
-============================================================
+AI-XYZ Quick Scalper V3.2.0 - Hybrid 1-Minute + Order Book + Averaging
+=======================================================================
 
 High-frequency scalping with 1-minute candles + order book confirmation.
 Designed by Claude (Opus 4.5) + Grok Consortium.
 
+V3.2.0: Added micro-averaging based on backtest results (+29% PnL, +6.2% WR)
 V3.1.0: Integrated with Unified Order Router for cross-system coordination.
 
 ARCHITECTURE:
@@ -13,6 +14,7 @@ ARCHITECTURE:
 - Real-time order book for imbalance confirmation
 - Combined scoring: RSI (40%) + OrderBook (40%) + Volume (10%) + Momentum (10%)
 - Micro TP/SL: 0.15% / 0.08%
+- MICRO-AVERAGING: At -0.05% UPNL, average with [0.5, 1.0, 1.5] multipliers
 - UNIFIED ORDER ROUTER: Prevents conflicts with main trading system
 
 SIGNAL FLOW:
@@ -20,7 +22,12 @@ SIGNAL FLOW:
 2. Order book imbalance confirms direction (>20% imbalance)
 3. Check for conflicts with other systems via Order Router
 4. Combined score > 70 triggers entry
-5. Exit on TP/SL or max hold (5 minutes)
+5. Manage position: averaging at -0.05%, exit on TP/SL or max hold
+
+BACKTEST RESULTS (384 trades):
+- Win Rate: 57% vs 51% (no averaging)
+- Total PnL: +$15.66 vs +$12.16 (+29%)
+- SL Exits: 84 vs 123 (32% fewer stops)
 
 DATE: January 17, 2026
 """
@@ -94,6 +101,14 @@ class HybridScalperConfig:
     LEVERAGE: int = 10
     COOLDOWN_SECONDS: int = 60       # 1 minute cooldown
 
+    # ===== MICRO-AVERAGING (V3.2.0) =====
+    # Based on backtest: averaging converts 32% fewer SL exits
+    AVG_ENABLED: bool = True
+    AVG_THRESHOLD_PCT: float = -0.05   # Average at -0.05% UPNL
+    AVG_MULTIPLIERS: List[float] = field(default_factory=lambda: [0.5, 1.0, 1.5])  # Small scalp multipliers
+    AVG_MAX_STEPS: int = 3             # Max 3 averaging steps
+    AVG_COOLDOWN_SECONDS: int = 30     # Min 30s between averaging steps
+
     # ===== SCAN SETTINGS =====
     SCAN_INTERVAL_SECONDS: int = 10  # Check every 10 seconds
     SYMBOL_REFRESH_MINUTES: int = 5
@@ -145,7 +160,7 @@ class HybridSignal:
 
 @dataclass
 class ScalperPosition:
-    """Active position tracking"""
+    """Active position tracking with averaging support (V3.2.0)"""
     symbol: str
     side: str
     entry_price: float
@@ -154,15 +169,28 @@ class ScalperPosition:
     score: float
     tp_price: float
     sl_price: float
+    # V3.2.0: Averaging tracking
+    avg_entry_price: float = 0.0       # Weighted average entry
+    original_size: float = 0.0         # Size before averaging
+    averaging_steps: int = 0           # Steps taken
+    last_avg_time: Optional[datetime] = None  # Last averaging time
+
+    def __post_init__(self):
+        """Initialize averaging fields if not set"""
+        if self.avg_entry_price == 0.0:
+            self.avg_entry_price = self.entry_price
+        if self.original_size == 0.0:
+            self.original_size = self.size
 
     def check_exit(self, current_price: float, config: HybridScalperConfig) -> Tuple[bool, str]:
-        """Check if position should exit"""
+        """Check if position should exit (V3.2.0: uses avg_entry for TP/SL after averaging)"""
         # Time-based exit
         hold_time = (datetime.now() - self.entry_time).total_seconds()
         if hold_time >= config.MAX_HOLD_SECONDS:
             return True, "MAX_HOLD"
 
-        # TP/SL check
+        # V3.2.0: Use dynamic TP/SL based on average entry price
+        # After averaging, TP/SL are recalculated from avg_entry_price
         if self.side == 'long':
             if current_price >= self.tp_price:
                 return True, "TAKE_PROFIT"
@@ -175,6 +203,30 @@ class ScalperPosition:
                 return True, "STOP_LOSS"
 
         return False, ""
+
+    def calculate_upnl_pct(self, current_price: float) -> float:
+        """Calculate unrealized PnL percentage based on average entry"""
+        if self.side == 'long':
+            return (current_price - self.avg_entry_price) / self.avg_entry_price * 100
+        else:
+            return (self.avg_entry_price - current_price) / self.avg_entry_price * 100
+
+    def can_average(self, current_price: float, config: HybridScalperConfig) -> bool:
+        """Check if position can be averaged (V3.2.0)"""
+        if not config.AVG_ENABLED:
+            return False
+        if self.averaging_steps >= config.AVG_MAX_STEPS:
+            return False
+
+        # Check cooldown
+        if self.last_avg_time:
+            elapsed = (datetime.now() - self.last_avg_time).total_seconds()
+            if elapsed < config.AVG_COOLDOWN_SECONDS:
+                return False
+
+        # Check UPNL threshold
+        upnl_pct = self.calculate_upnl_pct(current_price)
+        return upnl_pct <= config.AVG_THRESHOLD_PCT
 
 
 # ========== MAIN SCALPER CLASS ==========
@@ -211,17 +263,18 @@ class HybridScalper:
         self.symbols_to_scan: List[str] = []
         self.last_symbol_refresh = datetime.min
 
-        # Stats
+        # Stats (V3.2.0: added averaging stats)
         self.stats = {
             'wins': 0, 'losses': 0, 'total_pnl': 0.0,
-            'tp_exits': 0, 'sl_exits': 0, 'time_exits': 0
+            'tp_exits': 0, 'sl_exits': 0, 'time_exits': 0,
+            'avg_steps_total': 0, 'avg_trades': 0  # V3.2.0
         }
 
         # Load state
         self._load_state()
 
         print("=" * 65)
-        print("Quick Scalper V3.0.0 - Hybrid 1m + OrderBook")
+        print("Quick Scalper V3.2.0 - Hybrid 1m + OrderBook + Averaging")
         print("Designed by Claude (Opus 4.5) + Grok")
         print("=" * 65)
         print(f"  Timeframe: {self.config.TIMEFRAME}")
@@ -229,6 +282,11 @@ class HybridScalper:
         print(f"  OrderBook Imbalance: >{self.config.OB_IMBALANCE_LONG*100:.0f}% confirmation")
         print(f"  TP/SL: {self.config.TAKE_PROFIT_PCT}% / {self.config.STOP_LOSS_PCT}%")
         print(f"  Max Hold: {self.config.MAX_HOLD_SECONDS}s")
+        if self.config.AVG_ENABLED:
+            print(f"  [V3.2.0] Averaging: ON at {self.config.AVG_THRESHOLD_PCT}% UPNL")
+            print(f"           Multipliers: {self.config.AVG_MULTIPLIERS} (max {self.config.AVG_MAX_STEPS} steps)")
+        else:
+            print(f"  [V3.2.0] Averaging: OFF")
         print(f"  Scan Interval: {self.config.SCAN_INTERVAL_SECONDS}s")
         print(f"  Min Score: {self.config.MIN_SCORE}")
         print("=" * 65)
@@ -256,7 +314,7 @@ class HybridScalper:
             print(f"  State load error: {e}")
 
     def _save_state(self):
-        """Save state to Redis and file"""
+        """Save state to Redis and file (V3.2.0: includes averaging fields)"""
         try:
             data = {
                 'stats': self.stats,
@@ -264,7 +322,12 @@ class HybridScalper:
                     'symbol': v.symbol, 'side': v.side,
                     'entry_price': v.entry_price, 'size': v.size,
                     'entry_time': v.entry_time.isoformat(),
-                    'tp_price': v.tp_price, 'sl_price': v.sl_price
+                    'tp_price': v.tp_price, 'sl_price': v.sl_price,
+                    # V3.2.0: Averaging fields
+                    'avg_entry_price': v.avg_entry_price,
+                    'original_size': v.original_size,
+                    'averaging_steps': v.averaging_steps,
+                    'last_avg_time': v.last_avg_time.isoformat() if v.last_avg_time else None
                 } for k, v in self.positions.items()},
                 'last_update': datetime.now().isoformat()
             }
@@ -643,18 +706,26 @@ class HybridScalper:
             else:
                 self.stats['time_exits'] += 1
 
+            # V3.2.0: Track averaging stats
+            avg_steps = pos.averaging_steps
+            if avg_steps > 0:
+                self.stats['avg_trades'] += 1
+
             del self.positions[symbol]
             self._save_state()
 
             router_tag = "[ROUTER] " if ORDER_ROUTER_AVAILABLE else ""
             emoji = "+" if pnl_usd >= 0 else ""
-            print(f"\n{router_tag}[CLOSE] {sym} - {reason}")
+            avg_tag = f" [AVG:{avg_steps}]" if avg_steps > 0 else ""
+            print(f"\n{router_tag}[CLOSE] {sym} - {reason}{avg_tag}")
             print(f"  PnL: {emoji}${pnl_usd:.2f} ({emoji}{pnl_pct:.2f}%) | Hold: {hold_time:.0f}s")
+            if avg_steps > 0:
+                print(f"  Averaging: {avg_steps} steps | Entry: ${pos.entry_price:.4f} → Avg: ${pos.avg_entry_price:.4f}")
 
             total = self.stats['wins'] + self.stats['losses']
             wr = self.stats['wins'] / total * 100 if total > 0 else 0
             print(f"  Stats: {self.stats['wins']}W/{self.stats['losses']}L ({wr:.1f}%) | Total: ${self.stats['total_pnl']:.2f}")
-            print(f"  Exits: TP:{self.stats['tp_exits']} SL:{self.stats['sl_exits']} Time:{self.stats['time_exits']}")
+            print(f"  Exits: TP:{self.stats['tp_exits']} SL:{self.stats['sl_exits']} Time:{self.stats['time_exits']} | Avg Trades: {self.stats['avg_trades']}")
 
             return True
 
@@ -670,8 +741,93 @@ class HybridScalper:
             print(f"  Close error: {e}")
             return False
 
+    def execute_averaging(self, pos: ScalperPosition, current_price: float) -> bool:
+        """
+        Execute averaging step for a position (V3.2.0)
+        Returns True if averaging was executed successfully
+        """
+        symbol = pos.symbol
+        sym = symbol.replace('/USDT:USDT', '')
+
+        try:
+            # Get multiplier for this step
+            step = pos.averaging_steps
+            if step >= len(self.config.AVG_MULTIPLIERS):
+                return False
+
+            multiplier = self.config.AVG_MULTIPLIERS[step]
+            add_size_usd = self.config.POSITION_SIZE_USD * multiplier
+            add_amount = add_size_usd / current_price
+
+            # Execute averaging order
+            if ORDER_ROUTER_AVAILABLE:
+                response = submit_order(
+                    system="quick_scalper",
+                    symbol=symbol,
+                    action="open",  # Add to position
+                    side=pos.side,
+                    size_usd=add_size_usd,
+                    leverage=self.config.LEVERAGE,
+                    metadata={'averaging_step': step + 1}
+                )
+                if response.status != "accepted":
+                    print(f"  ⚠️ Averaging rejected: {response.message}")
+                    return False
+                fill_price = response.fill_price or current_price
+            else:
+                # Direct exchange order
+                side = 'buy' if pos.side == 'long' else 'sell'
+                order = self.exchange.create_market_order(
+                    symbol, side, add_amount,
+                    params={
+                        'tradeSide': 'open',
+                        'holdSide': pos.side,
+                        'productType': 'USDT-FUTURES'
+                    }
+                )
+                fill_price = current_price
+
+            # Update position state
+            old_size = pos.size
+            new_size = old_size + add_amount
+
+            # Calculate new weighted average entry
+            new_avg_entry = (pos.avg_entry_price * old_size + fill_price * add_amount) / new_size
+
+            # Update position
+            pos.avg_entry_price = new_avg_entry
+            pos.size = new_size
+            pos.averaging_steps += 1
+            pos.last_avg_time = datetime.now()
+
+            # Recalculate TP/SL from new average entry
+            if pos.side == 'long':
+                pos.tp_price = new_avg_entry * (1 + self.config.TAKE_PROFIT_PCT / 100)
+                pos.sl_price = new_avg_entry * (1 - self.config.STOP_LOSS_PCT / 100)
+            else:
+                pos.tp_price = new_avg_entry * (1 - self.config.TAKE_PROFIT_PCT / 100)
+                pos.sl_price = new_avg_entry * (1 + self.config.STOP_LOSS_PCT / 100)
+
+            # Update stats
+            self.stats['avg_steps_total'] += 1
+
+            self._save_state()
+
+            upnl_pct = pos.calculate_upnl_pct(current_price)
+            print(f"\n[AVG] {sym} Step {pos.averaging_steps}/{self.config.AVG_MAX_STEPS}")
+            print(f"  Added {multiplier}x (${add_size_usd:.2f}) @ ${fill_price:.4f}")
+            print(f"  Avg Entry: ${pos.entry_price:.4f} → ${new_avg_entry:.4f}")
+            print(f"  New TP: ${pos.tp_price:.4f} | SL: ${pos.sl_price:.4f}")
+            print(f"  UPNL: {upnl_pct:+.3f}% | Size: ${old_size * pos.entry_price:.2f} → ${new_size * new_avg_entry:.2f}")
+
+            return True
+
+        except Exception as e:
+            print(f"  Averaging error for {sym}: {e}")
+            return False
+
     def manage_positions(self):
-        """Check and manage all open positions"""
+        """Check and manage all open positions (V3.2.0: with averaging)"""
         for symbol in list(self.positions.keys()):
             pos = self.positions[symbol]
 
@@ -686,6 +842,9 @@ class HybridScalper:
                     if not has_position:
                         # Position was closed elsewhere (TP/SL hit, liquidation, etc.)
                         print(f"[{datetime.now().strftime('%H:%M:%S')}] {symbol.replace('/USDT:USDT', '')} - Position closed externally")
+                        # Track averaging stats if this position had averaging
+                        if pos.averaging_steps > 0:
+                            self.stats['avg_trades'] += 1
                         del self.positions[symbol]
                         self._save_state()
                         continue
@@ -694,6 +853,12 @@ class HybridScalper:
 
                 ticker = self.exchange.fetch_ticker(symbol)
                 current_price = ticker['last']
+
+                # V3.2.0: Check for averaging opportunity BEFORE exit check
+                if pos.can_average(current_price, self.config):
+                    self.execute_averaging(pos, current_price)
+                    # After averaging, don't immediately check exit - give it a chance
+                    continue
 
                 should_exit, reason = pos.check_exit(current_price, self.config)
                 if should_exit:
@@ -754,7 +919,7 @@ class HybridScalper:
     def run(self):
         """Main run loop"""
         print("\n" + "=" * 65)
-        print("Starting Quick Scalper V3.0.0...")
+        print("Starting Quick Scalper V3.2.0 with Micro-Averaging...")
         print("=" * 65 + "\n")
 
         while True:

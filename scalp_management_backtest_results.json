@@ -1,0 +1,58 @@
+{
+  "timestamp": "2026-01-17T10:30:56.358357",
+  "config": {
+    "symbols": [
+      "BTC/USDT:USDT",
+      "ETH/USDT:USDT",
+      "SOL/USDT:USDT",
+      "XRP/USDT:USDT",
+      "DOGE/USDT:USDT",
+      "PEPE/USDT:USDT",
+      "XMR/USDT:USDT",
+      "DASH/USDT:USDT"
+    ],
+    "candles": 4320,
+    "strategy_a": {
+      "tp_pct": 0.15,
+      "sl_pct": 0.08,
+      "max_hold": 5
+    },
+    "strategy_b": {
+      "tp_pct": 0.15,
+      "sl_pct": 0.08,
+      "max_hold": 5,
+      "avg_threshold": -0.05
+    }
+  },
+  "strategy_a": {
+    "total_trades": 384,
+    "wins": 195,
+    "losses": 189,
+    "win_rate": 50.78125,
+    "total_pnl_usd": 12.157427200891949,
+    "avg_pnl_usd": 0.03165996666898945,
+    "profit_factor": 1.5320564895493982,
+    "avg_hold_candles": 3.3958333333333335,
+    "tp_exits": 80,
+    "sl_exits": 123,
+    "max_hold_exits": 181,
+    "surplus_dump_exits": 0,
+    "avg_averaging_steps": 0.0
+  },
+  "strategy_b": {
+    "total_trades": 384,
+    "wins": 219,
+    "losses": 165,
+    "win_rate": 57.03125,
+    "total_pnl_usd": 15.660939004007929,
+    "avg_pnl_usd": 0.04078369532293732,
+    "profit_factor": 1.5455226047388884,
+    "avg_hold_candles": 3.5885416666666665,
+    "tp_exits": 93,
+    "sl_exits": 84,
+    "max_hold_exits": 207,
+    "surplus_dump_exits": 0,
+    "avg_averaging_steps": 0.4635416666666667
+  },
+  "recommendation": "B"
+}
