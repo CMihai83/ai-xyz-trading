@@ -1,5 +1,6 @@
-# Quick Scalper V3.2.0 - Hybrid 1m + OrderBook + Averaging
-# AI-XYZ Trading System - High-frequency micro-scalping with averaging
+# Quick Scalper V3.4.0 - Hybrid 1m + OrderBook + Dynamic Capital Allocation
+# AI-XYZ Trading System - High-frequency micro-scalping with dynamic capital management
+# Aligned with Main Engine's TieredCapitalAllocation and DynamicPositionManager
 
 FROM python:3.11-slim
 
@@ -12,6 +13,9 @@ RUN pip install --no-cache-dir --upgrade pip && \
 # Copy files
 COPY quick_scalper_v3.py /app/
 COPY unified_order_router.py /app/
+COPY grok_v2_volatility_regime_hmm.py /app/
+COPY scalper_capital_manager.py /app/
+COPY unified_capital_coordinator.py /app/
 COPY .env /app/
 
 # Run the service

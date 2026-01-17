@@ -44,6 +44,14 @@ except ImportError as e:
     print(f"⚠️ TieredCapitalAllocation not available: {e}")
     TIERED_ALLOCATION_AVAILABLE = False
 
+# V3.6.0: Unified Capital Coordinator (shared state with Quick Scalper)
+try:
+    from unified_capital_coordinator import UnifiedCapitalCoordinator, get_capital_coordinator
+    UNIFIED_COORDINATOR_AVAILABLE = True
+except ImportError as e:
+    print(f"⚠️ UnifiedCapitalCoordinator not available: {e}")
+    UNIFIED_COORDINATOR_AVAILABLE = False
+
 # V3.3.0: Symbol-specific threshold calibration
 try:
     from symbol_threshold_calibrator import get_symbol_adjusted_threshold, get_threshold_calibrator
@@ -368,6 +376,34 @@ class AIXYZContinuousProfit:
             self.tiered_allocation = None
             self.tiered_sync_service = None
             print("⚠️ Tiered Capital Allocation not available")
+
+        # V3.6.0: Initialize Unified Capital Coordinator (shared with Quick Scalper)
+        if UNIFIED_COORDINATOR_AVAILABLE:
+            try:
+                # Get equity from tiered allocation or env
+                coordinator_equity = (
+                    self.tiered_allocation.total_capital
+                    if self.tiered_allocation else float(os.getenv('INITIAL_BALANCE', 400.0))
+                )
+                coordinator_max_positions = (
+                    self.tiered_allocation.max_positions
+                    if self.tiered_allocation else int(os.getenv('MAX_POSITIONS', 30))
+                )
+
+                # Initialize coordinator - Main Engine is the DRIVER
+                self.capital_coordinator = get_capital_coordinator(
+                    total_equity=coordinator_equity,
+                    max_main_positions=coordinator_max_positions
+                )
+                print(f"\n🔗 Unified Capital Coordinator V1.0.0 (Main Engine = DRIVER)")
+                print(f"   Total Equity: ${coordinator_equity:.2f}")
+                print(f"   Main Max Positions: {coordinator_max_positions}")
+                self.capital_coordinator.print_status()
+            except Exception as e:
+                print(f"⚠️ UnifiedCapitalCoordinator init error: {e}")
+                self.capital_coordinator = None
+        else:
+            self.capital_coordinator = None
 
         # V1.3.1: Initialize Advanced Unused Modules (Category 1 - High Priority)
         print("\n🚀 Initializing Category 1 Advanced Modules...")
@@ -1030,6 +1066,14 @@ class AIXYZContinuousProfit:
                         print(f"  🎯 Tiered limit ({current_regime.upper()}): {regime_limit}/{dynamic_limit} (Tiers {tiers_active})")
 
                     dynamic_limit = regime_limit
+
+                    # V3.6.0: Sync regime to Unified Capital Coordinator
+                    if hasattr(self, 'capital_coordinator') and self.capital_coordinator:
+                        try:
+                            self.capital_coordinator.update_regime(current_regime)
+                            self.capital_coordinator.update_equity(total_capital)
+                        except Exception as coord_err:
+                            pass  # Don't block main loop on coordinator errors
                 except Exception as e:
                     pass  # Use capital-based limit if tiered fails
 
@@ -2979,6 +3023,19 @@ class AIXYZContinuousProfit:
             print(f"  🎯 Partial Close Ladder: {ladder_status.get('levels_total', 0)} levels active")
 
             self.positions_opened += 1
+
+            # V3.6.0: Allocate capital in Unified Coordinator
+            if hasattr(self, 'capital_coordinator') and self.capital_coordinator:
+                try:
+                    # Use initial margin for allocation tracking
+                    margin_used = sizing['total_initial_margin']
+                    success, msg = self.capital_coordinator.main_allocate(symbol, margin_used)
+                    if success:
+                        print(f"  🔗 Coordinator: {msg}")
+                    else:
+                        print(f"  ⚠️ Coordinator allocation warning: {msg}")
+                except Exception as coord_err:
+                    print(f"  ⚠️ Coordinator allocation error: {coord_err}")
 
             # HEDGE GATEWAY: Open hedge position automatically
             if self.hedge_gateway:
@@ -5824,6 +5881,17 @@ class AIXYZContinuousProfit:
             except Exception as dpm_err:
                 print(f"  ⚠️ Dynamic position manager release error: {dpm_err}")
 
+        # V3.6.0: Release from Unified Capital Coordinator
+        if hasattr(self, 'capital_coordinator') and self.capital_coordinator:
+            try:
+                success, msg = self.capital_coordinator.main_release(symbol)
+                if success:
+                    alloc = self.capital_coordinator.get_main_allocation()
+                    print(f"  🔗 Coordinator Released: {alloc['positions']}/{alloc['max_positions']} main positions, "
+                          f"${alloc['available']:.2f} available")
+            except Exception as coord_err:
+                print(f"  ⚠️ Coordinator release error: {coord_err}")
+
         # Calculate final PnL for adaptive Fibonacci learning (if position exists)
         final_pnl = 0.0
         if symbol in self.active_positions:
@@ -6054,10 +6122,22 @@ class AIXYZContinuousProfit:
             
             if added_count > 0:
                 print(f"  ✅ Added {added_count} manual positions to management")
-                
+
+            # V3.6.0: Sync all positions to Unified Capital Coordinator
+            if hasattr(self, 'capital_coordinator') and self.capital_coordinator:
+                try:
+                    # Convert active_exchange to list format for coordinator
+                    positions_list = [
+                        {'symbol': symbol, 'initialMargin': pos.get('initialMargin', 5.0), 'margin': pos.get('initialMargin', 5.0)}
+                        for symbol, pos in active_exchange.items()
+                    ]
+                    self.capital_coordinator.main_sync_positions(positions_list)
+                except Exception as coord_err:
+                    pass  # Don't block reconciliation on coordinator errors
+
         except Exception as e:
             print(f"  ❌ Reconciliation error: {e}")
-    
+
     def update_fibonacci_configs(self):
         """Update Fibonacci configurations for all active positions based on current market conditions"""
         try:

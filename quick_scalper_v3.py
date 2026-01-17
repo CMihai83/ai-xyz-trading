@@ -61,6 +61,65 @@ except ImportError:
     ORDER_ROUTER_AVAILABLE = False
     print("  ⚠ Order Router not available - running standalone")
 
+# Import HMM Volatility Regime from Main Engine (Grok V2)
+try:
+    from grok_v2_volatility_regime_hmm import VolatilityRegimeHMM, VolatilityRegime
+    HMM_AVAILABLE = True
+    print("  ✓ HMM Volatility Regime loaded")
+except ImportError:
+    HMM_AVAILABLE = False
+    print("  ⚠ HMM not available - using default settings")
+
+# Import ScalperCapitalManager (V3.4.0 - Dynamic Capital Allocation)
+try:
+    from scalper_capital_manager import (
+        ScalperCapitalManager, get_scalper_capital_manager,
+        DYNAMIC_CAPITAL_ALLOCATION
+    )
+    CAPITAL_MANAGER_AVAILABLE = True
+    print("  ✓ ScalperCapitalManager loaded")
+except ImportError:
+    CAPITAL_MANAGER_AVAILABLE = False
+    print("  ⚠ ScalperCapitalManager not available - using fixed sizing")
+
+
+# ========== REGIME-BASED DYNAMIC SETTINGS (Grok Recommendation) ==========
+# Aligned with Main Engine's HMM regime detection
+REGIME_SETTINGS = {
+    "low_vol": {
+        "min_volatility": 20.0,   # Lower to find symbols in quiet markets
+        "max_volatility": 40.0,
+        "max_positions": 1,       # Conservative in low vol
+        "tp_pct": 0.10,           # Tighter TP
+        "sl_pct": 0.05,           # Tighter SL
+        "scan_limit": 100         # Scan more to find opportunities
+    },
+    "normal_vol": {
+        "min_volatility": 40.0,
+        "max_volatility": 60.0,
+        "max_positions": 2,
+        "tp_pct": 0.15,
+        "sl_pct": 0.08,
+        "scan_limit": 50
+    },
+    "high_vol": {
+        "min_volatility": 60.0,
+        "max_volatility": 80.0,
+        "max_positions": 3,       # More opportunities in high vol
+        "tp_pct": 0.20,           # Wider TP for bigger moves
+        "sl_pct": 0.10,           # Wider SL for swings
+        "scan_limit": 30
+    },
+    "crisis": {
+        "min_volatility": 80.0,
+        "max_volatility": 120.0,
+        "max_positions": 1,       # Minimal risk in crisis
+        "tp_pct": 0.25,           # Capture big moves
+        "sl_pct": 0.15,           # Protection
+        "scan_limit": 20          # Very selective
+    }
+}
+
 
 # ========== CONFIGURATION ==========
 
@@ -97,7 +156,7 @@ class HybridScalperConfig:
 
     # ===== POSITION MANAGEMENT =====
     POSITION_SIZE_USD: float = 20.0  # $20 per position
-    MAX_POSITIONS: int = 6
+    MAX_POSITIONS: int = 2  # User requested max 2 positions
     LEVERAGE: int = 10
     COOLDOWN_SECONDS: int = 60       # 1 minute cooldown
 
@@ -270,25 +329,44 @@ class HybridScalper:
             'avg_steps_total': 0, 'avg_trades': 0  # V3.2.0
         }
 
+        # V3.3.0: HMM Volatility Regime (aligned with Main Engine)
+        self.volatility_hmm = None
+        self.current_regime = 'normal_vol'  # Default
+        if HMM_AVAILABLE:
+            try:
+                self.volatility_hmm = VolatilityRegimeHMM()
+                print("  ✓ HMM Volatility Regime initialized")
+            except Exception as e:
+                print(f"  ⚠ HMM init error: {e}")
+
+        # V3.4.0: ScalperCapitalManager (Dynamic Capital Allocation)
+        self.capital_manager = None
+        if CAPITAL_MANAGER_AVAILABLE:
+            try:
+                self.capital_manager = get_scalper_capital_manager()
+                print("  ✓ ScalperCapitalManager initialized")
+            except Exception as e:
+                print(f"  ⚠ CapitalManager init error: {e}")
+
         # Load state
         self._load_state()
 
         print("=" * 65)
-        print("Quick Scalper V3.2.0 - Hybrid 1m + OrderBook + Averaging")
-        print("Designed by Claude (Opus 4.5) + Grok")
+        print("Quick Scalper V3.4.0 - Hybrid + Dynamic Capital Allocation")
+        print("Designed by Claude (Opus 4.5) + Grok Consortium")
         print("=" * 65)
         print(f"  Timeframe: {self.config.TIMEFRAME}")
         print(f"  RSI: <{self.config.RSI_OVERSOLD} LONG, >{self.config.RSI_OVERBOUGHT} SHORT")
         print(f"  OrderBook Imbalance: >{self.config.OB_IMBALANCE_LONG*100:.0f}% confirmation")
-        print(f"  TP/SL: {self.config.TAKE_PROFIT_PCT}% / {self.config.STOP_LOSS_PCT}%")
+        print(f"  [V3.3.0] Regime-Adaptive: TP/SL/Positions adjust by HMM regime")
+        print(f"  [V3.4.0] Dynamic Capital: Position size/limits from ScalperCapitalManager")
         print(f"  Max Hold: {self.config.MAX_HOLD_SECONDS}s")
         if self.config.AVG_ENABLED:
             print(f"  [V3.2.0] Averaging: ON at {self.config.AVG_THRESHOLD_PCT}% UPNL")
             print(f"           Multipliers: {self.config.AVG_MULTIPLIERS} (max {self.config.AVG_MAX_STEPS} steps)")
-        else:
-            print(f"  [V3.2.0] Averaging: OFF")
         print(f"  Scan Interval: {self.config.SCAN_INTERVAL_SECONDS}s")
-        print(f"  Min Score: {self.config.MIN_SCORE}")
+        print(f"  HMM Regime: {'Enabled' if self.volatility_hmm else 'Disabled (using defaults)'}")
+        print(f"  Capital Manager: {'Enabled' if self.capital_manager else 'Disabled (fixed sizing)'}")
         print("=" * 65)
 
     # ========== STATE MANAGEMENT ==========
@@ -340,23 +418,70 @@ class HybridScalper:
         except Exception as e:
             print(f"  State save error: {e}")
 
+    # ========== REGIME MANAGEMENT (V3.3.0) ==========
+
+    def update_regime(self):
+        """Update HMM regime and get dynamic settings (V3.4.0: sync with CapitalManager)"""
+        if self.volatility_hmm:
+            try:
+                # Fetch BTC data for regime detection (aligned with Main Engine)
+                ohlcv = self.exchange.fetch_ohlcv('BTC/USDT:USDT', '1h', limit=48)
+                if ohlcv and len(ohlcv) >= 24:
+                    returns = [(ohlcv[i][4] - ohlcv[i-1][4]) / ohlcv[i-1][4]
+                               for i in range(1, len(ohlcv))]
+
+                    # Update HMM with recent returns
+                    for r in returns[-24:]:
+                        self.volatility_hmm.update(r)
+
+                    regime_state = self.volatility_hmm.get_regime()
+                    self.current_regime = regime_state.regime.value
+            except Exception as e:
+                print(f"  Regime update error: {e}")
+
+        # V3.4.0: Sync regime with CapitalManager
+        if self.capital_manager:
+            try:
+                # Get current equity from exchange
+                balance = self.exchange.fetch_balance()
+                equity = balance.get('total', {}).get('USDT', 0) or 400.0
+                self.capital_manager.update_state(
+                    regime=self.current_regime,
+                    equity=equity
+                )
+            except Exception as e:
+                print(f"  CapitalManager sync error: {e}")
+
+        return self.get_regime_settings()
+
+    def get_regime_settings(self) -> dict:
+        """Get current regime-adjusted settings"""
+        settings = REGIME_SETTINGS.get(self.current_regime, REGIME_SETTINGS['normal_vol'])
+        return settings
+
     # ========== SYMBOL MANAGEMENT ==========
 
     def refresh_symbols(self):
-        """Refresh symbol list from multiple sources"""
+        """Refresh symbol list from multiple sources (V3.3.0: regime-adaptive)"""
         elapsed = (datetime.now() - self.last_symbol_refresh).total_seconds()
         if elapsed < self.config.SYMBOL_REFRESH_MINUTES * 60 and self.symbols_to_scan:
             return
 
+        # V3.3.0: Update regime and get dynamic settings
+        regime_settings = self.update_regime()
+        min_vol = regime_settings['min_volatility']
+        max_vol = regime_settings['max_volatility']
+        scan_limit = regime_settings['scan_limit']
+
         symbols = set()
 
-        # Source 1: Volatile symbols scan
+        # Source 1: Volatile symbols scan (V3.3.0: regime-adaptive thresholds)
         try:
-            print("\n[SYMBOL SCAN] Scanning for volatile symbols...")
+            print(f"\n[SYMBOL SCAN] Regime: {self.current_regime.upper()} | Vol: {min_vol}-{max_vol}%")
             markets = self.exchange.load_markets()
             futures = [s for s in markets if s.endswith('/USDT:USDT') and markets[s].get('swap')]
 
-            for symbol in futures[:50]:  # Check top 50 by volume
+            for symbol in futures[:scan_limit]:  # V3.3.0: regime-based scan limit
                 try:
                     ohlcv = self.exchange.fetch_ohlcv(symbol, '1h', limit=24)
                     if len(ohlcv) < 24:
@@ -367,7 +492,8 @@ class HybridScalper:
                     volatility = returns.std() * np.sqrt(24 * 365) * 100
                     volume = df['v'].mean() * df['c'].iloc[-1]
 
-                    if (self.config.MIN_VOLATILITY <= volatility <= self.config.MAX_VOLATILITY and
+                    # V3.3.0: Use regime-adaptive volatility thresholds
+                    if (min_vol <= volatility <= max_vol and
                         volume >= self.config.MIN_VOLUME_USD):
                         symbols.add(symbol)
                 except:
@@ -546,10 +672,21 @@ class HybridScalper:
     # ========== POSITION MANAGEMENT ==========
 
     def open_position(self, signal: HybridSignal) -> bool:
-        """Open a new position via Unified Order Router"""
+        """Open a new position via Unified Order Router (V3.4.0: Dynamic Sizing)"""
         try:
             symbol = signal.symbol
             sym = symbol.replace('/USDT:USDT', '')
+
+            # V3.4.0: Get dynamic position size from CapitalManager
+            if self.capital_manager:
+                position_size_usd = self.capital_manager.get_position_size()
+                # Check for Main Engine conflicts
+                has_conflict, conflict_reason = self.capital_manager.check_main_engine_conflict(symbol)
+                if has_conflict:
+                    print(f"  ⚠️ MAIN ENGINE CONFLICT: {sym} - {conflict_reason}")
+                    return False
+            else:
+                position_size_usd = self.config.POSITION_SIZE_USD
 
             # ===== USE ORDER ROUTER IF AVAILABLE =====
             if ORDER_ROUTER_AVAILABLE:
@@ -564,13 +701,13 @@ class HybridScalper:
                     print(f"  ⚠️ CONFLICT: {sym} - {conflict_msg}")
                     return False
 
-                # Submit order via router
+                # Submit order via router (V3.4.0: dynamic size)
                 response = submit_order(
                     system="quick_scalper",
                     symbol=symbol,
                     action="open",
                     side=signal.direction,
-                    size_usd=self.config.POSITION_SIZE_USD,
+                    size_usd=position_size_usd,
                     leverage=self.config.LEVERAGE,
                     tp_pct=self.config.TAKE_PROFIT_PCT,
                     sl_pct=self.config.STOP_LOSS_PCT,
@@ -586,12 +723,20 @@ class HybridScalper:
                     return False
 
                 fill_price = response.fill_price or signal.price
-                amount = self.config.POSITION_SIZE_USD / fill_price
+                amount = position_size_usd / fill_price
 
             else:
-                # Fallback: Direct exchange access
-                amount = self.config.POSITION_SIZE_USD / signal.price
+                # Fallback: Direct exchange access (V3.4.0: dynamic size)
+                amount = position_size_usd / signal.price
                 fill_price = signal.price
+
+                try:
+                    # Set ISOLATED margin mode (user requirement)
+                    self.exchange.set_margin_mode('isolated', symbol, params={
+                        'productType': 'USDT-FUTURES'
+                    })
+                except Exception as e:
+                    print(f"  Margin mode warning: {e}")
 
                 try:
                     self.exchange.set_leverage(self.config.LEVERAGE, symbol)
@@ -624,12 +769,20 @@ class HybridScalper:
             self.last_trade_time[symbol] = datetime.now()
             self._save_state()
 
+            # V3.4.0: Track position in CapitalManager
+            if self.capital_manager:
+                self.capital_manager.allocate_position(symbol, position_size_usd)
+
             router_tag = "[ROUTER] " if ORDER_ROUTER_AVAILABLE else ""
+            size_info = f"${position_size_usd:.2f}" if self.capital_manager else f"${self.config.POSITION_SIZE_USD:.2f}"
             print(f"\n{'='*50}")
-            print(f"{router_tag}[OPEN] {signal.direction.upper()} {sym} @ ${fill_price:.4f}")
+            print(f"{router_tag}[OPEN] {signal.direction.upper()} {sym} @ ${fill_price:.4f} ({size_info})")
             print(f"  Score: {signal.score:.1f} (RSI:{signal.rsi_score:.0f} OB:{signal.ob_score:.0f} Vol:{signal.volume_score:.0f} Mom:{signal.momentum_score:.0f})")
             print(f"  RSI: {signal.rsi:.1f} | OB Imbalance: {signal.ob_imbalance*100:+.1f}%")
             print(f"  TP: ${signal.tp_price:.4f} | SL: ${signal.sl_price:.4f}")
+            if self.capital_manager:
+                config = self.capital_manager.get_config()
+                print(f"  Capital: ${config.available_capital:.2f} avail | {len(self.positions)}/{config.max_positions} positions")
             print(f"{'='*50}")
 
             return True
@@ -713,6 +866,10 @@ class HybridScalper:
 
             del self.positions[symbol]
             self._save_state()
+
+            # V3.4.0: Release capital in CapitalManager
+            if self.capital_manager:
+                self.capital_manager.release_position(symbol)
 
             router_tag = "[ROUTER] " if ORDER_ROUTER_AVAILABLE else ""
             emoji = "+" if pnl_usd >= 0 else ""
@@ -896,12 +1053,30 @@ class HybridScalper:
         return opportunities[0]
 
     def run_cycle(self):
-        """Run one scan cycle"""
+        """Run one scan cycle (V3.4.0: Dynamic Capital Allocation)"""
         self.refresh_symbols()
         self.manage_positions()
 
-        # Check position limit
-        if len(self.positions) >= self.config.MAX_POSITIONS:
+        # V3.4.0: Get max positions from CapitalManager (dynamic by regime + equity)
+        if self.capital_manager:
+            max_pos = self.capital_manager.get_max_positions()
+            can_open, reason = self.capital_manager.can_open_position()
+            alloc_pct = DYNAMIC_CAPITAL_ALLOCATION.get(self.current_regime, {}).get('scalper', 0.2) * 100
+        else:
+            # Fallback to V3.3.0 regime settings
+            regime_settings = self.get_regime_settings()
+            max_pos = regime_settings['max_positions']
+            can_open = len(self.positions) < max_pos
+            reason = "OK" if can_open else "Position limit"
+            alloc_pct = 0
+
+        # Check position limit (dynamic)
+        if not can_open or len(self.positions) >= max_pos:
+            now = datetime.now()
+            active = len(self.positions)
+            scanned = len(self.symbols_to_scan)
+            if self.capital_manager:
+                print(f"[{now.strftime('%H:%M:%S')}] {self.current_regime.upper()} ({alloc_pct:.0f}% alloc) | Scanned {scanned} | Active: {active}/{max_pos} | Limit reached")
             return
 
         # Find opportunity
@@ -914,12 +1089,17 @@ class HybridScalper:
             now = datetime.now()
             active = len(self.positions)
             scanned = len(self.symbols_to_scan)
-            print(f"[{now.strftime('%H:%M:%S')}] Scanned {scanned} | Active: {active}/{self.config.MAX_POSITIONS} | No RSI+OB signals")
+            if self.capital_manager:
+                avail = self.capital_manager.get_available_capital()
+                pos_size = self.capital_manager.get_position_size()
+                print(f"[{now.strftime('%H:%M:%S')}] {self.current_regime.upper()} ({alloc_pct:.0f}%) | Scanned {scanned} | Active: {active}/{max_pos} | Avail: ${avail:.2f} | Size: ${pos_size:.2f} | No signals")
+            else:
+                print(f"[{now.strftime('%H:%M:%S')}] {self.current_regime.upper()} | Scanned {scanned} | Active: {active}/{max_pos} | No RSI+OB signals")
 
     def run(self):
         """Main run loop"""
         print("\n" + "=" * 65)
-        print("Starting Quick Scalper V3.2.0 with Micro-Averaging...")
+        print("Starting Quick Scalper V3.4.0 - Dynamic Capital Allocation...")
         print("=" * 65 + "\n")
 
         while True:

@@ -1074,6 +1074,220 @@ See `/root/ai_xyz/SPRINT_BACKLOG.json` for full backlog.
 
 ---
 
-**Version**: 3.5.1 | **Last Updated**: January 17, 2026
+## 20. QUICK SCALPER V3 CAPITAL ALIGNMENT (Jan 17, 2026)
+
+### 20.1 Overview
+**Goal**: Align Quick Scalper V3 with Main Engine's capital allocation and position management systems.
+
+**Main Engine Systems**:
+1. **TieredCapitalAllocation** (`tiered_capital_allocation.py`)
+   - 3-tier system: REGULAR_BUSINESS, MARKET_ADVERSITY, BLACK_SWAN
+   - Maps HMM regimes to tiers (LOW_VOL/NORMAL_VOL → Tier 1, HIGH_VOL → Tier 1+2, CRISIS → All 3)
+   - Configurable capital allocation per tier
+
+2. **DynamicPositionManager** (`dynamic_position_manager.py`)
+   - Multi-factor position sizing based on: Volatility (40%), BTC Correlation (30%), Trend (20%), Funding Rate (10%)
+   - Risk tiers: CONSERVATIVE, MODERATE, AGGRESSIVE
+   - Dynamic parameters: base_margin, total_allocation, max_averaging_steps
+
+### 20.2 Quick Scalper V3 Current State (V3.3.0)
+**File**: `quick_scalper_v3.py`
+
+| Component | Current Implementation |
+|-----------|----------------------|
+| HMM Regime | ✅ Integrated (`grok_v2_volatility_regime_hmm.py`) |
+| Position Limits | Simple regime-based (1-3 positions) |
+| Position Sizing | Fixed $20 per position |
+| Capital Allocation | Not integrated |
+| Tiered System | Not integrated |
+
+### 20.3 GROK CONSENSUS (Jan 17, 2026)
+
+**Approach**: HYBRID with dynamic regime-based allocation
+
+**Grok Recommendations**:
+1. **Capital Split**: Dynamic by regime (not fixed)
+2. **Position Limits**: Scale with Main Engine's tiered system
+3. **Position Sizing**: Dynamic formula based on equity and regime
+4. **Conflict Resolution**: Main Engine has priority
+
+### 20.4 Dynamic Capital Allocation (Grok V1)
+
+```python
+DYNAMIC_CAPITAL_ALLOCATION = {
+    'low_vol': {'scalper': 0.10, 'main': 0.90},   # Conservative - scalper gets 10%
+    'normal_vol': {'scalper': 0.20, 'main': 0.80}, # Balanced - scalper gets 20%
+    'high_vol': {'scalper': 0.30, 'main': 0.70},   # Aggressive - scalper gets 30%
+    'crisis': {'scalper': 0.05, 'main': 0.95}      # Minimal - scalper gets 5%
+}
+```
+
+| Regime | Scalper % | Main % | Scalper Capital ($400) | Scalper Max Pos |
+|--------|-----------|--------|------------------------|-----------------|
+| LOW_VOL | 10% | 90% | $40 | 1 |
+| NORMAL_VOL | 20% | 80% | $80 | 2 |
+| HIGH_VOL | 30% | 70% | $120 | 3-4 |
+| CRISIS | 5% | 95% | $20 | 1 |
+
+### 20.5 Dynamic Position Formulas
+
+**Max Positions Formula**:
+```python
+def calculate_scalper_max_positions(total_capital, regime, current_equity, main_tier):
+    base = 1
+    regime_factor = {'low_vol': 1, 'normal_vol': 1.5, 'high_vol': 2, 'crisis': 0.5}[regime]
+    tier_factor = [1, 1.2, 1.5, 2][main_tier - 1]
+    equity_ratio = current_equity / total_capital
+    max_pos = int(base * regime_factor * tier_factor * equity_ratio * 10)
+    return max(1, min(5, max_pos))
+```
+
+**Position Size Formula**:
+```python
+def calculate_position_size(current_equity, regime, risk_factor=0.01):
+    risk_amount = current_equity * risk_factor  # 1% of equity
+    regime_adj = {'low_vol': 0.8, 'normal_vol': 1.0, 'high_vol': 1.2, 'crisis': 0.5}[regime]
+    size = risk_amount * regime_adj
+    return max(10, min(size, 100))  # Min $10, max $100
+```
+
+### 20.6 Conflict Resolution Rules
+
+| Priority | Rule |
+|----------|------|
+| 1 | If Main holds position in symbol → Scalper cannot enter |
+| 2 | If Scalper holds and Main wants same symbol → Scalper closes immediately |
+| 3 | If both want to enter simultaneously → Main gets priority |
+
+### 20.7 ScalperCapitalManager Class
+
+**File**: `scalper_capital_manager.py` (NEW)
+
+```python
+class ScalperCapitalManager:
+    def __init__(self, tiered_allocation):
+        self.tiered = tiered_allocation
+        self.regime = 'normal_vol'
+        self.total_capital = 400.0
+        self.used_capital = 0.0
+
+    def update_regime(self, regime): self.regime = regime
+
+    def get_allocated_capital(self):
+        pct = DYNAMIC_CAPITAL_ALLOCATION[self.regime]['scalper']
+        return self.total_capital * pct
+
+    def get_max_positions(self):
+        return calculate_scalper_max_positions(...)
+
+    def get_position_size(self):
+        return calculate_position_size(...)
+```
+
+### 20.8 Integration Points
+
+| System | Main Engine Location | Quick Scalper Location |
+|--------|---------------------|----------------------|
+| HMM Regime | `grok_v2_integration.py` | `quick_scalper_v3.py:410-424` |
+| Capital Check | `tiered_capital_allocation.py:311-328` | `scalper_capital_manager.py` (NEW) |
+| Position Sizing | `dynamic_position_manager.py:353-436` | `scalper_capital_manager.py` (NEW) |
+| Conflict Check | `unified_order_router.py` | `unified_order_router.py` |
+
+### 20.9 UnifiedCapitalCoordinator V2.0.0 (IMPLEMENTED)
+
+**File**: `unified_capital_coordinator.py`
+**Status**: ✅ DEPLOYED & OPERATIONAL
+
+The UnifiedCapitalCoordinator is the single source of truth for capital allocation shared via Redis.
+
+**V2.0.0 Features** (Grok Recommendations - Jan 17, 2026):
+- **Redis Distributed Locking**: Prevents race conditions with `SET NX` locks
+- **Circuit Breaker Pattern**: Halts operations after 5 errors, auto-resets in 60s
+- **Position Reconciliation**: Detects and fixes discrepancies between coordinator and exchange
+- **Regime Switching Buffer**: 30-second minimum between regime changes
+- **Audit Logging**: All operations logged to Redis (last 100 entries)
+- **Robust Error Handling**: Retry logic for Redis operations
+
+**Architecture**:
+```
+Main Engine (DRIVER) ──► Redis ◄── Quick Scalper (READER)
+       │                  │
+       ├── update_regime()   └── get_scalper_allocation()
+       ├── update_equity()
+       ├── main_allocate()    [with distributed lock]
+       ├── main_release()
+       └── main_sync_positions()
+
+Safety Features:
+- Distributed locks (5s timeout, 3 retries)
+- Circuit breaker (5 errors → OPEN, 60s → HALF_OPEN → CLOSED)
+- Reconciliation (detects stale positions)
+- Regime buffer (30s between switches)
+```
+
+**Redis Keys**:
+```
+unified_capital:state           - Current allocation state (JSON)
+unified_capital:main_positions  - Main Engine position tracking (Hash)
+unified_capital:scalper_positions - Scalper position tracking (Hash)
+```
+
+**Regime-Based Allocation** (V1.0.0):
+```python
+REGIME_ALLOCATION = {
+    'low_vol': {'scalper_pct': 0.10, 'main_pct': 0.90, 'scalper_max_positions': 1},
+    'normal_vol': {'scalper_pct': 0.15, 'main_pct': 0.85, 'scalper_max_positions': 2},
+    'high_vol': {'scalper_pct': 0.20, 'main_pct': 0.80, 'scalper_max_positions': 3},
+    'crisis': {'scalper_pct': 0.05, 'main_pct': 0.95, 'scalper_max_positions': 1}
+}
+```
+
+**Main Engine Integration Points**:
+| Location | Purpose |
+|----------|---------|
+| `aixyz_continuous_profit_system.py:380-406` | Coordinator initialization |
+| `aixyz_continuous_profit_system.py:1070-1076` | Regime sync during position limit calculation |
+| `aixyz_continuous_profit_system.py:3027-3038` | Position allocate on open |
+| `aixyz_continuous_profit_system.py:5884-5893` | Position release on close |
+| `aixyz_continuous_profit_system.py:6126-6136` | Position sync during reconciliation |
+
+**Quick Scalper Integration**:
+| Location | Purpose |
+|----------|---------|
+| `quick_scalper_v3.py` | Uses `ScalperCapitalManager` which reads from coordinator |
+| `scalper_capital_manager.py` | `ScalperCapitalManager` V1.1.0 uses coordinator for allocation |
+
+**Verification Commands**:
+```bash
+# Check coordinator state
+docker exec ai_xyz_redis redis-cli GET "unified_capital:state" | python3 -m json.tool
+
+# Check main positions
+docker exec ai_xyz_redis redis-cli HGETALL "unified_capital:main_positions"
+
+# Check scalper positions
+docker exec ai_xyz_redis redis-cli HGETALL "unified_capital:scalper_positions"
+```
+
+---
+
+**Version**: 3.6.1 | **Last Updated**: January 17, 2026
 **Reviewed By**: Claude (Opus 4.5) & Grok (grok-2-latest)
 **Status**: Deployed & Operational
+
+### V3.6.1 Changelog (Jan 17, 2026)
+- UnifiedCapitalCoordinator upgraded to V2.0.0 with Grok recommendations:
+  - Redis distributed locking for conflict prevention
+  - Circuit breaker pattern (5 errors → halt, 60s auto-reset)
+  - Position reconciliation process for discrepancy detection
+  - Regime switching buffer (30s minimum between changes)
+  - Comprehensive audit logging (last 100 operations in Redis)
+  - Robust error handling with retry logic
+
+### V3.6.0 Changelog
+- UnifiedCapitalCoordinator V1.0.0 implemented
+- Main Engine is the DRIVER of capital allocation
+- Quick Scalper reads from coordinator via Redis
+- Real-time regime and equity sync
+- Position tracking correlation between systems
+- Conflict resolution via shared position state
